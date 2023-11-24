@@ -1,7 +1,7 @@
 import { ThemeProvider } from '@/components/theme-provider'
 import { cn } from '@/lib/utils'
 import type { Metadata } from 'next'
-import { Inter as FontSans } from "next/font/google"
+import { Rubik as FontSans } from "next/font/google"
 import './globals.css'
 
 export const fontSans = FontSans({
@@ -22,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="pt-br" suppressHydrationWarning>
       <body className={cn(
-        "min-h-screen font-sans antialiased",
+        "min-h-screen font-sans antialiased text-foreground",
         fontSans.variable
       )}>
         <ThemeProvider
