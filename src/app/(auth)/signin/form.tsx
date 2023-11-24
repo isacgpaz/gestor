@@ -14,6 +14,7 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { signIn } from "next-auth/react"
 import Link from "next/link"
 
 const formSchema = z.object({
@@ -33,8 +34,9 @@ export function SigninForm() {
   })
 
   function onSubmit(values: FormSchema) {
-    console.log(values)
+    signIn("credentials", { ...values })
   }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-6 max-w-sm mx-auto w-full">

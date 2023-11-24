@@ -14,7 +14,12 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { useToast } from "@/components/ui/use-toast"
+import { signup } from "@/services/auth/signup"
+import { User, UserRole } from "@prisma/client"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 const formSchema = z.object({
   name: z.string().min(1, "O nome é obrigatório."),
@@ -24,7 +29,12 @@ const formSchema = z.object({
 
 type FormSchema = z.infer<typeof formSchema>
 
-export function SignupForm() {
+function useSignupForm() {
+  const router = useRouter()
+  const { toast } = useToast()
+
+  const [isLoading, setIsLoading] = useState(false)
+
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -34,9 +44,44 @@ export function SignupForm() {
     },
   })
 
-  function onSubmit(values: FormSchema) {
-    console.log(values)
+  async function onSubmit(values: FormSchema) {
+    setIsLoading(true)
+
+    await signup(values).then(async (response) => {
+      if (response.ok) {
+        const { user } = await response.json() as { user: User };
+
+        if (user?.role === UserRole.CUSTOMER) {
+          router.push('/dashboard')
+        }
+
+        if (user?.role === UserRole.ADMIN) {
+          router.push('/admin/dashboard')
+        }
+      } else {
+        toast({
+          title: 'Ops, algo não saiu como o esperado.',
+          description: 'Ocorreu um erro ao criar conta. Tente novamente mais tarde.',
+          variant: 'destructive',
+        })
+      }
+    }).catch((e) => {
+      console.error(e)
+    }).finally(() => {
+      setIsLoading(false)
+    })
   }
+
+  return {
+    form,
+    onSubmit,
+    isLoading
+  }
+}
+
+export function SignupForm() {
+  const { form, onSubmit, isLoading } = useSignupForm();
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-6 max-w-sm mx-auto w-full">
@@ -82,7 +127,9 @@ export function SignupForm() {
           )}
         />
 
-        <Button type="submit" className="w-full" size='lg'>Criar conta</Button>
+        <Button type="submit" className="w-full" size='lg' isLoading={isLoading}>
+          Criar conta
+        </Button>
       </form>
 
       <div className="flex justify-between items-center gap-4 mt-4">
