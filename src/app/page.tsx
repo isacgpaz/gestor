@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import Link from 'next/link'
 
-export default function Home() {
+export default async function Home() {
   return (
     <main className='p-6 pb-12 min-h-screen relative flex flex-col'>
       <div className="w-full flex flex-col items-center justify-center flex-1">

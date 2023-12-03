@@ -16,6 +16,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 const formSchema = z.object({
   email: z.string().email("Por favor, digite um e-mail válido."),
@@ -25,6 +27,9 @@ const formSchema = z.object({
 type FormSchema = z.infer<typeof formSchema>
 
 export function SigninForm() {
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -33,8 +38,19 @@ export function SigninForm() {
     },
   })
 
-  function onSubmit(values: FormSchema) {
-    signIn("credentials", { ...values })
+  async function onSubmit(values: FormSchema) {
+    setIsLoading(true)
+
+    await signIn("credentials", {
+      ...values,
+      callbackUrl: '/dashboard'
+    }).then((res) => {
+      setIsLoading(false)
+
+      if (res?.error) {
+        console.log('here')
+      }
+    })
   }
 
   return (
@@ -68,7 +84,9 @@ export function SigninForm() {
           )}
         />
 
-        <Button type="submit" className="w-full" size='lg'>Entrar</Button>
+        <Button type="submit" className="w-full" size='lg' isLoading={isLoading}>
+          Entrar
+        </Button>
       </form>
 
       <div className="flex justify-between items-center gap-4 mt-4">
