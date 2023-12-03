@@ -1,14 +1,19 @@
 import { exclude } from '@/utils/exclude'
-import { User } from '@prisma/client'
+import { User, UserRole } from '@prisma/client'
 import bcrypt from 'bcrypt'
 import type { GetServerSidePropsContext, NextApiRequest, NextApiResponse } from "next"
 import { AuthOptions, getServerSession } from "next-auth"
-import Credentials from "next-auth/providers/credentials"
+import CredentialsProvider from "next-auth/providers/credentials"
+import GoogleProvider from "next-auth/providers/google"
 import { prisma } from "./prisma"
 
 export const authOptions: AuthOptions = {
   providers: [
-    Credentials({
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    }),
+    CredentialsProvider({
       credentials: {
         email: {},
         password: {}
@@ -35,7 +40,7 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role;
+        token.role = user.role ?? UserRole.CUSTOMER;
       }
 
       return token

@@ -18,6 +18,7 @@ import { signIn } from "next-auth/react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { FcGoogle } from "react-icons/fc"
 
 const formSchema = z.object({
   email: z.string().email("Por favor, digite um e-mail válido."),
@@ -86,6 +87,24 @@ export function SigninForm() {
 
         <Button type="submit" className="w-full" size='lg' isLoading={isLoading}>
           Entrar
+        </Button>
+
+        <div className="flex items-center justify-center gap-3 text-slate-500">
+          <hr className="w-full bg-slate-500" />
+          <span>ou</span>
+          <hr className="w-full bg-slate-500" />
+        </div>
+
+        <Button
+          type="button"
+          variant='secondary'
+          className="w-full"
+          size='lg'
+          isLoading={isLoading}
+          onClick={() => signIn('google')}
+        >
+          <FcGoogle className="mr-2 h-4 w-4" />
+          Entrar com o Google
         </Button>
       </form>
 
