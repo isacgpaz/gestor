@@ -16,7 +16,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { FcGoogle } from "react-icons/fc"
 
@@ -28,7 +27,6 @@ const formSchema = z.object({
 type FormSchema = z.infer<typeof formSchema>
 
 export function SigninForm() {
-  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
   const form = useForm<FormSchema>({
@@ -44,7 +42,7 @@ export function SigninForm() {
 
     await signIn("credentials", {
       ...values,
-      callbackUrl: '/dashboard'
+      callbackUrl: '/'
     }).then((res) => {
       setIsLoading(false)
 
