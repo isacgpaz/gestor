@@ -17,9 +17,11 @@ import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
 import { signup } from "@/services/auth/signup"
 import { User, UserRole } from "@prisma/client"
+import { signIn } from "next-auth/react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { FcGoogle } from "react-icons/fc"
 
 const formSchema = z.object({
   name: z.string().min(1, "O nome é obrigatório."),
@@ -84,7 +86,7 @@ export function SignupForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-6 max-w-sm mx-auto w-full">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-6">
         <FormField
           control={form.control}
           name="name"
@@ -129,6 +131,25 @@ export function SignupForm() {
 
         <Button type="submit" className="w-full" size='lg' isLoading={isLoading}>
           Criar conta
+        </Button>
+
+
+        <div className="flex items-center justify-center gap-3 text-slate-500">
+          <hr className="w-full bg-slate-500" />
+          <span>ou</span>
+          <hr className="w-full bg-slate-500" />
+        </div>
+
+        <Button
+          type="button"
+          variant='secondary'
+          className="w-full"
+          size='lg'
+          isLoading={isLoading}
+          onClick={() => signIn('google')}
+        >
+          <FcGoogle className="mr-2 h-4 w-4" />
+          Entrar com o Google
         </Button>
       </form>
 

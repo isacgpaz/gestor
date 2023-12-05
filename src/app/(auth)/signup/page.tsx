@@ -7,7 +7,7 @@ export default function SignupPage() {
     <main className='p-6 pb-12 min-h-screen relative flex flex-col'>
       <NavHeader backHref="/" />
 
-      <div className="w-full flex flex-col  flex-1">
+      <div className="flex flex-col flex-1 max-w-sm mx-auto w-full">
         <div className="mx-auto w-fit mt-6">
           <Image
             src="/logo.svg"

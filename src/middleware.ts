@@ -38,8 +38,6 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    ...routes.public,
-    ...routes.protecteds.admin,
-    ...routes.protecteds.customer
+    "/", "/signin", "/signup", "/admin/dashboard", "/dashboard"
   ],
 }
