@@ -18,13 +18,48 @@ model User {
   password  String
   name      String
   role      UserRole @default(CUSTOMER)
-  Company   Company? @relation(fields: [companyId], references: [id])
-  companyId String?  @db.ObjectId
+  company   Company?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  wallets   Wallet[]
 }
 
 model Company {
-  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
-  slug      String @unique
-  customers User[]
+  slug      String   @unique
+  manager   User     @relation(fields: [managerId], references: [id])
+  managerId String   @unique @db.ObjectId
+  address   Address?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  wallet    Wallet[]
+}
+
+model Wallet {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  points      Int       @default(0)
+  completedAt DateTime?
+  history     History[]
+  company     Company   @relation(fields: [companyId], references: [id])
+  companyId   String    @db.ObjectId
+  customer    User      @relation(fields: [customerId], references: [id])
+  customerId  String    @db.ObjectId
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([companyId, customerId])
+}
+
+type History {
+  pointsAdded Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+type Address {
+  street String
+  number String
+  city   String
+  state  String
+  zip    String
 }

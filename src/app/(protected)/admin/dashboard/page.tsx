@@ -2,18 +2,27 @@
 
 import { IdentifyUser } from "@/components/admin/indentify-user"
 import { Shortcuts } from "@/components/admin/shortcuts"
+import { PointsProvider } from "@/contexts/points-context"
 import { signOut } from "next-auth/react"
 
-export default function AdminDashboard() {
+function Dashboard() {
   return (
     <div className="mt-6">
       <Shortcuts />
 
-      <IdentifyUser isOpen onOpenChange={() => { }} user={{}} />
+      <IdentifyUser />
 
       <button onClick={() => signOut({ callbackUrl: '/signin' })}>
         sair
       </button>
     </div>
+  )
+}
+
+export default function AdminDashboard() {
+  return (
+    <PointsProvider>
+      <Dashboard />
+    </PointsProvider>
   )
 }

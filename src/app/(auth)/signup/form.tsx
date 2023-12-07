@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
 import { signup } from "@/services/auth/signup"
-import { User, UserRole } from "@prisma/client"
+import { User } from "@prisma/client"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -51,15 +51,12 @@ function useSignupForm() {
 
     await signup(values).then(async (response) => {
       if (response.ok) {
-        const { user } = await response.json() as { user: User };
+        const user = await response.json() as User;
 
-        if (user?.role === UserRole.CUSTOMER) {
-          router.push('/dashboard')
-        }
-
-        if (user?.role === UserRole.ADMIN) {
-          router.push('/admin/dashboard')
-        }
+        signIn('credentials', {
+          email: user.email,
+          password: values.password
+        })
       } else {
         toast({
           title: 'Ops, algo não saiu como o esperado.',

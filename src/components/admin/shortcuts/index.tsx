@@ -1,10 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { CalendarCheck, CopyPlus, LucideIcon, MenuSquare, Settings } from "lucide-react";
+import { CalendarCheck, LucideIcon, MenuSquare, Settings } from "lucide-react";
 import { ScanUser } from "../scan-user";
 
 const shortcuts = [
   <ScanUser key='scan-user' />,
-  <ShortcutItem icon={CopyPlus} key='add-manual-points' />,
   <ShortcutItem icon={MenuSquare} key='menu' />,
   <ShortcutItem icon={CalendarCheck} key='calendar' />,
   <ShortcutItem icon={Settings} key='settings' />,

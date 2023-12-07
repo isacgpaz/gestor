@@ -10,12 +10,20 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { QrScanner } from '@yudiel/react-qr-scanner';
-import { Scan, ScanText } from "lucide-react";
+import { usePoints } from "@/contexts/points-context";
+import { ScanText } from "lucide-react";
+import { QrScanner } from "../qr-scanner";
 
 export function ScanUser() {
+  const {
+    selectedWallet,
+    isScanUserModalOpen,
+    setIsIdentifyUserModalOpen,
+    setIsScanUserModalOpen
+  } = usePoints()
+
   return (
-    <AlertDialog>
+    <AlertDialog open={isScanUserModalOpen} onOpenChange={setIsScanUserModalOpen}>
       <AlertDialogTrigger asChild>
         <Button
           size='lg'
@@ -34,22 +42,16 @@ export function ScanUser() {
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <div className="qr-scanner rounded">
-          <QrScanner
-            onDecode={(result) => console.log(result)}
-            onError={(error) => console.log(error?.message)}
-            viewFinderBorder={20}
-            viewFinder={() => <Scan
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-primary"
-              size={310}
-              strokeWidth={.25}
-            />}
-          />
-        </div>
+        <QrScanner />
 
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction>Continuar</AlertDialogAction>
+          <AlertDialogAction
+            onClick={() => setIsIdentifyUserModalOpen(true)}
+            disabled={!selectedWallet}
+          >
+            Continuar
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
