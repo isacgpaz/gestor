@@ -79,6 +79,10 @@ export async function POST(
             pointsAdded: points
           }
         }
+      },
+      include: {
+        company: true,
+        customer: true
       }
     })
 

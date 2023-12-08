@@ -40,5 +40,9 @@ export async function GET(
     }
   })
 
+  if (!wallet) {
+    return NextResponse.json({ message: 'Carteira não encontrada.' }, { status: 404 })
+  }
+
   return NextResponse.json(wallet, { status: 200 })
 }

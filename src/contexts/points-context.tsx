@@ -32,7 +32,8 @@ type PointsContextProp = {
   walletsList: WalletsList,
   setWalletsList: (walletsList: WalletsList) => void,
   filters: WalletFilters,
-  updateFilters: (filters: Partial<WalletFilters>) => void
+  updateFilters: (filters: Partial<WalletFilters>) => void,
+  applyWalletFilters: () => Promise<void>
 }
 
 export const PointsContext = createContext<PointsContextProp>({} as PointsContextProp)
@@ -41,7 +42,7 @@ export function PointsProvider({ children }: PropsWithChildren) {
   const [selectedWallet, setSelectedWallet] = useState<Wallet | undefined>(undefined);
   const [isIdentifyUserModalOpen, setIsIdentifyUserModalOpen] = useState(false);
   const [isScanUserModalOpen, setIsScanUserModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [walletsList, setWalletsList] = useState<WalletsList>({
     result: [],
     meta: {
@@ -116,7 +117,8 @@ export function PointsProvider({ children }: PropsWithChildren) {
     filters,
     updateFilters,
     isLoading,
-    setIsLoading
+    setIsLoading,
+    applyWalletFilters
   }), [
     selectedWallet,
     setSelectedWallet,
@@ -129,7 +131,8 @@ export function PointsProvider({ children }: PropsWithChildren) {
     filters,
     updateFilters,
     isLoading,
-    setIsLoading
+    setIsLoading,
+    applyWalletFilters
   ])
 
   return (

@@ -20,7 +20,8 @@ export function IdentifyUser() {
   const {
     selectedWallet,
     isIdentifyUserModalOpen,
-    setIsIdentifyUserModalOpen
+    setIsIdentifyUserModalOpen,
+    applyWalletFilters
   } = usePoints()
 
 
@@ -46,6 +47,7 @@ export function IdentifyUser() {
         })
 
         setIsIdentifyUserModalOpen(false)
+        applyWalletFilters()
       })
     }
 

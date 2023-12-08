@@ -18,12 +18,24 @@ import {
   TableRow
 } from "@/components/ui/table"
 import { formatRelativeTime } from "@/utils/format-relative-date"
+import { Wallet } from "@prisma/client"
 import { ChevronRight, Loader2, MenuSquare, Pencil, SearchX, Trash } from "lucide-react"
 
 export function WalletsTable() {
-  const { walletsList, isLoading } = usePoints()
+  const {
+    isLoading,
+    walletsList,
+    setSelectedWallet,
+    setIsIdentifyUserModalOpen
+  } = usePoints()
 
   const wallets = walletsList.result
+
+  function selectWallet(wallet: Wallet) {
+    setSelectedWallet(wallet)
+
+    setIsIdentifyUserModalOpen(true)
+  }
 
   if (isLoading) {
     return (
@@ -39,7 +51,7 @@ export function WalletsTable() {
       <Table className="mt-6">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[200px]">Cliente</TableHead>
+            <TableHead className="w-[300px]">Cliente</TableHead>
             <TableHead className="text-right">Pts</TableHead>
             <TableHead className="w-5"></TableHead>
           </TableRow>
@@ -48,7 +60,13 @@ export function WalletsTable() {
           {wallets.map((wallet) => (
             <TableRow key={wallet.id}>
               <TableCell className="flex flex-col">
-                <span className="font-medium">{wallet.customer.name}</span>
+                <span
+                  className="font-medium cursor-pointer"
+                  onClick={() => selectWallet(wallet)}
+                >
+                  {wallet.customer.name}
+                </span>
+
                 <span className="text-slate-500 text-xs">
                   Última atualização: {formatRelativeTime(wallet.updatedAt)}
                 </span>
