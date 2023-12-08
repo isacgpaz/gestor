@@ -7,26 +7,37 @@ export async function GET(request: NextRequest) {
   const page = Number(request.nextUrl.searchParams.get('page') ?? 1)
   const rowsPerPage = Number(request.nextUrl.searchParams.get('rowsPerPage') ?? 10)
   const companyId = request.nextUrl.searchParams.get('companyId')
-
-  if (!companyId) {
-    return NextResponse.json({ status: 400 })
-  }
+  const customerId = request.nextUrl.searchParams.get('customerId')
 
   const [wallets, totalWallets] = await prisma.$transaction([
     prisma.wallet.findMany({
       skip: (page - 1) * rowsPerPage,
       take: rowsPerPage,
       where: {
-        companyId,
-        customer: {
-          name: {
-            contains: search,
-            mode: 'insensitive',
-          }
-        }
+        OR: [
+          companyId ? {
+            companyId,
+            customer: {
+              name: {
+                contains: search,
+                mode: 'insensitive',
+              }
+            }
+          } : {},
+          customerId ? {
+            customerId,
+            customer: {
+              name: {
+                contains: search,
+                mode: 'insensitive',
+              }
+            }
+          } : {}
+        ]
       },
       include: {
-        customer: true
+        customer: true,
+        company: true
       },
     }),
     prisma.wallet.count()

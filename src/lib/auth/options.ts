@@ -78,6 +78,7 @@ export const authOptions: AuthOptions = {
       if (user) {
         token.role = user.role ?? UserRole.CUSTOMER;
         token.company = user.company
+        token.id = user.id
       }
 
       return token
@@ -86,6 +87,7 @@ export const authOptions: AuthOptions = {
       if (session.user) {
         session.user.role = token.role
         session.user.company = token.company
+        session.user.id = token.id
       }
 
       return session
