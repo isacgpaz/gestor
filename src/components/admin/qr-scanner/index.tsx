@@ -36,7 +36,6 @@ export function QrScanner() {
         await createWallet({
           companyId: user.company.id,
           customerId: result,
-          points: 1
         }).then(async (response) => {
           await selectWallet(response)
         }).catch((e) => {

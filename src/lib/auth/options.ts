@@ -51,7 +51,7 @@ export const authOptions: AuthOptions = {
           const userExists = await prisma.user.findUnique({ where: { email: String(email) } })
 
           if (!userExists) {
-            const res = await fetch("http://localhost:3000/api/auth/signup", {
+            const resonse = await fetch("http://localhost:3000/api/auth/signup", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -63,9 +63,15 @@ export const authOptions: AuthOptions = {
               }),
             });
 
-            if (res.ok) {
+            if (resonse.ok) {
+              const createdUser = await resonse.json() as User
+
+              user.id = createdUser.id
+
               return Boolean(user);
             }
+          } else {
+            user.id = userExists.id
           }
         } catch (error) {
           console.log(error);

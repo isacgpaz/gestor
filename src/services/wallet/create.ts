@@ -1,13 +1,12 @@
 type CreateWalletProps = {
   customerId: string,
-  companyId: string,
-  points: number,
+  companyId: string
 }
 
-export async function createWallet({ customerId, companyId, points }: CreateWalletProps) {
+export async function createWallet({ customerId, companyId }: CreateWalletProps) {
   const response = await fetch('/api/wallet', {
     method: 'POST',
-    body: JSON.stringify({ customerId, companyId, points }),
+    body: JSON.stringify({ customerId, companyId }),
   })
 
   return response

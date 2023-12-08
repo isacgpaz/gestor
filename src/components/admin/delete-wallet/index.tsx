@@ -10,6 +10,7 @@ export function DeleteWallet() {
     selectedWallet,
     isDeleteWalletModalOpen,
     setIsDeleteWalletModalOpen,
+    setSelectedWallet,
     applyWalletFilters
   } = usePoints()
 
@@ -22,6 +23,8 @@ export function DeleteWallet() {
       await deleteWallet(selectedWallet?.id).then(() => {
         setIsDeleteWalletModalOpen(false)
         applyWalletFilters()
+
+        setSelectedWallet(undefined)
 
         toast({
           title: 'Carteira excluída com sucesso!',

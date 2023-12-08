@@ -31,6 +31,10 @@ export default withAuth(
           return token?.role === UserRole.CUSTOMER
         }
 
+        if (routes.protecteds.both.some((value) => pathname.includes(value))) {
+          return Boolean(token)
+        }
+
         return true
       }
     },
@@ -38,6 +42,13 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    "/", "/signin", "/signup", "/admin/dashboard", "/dashboard"
+    "/",
+    "/signin",
+    "/signup",
+    "/admin/dashboard",
+    "/dashboard",
+    "/admin/settings",
+    "/settings",
+    "/company/:path*"
   ],
 }

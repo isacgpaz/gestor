@@ -48,6 +48,7 @@ export function IdentifyUser() {
 
         setIsIdentifyUserModalOpen(false)
         applyWalletFilters()
+        setPoints(1)
       })
     }
 

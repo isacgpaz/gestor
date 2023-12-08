@@ -63,7 +63,7 @@ export async function POST(
   request: NextRequest,
 ) {
   try {
-    const { customerId, companyId, points } = await request.json()
+    const { customerId, companyId } = await request.json()
 
     const user = await prisma.user.findUnique({
       where: { id: customerId }
@@ -85,12 +85,6 @@ export async function POST(
       data: {
         companyId,
         customerId,
-        points,
-        history: {
-          set: {
-            pointsAdded: points
-          }
-        }
       },
       include: {
         company: true,
@@ -98,7 +92,7 @@ export async function POST(
       }
     })
 
-    return NextResponse.json({ wallet }, { status: 201 })
+    return NextResponse.json(wallet, { status: 201 })
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
