@@ -119,11 +119,11 @@ export function SigninForm() {
           </Link>
         </Button>
 
-        <Button className="p-0" variant='link' asChild>
+        {/* <Button className="p-0" variant='link' asChild>
           <Link href='/recover-password'>
             Esqueceu sua senha?
           </Link>
-        </Button>
+        </Button> */}
       </div>
     </Form>
   )
