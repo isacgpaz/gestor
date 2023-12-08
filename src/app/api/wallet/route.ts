@@ -20,7 +20,8 @@ export async function GET(request: NextRequest) {
         companyId,
         customer: {
           name: {
-            contains: search
+            contains: search,
+            mode: 'insensitive',
           }
         }
       },
