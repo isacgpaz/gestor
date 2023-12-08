@@ -27,6 +27,8 @@ type PointsContextProp = {
   setIsIdentifyUserModalOpen: (open: boolean) => void
   isScanUserModalOpen: boolean,
   setIsScanUserModalOpen: (open: boolean) => void,
+  isDeleteWalletModalOpen: boolean,
+  setIsDeleteWalletModalOpen: (open: boolean) => void,
   isLoading: boolean,
   setIsLoading: (open: boolean) => void,
   walletsList: WalletsList,
@@ -42,6 +44,7 @@ export function PointsProvider({ children }: PropsWithChildren) {
   const [selectedWallet, setSelectedWallet] = useState<Wallet | undefined>(undefined);
   const [isIdentifyUserModalOpen, setIsIdentifyUserModalOpen] = useState(false);
   const [isScanUserModalOpen, setIsScanUserModalOpen] = useState(false);
+  const [isDeleteWalletModalOpen, setIsDeleteWalletModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [walletsList, setWalletsList] = useState<WalletsList>({
     result: [],
@@ -118,7 +121,9 @@ export function PointsProvider({ children }: PropsWithChildren) {
     updateFilters,
     isLoading,
     setIsLoading,
-    applyWalletFilters
+    applyWalletFilters,
+    isDeleteWalletModalOpen,
+    setIsDeleteWalletModalOpen
   }), [
     selectedWallet,
     setSelectedWallet,
@@ -132,7 +137,9 @@ export function PointsProvider({ children }: PropsWithChildren) {
     updateFilters,
     isLoading,
     setIsLoading,
-    applyWalletFilters
+    applyWalletFilters,
+    isDeleteWalletModalOpen,
+    setIsDeleteWalletModalOpen
   ])
 
   return (

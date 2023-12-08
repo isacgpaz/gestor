@@ -1,5 +1,6 @@
 'use client'
 
+import { DeleteWallet } from "@/components/admin/delete-wallet"
 import { IdentifyUser } from "@/components/admin/indentify-user"
 import { Shortcuts } from "@/components/admin/shortcuts"
 import { Wallets } from "@/components/admin/wallets"
@@ -14,6 +15,8 @@ function Dashboard() {
       <Wallets />
 
       <IdentifyUser />
+
+      <DeleteWallet />
 
       <button onClick={() => signOut({ callbackUrl: '/signin' })}>
         sair

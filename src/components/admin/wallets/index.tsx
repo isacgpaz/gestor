@@ -18,7 +18,6 @@ import {
   TableRow
 } from "@/components/ui/table"
 import { formatRelativeTime } from "@/utils/format-relative-date"
-import { Wallet } from "@prisma/client"
 import { ChevronRight, Loader2, SearchX, Trash, Trophy } from "lucide-react"
 
 export function WalletsTable() {
@@ -26,16 +25,11 @@ export function WalletsTable() {
     isLoading,
     walletsList,
     setSelectedWallet,
-    setIsIdentifyUserModalOpen
+    setIsIdentifyUserModalOpen,
+    setIsDeleteWalletModalOpen
   } = usePoints()
 
   const wallets = walletsList.result
-
-  function selectWallet(wallet: Wallet) {
-    setSelectedWallet(wallet)
-
-    setIsIdentifyUserModalOpen(true)
-  }
 
   if (isLoading) {
     return (
@@ -62,7 +56,10 @@ export function WalletsTable() {
               <TableCell className="flex flex-col">
                 <span
                   className="font-medium cursor-pointer"
-                  onClick={() => selectWallet(wallet)}
+                  onClick={() => {
+                    setSelectedWallet(wallet)
+                    setIsIdentifyUserModalOpen(true)
+                  }}
                 >
                   {wallet.customer.name}
                 </span>
@@ -78,11 +75,20 @@ export function WalletsTable() {
                     <ChevronRight />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => selectWallet(wallet)}>
+                    <DropdownMenuItem onClick={() => {
+                      setSelectedWallet(wallet)
+                      setIsIdentifyUserModalOpen(true)
+                    }}>
                       <Trophy className="mr-2 h-4 w-4" />
                       <span>Adicionar pontos</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive focus:text-red-500">
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-red-500"
+                      onClick={() => {
+                        setSelectedWallet(wallet)
+                        setIsDeleteWalletModalOpen(true)
+                      }}
+                    >
                       <Trash className="mr-2 h-4 w-4" />
                       <span>Excluir</span>
                     </DropdownMenuItem>
