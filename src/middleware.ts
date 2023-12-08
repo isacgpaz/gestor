@@ -7,8 +7,11 @@ export default withAuth(
   function middleware(req) {
     const pathname = req.nextUrl.pathname;
     const token = req.nextauth.token;
+    const search = req.nextUrl.search
 
-    if (routes.public.includes(pathname) && token) {
+    console.log(search)
+
+    if (routes.public.includes(pathname) && token && !search.includes('callbackUrl')) {
       if (token?.role === UserRole.ADMIN) {
         return NextResponse.redirect(new URL(routes.protecteds.admin[0], req.url))
       }

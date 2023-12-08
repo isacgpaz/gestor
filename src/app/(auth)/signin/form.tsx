@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { useState } from "react"
 import { FcGoogle } from "react-icons/fc"
 
@@ -28,6 +29,9 @@ type FormSchema = z.infer<typeof formSchema>
 
 export function SigninForm() {
   const [isLoading, setIsLoading] = useState(false)
+
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get('callbackUrl')
 
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
@@ -42,7 +46,7 @@ export function SigninForm() {
 
     await signIn("credentials", {
       ...values,
-      callbackUrl: '/'
+      callbackUrl: callbackUrl ?? undefined
     }).then((res) => {
       setIsLoading(false)
 
@@ -99,7 +103,9 @@ export function SigninForm() {
           className="w-full"
           size='lg'
           isLoading={isLoading}
-          onClick={() => signIn('google')}
+          onClick={() => signIn('google', {
+            callbackUrl: callbackUrl ?? undefined
+          })}
         >
           <FcGoogle className="mr-2 h-4 w-4" />
           Entrar com o Google
