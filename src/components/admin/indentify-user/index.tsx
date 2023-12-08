@@ -54,8 +54,13 @@ export function IdentifyUser() {
     setIsLoading(false)
   }
 
+  function onOpenChange(open: boolean) {
+    setIsIdentifyUserModalOpen(open)
+    setPoints(1)
+  }
+
   return (
-    <AlertDialog open={isIdentifyUserModalOpen} onOpenChange={setIsIdentifyUserModalOpen}>
+    <AlertDialog open={isIdentifyUserModalOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent className="max-w-xs">
         <AlertDialogHeader>
           <AlertDialogTitle>Confirmar pontuação</AlertDialogTitle>

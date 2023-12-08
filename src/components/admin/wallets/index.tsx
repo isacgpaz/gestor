@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/table"
 import { formatRelativeTime } from "@/utils/format-relative-date"
 import { Wallet } from "@prisma/client"
-import { ChevronRight, Loader2, MenuSquare, Pencil, SearchX, Trash } from "lucide-react"
+import { ChevronRight, Loader2, SearchX, Trash, Trophy } from "lucide-react"
 
 export function WalletsTable() {
   const {
@@ -78,13 +78,9 @@ export function WalletsTable() {
                     <ChevronRight />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
-                      <MenuSquare className="mr-2 h-4 w-4" />
-                      <span>Detalhes</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      <span>Editar</span>
+                    <DropdownMenuItem onClick={() => selectWallet(wallet)}>
+                      <Trophy className="mr-2 h-4 w-4" />
+                      <span>Adicionar pontos</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem className="text-destructive focus:text-red-500">
                       <Trash className="mr-2 h-4 w-4" />
