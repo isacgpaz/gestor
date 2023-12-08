@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
   ])
 
   const totalPages = Math.ceil(totalWallets / rowsPerPage)
-  const hasNextPage = page !== totalPages
+  const hasNextPage = page !== totalPages && totalPages !== 0
   const hasPreviousPage = page !== 1
 
   return NextResponse.json({
