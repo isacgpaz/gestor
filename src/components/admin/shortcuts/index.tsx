@@ -1,12 +1,12 @@
-import { Button } from "@/components/ui/button";
+import { Button, ButtonProps } from "@/components/ui/button";
 import { CalendarCheck, LucideIcon, MenuSquare, Settings } from "lucide-react";
 import { ScanUser } from "../scan-user";
 
 const shortcuts = [
   <ScanUser key='scan-user' />,
-  <ShortcutItem icon={MenuSquare} key='menu' />,
-  <ShortcutItem icon={CalendarCheck} key='calendar' />,
-  <ShortcutItem icon={Settings} key='settings' />,
+  <ShortcutItem icon={MenuSquare} key='menu' disabled />,
+  <ShortcutItem icon={CalendarCheck} key='calendar' disabled />,
+  <ShortcutItem icon={Settings} key='settings' disabled />,
 ]
 
 function ShortcutsList() {
@@ -21,12 +21,18 @@ function ShortcutsList() {
   )
 }
 
-export function ShortcutItem({ icon: Icon, primary = false }: { icon: LucideIcon, primary?: boolean }) {
+type ShortcutItemProps = {
+  icon: LucideIcon,
+  primary?: boolean,
+} & ButtonProps
+
+export function ShortcutItem({ icon: Icon, primary = false, ...props }: ShortcutItemProps) {
   return (
     <Button
       size='lg'
       variant={primary ? 'default' : 'secondary'}
       className="flex-shrink-0 w-full px-0"
+      {...props}
     >
       <Icon />
     </Button>
