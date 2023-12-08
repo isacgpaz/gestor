@@ -11,6 +11,18 @@ export const customerBottomBar = [
     path="/settings"
     icon={Settings}
     key='settings'
-    disabled
+  />,
+]
+
+export const adminBottomBar = [
+  <BottomBarItem
+    path="/admin/dashboard"
+    icon={LayoutDashboard}
+    key='dashboard'
+  />,
+  <BottomBarItem
+    path="/admin/settings"
+    icon={Settings}
+    key='settings'
   />,
 ]

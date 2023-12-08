@@ -10,11 +10,9 @@ export default async function ProtectedLayout({
 
   const user = session?.user
 
-
-
   return (
     <div className="flex flex-col relative min-h-screen">
-      <main className="flex-1">
+      <main className="flex-1 mb-16">
         {children}
       </main>
 
