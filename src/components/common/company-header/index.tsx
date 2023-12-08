@@ -12,10 +12,10 @@ export function CompanyHeader() {
       </Avatar>
 
       <div className="text-center">
-        <span className="font-medium block text-lg">{company?.name}</span>
+        <span className="font-medium block text-xl">{company?.name}</span>
 
         {company?.slogan && (
-          <span className="text-slate-500">{company.slogan}</span>
+          <span className="text-slate-500 text-lg">{company.slogan}</span>
         )}
       </div>
     </div>

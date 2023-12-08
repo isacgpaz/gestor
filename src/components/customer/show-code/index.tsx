@@ -16,7 +16,7 @@ import { useCallback, useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 
 export function ShowCode() {
-  const { company } = useCompany()
+  const { company, wallet } = useCompany()
 
   const [customerId, setCustomerId] = useState<string>('')
 
@@ -39,7 +39,10 @@ export function ShowCode() {
       <AlertDialogTrigger asChild>
         <Button className="w-fit">
           <Trophy className="mr-2" />
-          <span>Adicionar pontos</span>
+          <span>
+            {company?.walletSettings?.size === wallet?.points ?
+              'Começar nova carteira' : 'Adicionar pontos'}
+          </span>
         </Button>
       </AlertDialogTrigger>
 
