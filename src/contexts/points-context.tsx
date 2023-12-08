@@ -1,6 +1,6 @@
 import { serverSession } from "@/lib/auth/server";
 import { findWallets } from "@/services/wallet/find";
-import { Wallet } from "@prisma/client";
+import { Wallet } from "@/types/wallet";
 import { PropsWithChildren, createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 type WalletFilters = {

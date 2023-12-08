@@ -3,7 +3,7 @@ import { usePoints } from '@/contexts/points-context';
 import { serverSession } from '@/lib/auth/server';
 import { createWallet } from '@/services/wallet/create';
 import { findWalletByUserAndCompany } from '@/services/wallet/find-by-user-and-company';
-import { Wallet } from '@prisma/client';
+import { Wallet } from '@/types/wallet';
 import { QrScanner as Scanner } from '@yudiel/react-qr-scanner';
 import { Loader2, Scan } from "lucide-react";
 import { useState } from 'react';

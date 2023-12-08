@@ -5,7 +5,7 @@ import type { Metadata } from 'next'
 import { Rubik as FontSans } from "next/font/google"
 import './globals.css'
 
-export const fontSans = FontSans({
+const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
 })

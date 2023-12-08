@@ -1,6 +1,7 @@
+import { User } from '@/types/user'
 import { exclude } from '@/utils/exclude'
 import { generateRandomPassword } from '@/utils/generate-random-password'
-import { User, UserRole } from '@prisma/client'
+import { Company, UserRole } from '@prisma/client'
 import bcrypt from 'bcrypt'
 import { AuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
@@ -82,8 +83,8 @@ export const authOptions: AuthOptions = {
     },
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role ?? UserRole.CUSTOMER;
-        token.company = user.company
+        token.role = (user as User).role ?? UserRole.CUSTOMER;
+        token.company = (user as User).company
         token.id = user.id
       }
 
@@ -91,9 +92,9 @@ export const authOptions: AuthOptions = {
     },
     session({ token, session }) {
       if (session.user) {
-        session.user.role = token.role
-        session.user.company = token.company
-        session.user.id = token.id
+        (session.user as unknown as User).role = token.role as UserRole
+        (session.user as unknown as User).company = token.company as Company
+        (session.user as unknown as User).id = token.id as string
       }
 
       return session

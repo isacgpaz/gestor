@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  const { name, slug, managerId, address } = await req.json();
+  const { name, slug, managerId, address, phone, slogan } = await req.json();
 
   const manager = await prisma.user.findUnique({ where: { id: managerId } })
 
@@ -21,7 +21,9 @@ export async function POST(req: Request) {
       name,
       slug,
       managerId,
-      address
+      address,
+      phone,
+      slogan
     }
   })
 
