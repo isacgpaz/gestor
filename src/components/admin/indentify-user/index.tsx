@@ -97,6 +97,7 @@ export function IdentifyUser() {
 
             <Button
               className="rounded-full p-0 w-8 h-8"
+              disabled={points === selectedWallet.company.walletSettings?.size}
               onClick={() => setPoints(points + 1)}
             >
               <Plus />
