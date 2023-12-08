@@ -1,3 +1,4 @@
+import { useCompany } from "@/contexts/company-context"
 import { cn } from "@/lib/utils"
 import { CheckCircle2, CircleDotDashed } from "lucide-react"
 import { ShowCode } from "../show-code"
@@ -21,14 +22,20 @@ function WalletListItem({ isChecked }: WalletListItemProps) {
   )
 }
 
-const walletItems = Array.from({ length: 15 })
-
 function WalletList() {
+  const { company, wallet } = useCompany()
+
+  const walletItems = Array.from({ length: company?.walletSettings?.size ?? 10 })
+
+  if (!wallet) {
+    return null
+  }
+
   return (
     <ul className="flex items-center justify-center gap-4 flex-wrap">
       {walletItems.map((_, index) => (
         <li key={index}>
-          <WalletListItem isChecked={index < 7} />
+          <WalletListItem isChecked={index < wallet.points} />
         </li>
       ))}
     </ul>
