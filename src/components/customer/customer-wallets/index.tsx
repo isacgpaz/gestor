@@ -3,6 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import { links } from "@/constants/links"
 import { findWallets } from "@/services/wallet/find"
 import { User } from "@prisma/client"
 import { Loader2, Send, Star, Trophy } from "lucide-react"
@@ -12,10 +13,11 @@ import { useCallback, useEffect, useState } from "react"
 type CustomerWalletsItem = {
   slug: string,
   name: string,
+  phone: string,
   isFavorite: boolean
 }
 
-function CustomerWalletsItem({ name, slug, isFavorite }: CustomerWalletsItem) {
+function CustomerWalletsItem({ name, slug, phone, isFavorite }: CustomerWalletsItem) {
   return (
     <Card className="p-0">
       <CardContent className="py-3 px-4 flex justify-between items-center gap-4">
@@ -35,9 +37,11 @@ function CustomerWalletsItem({ name, slug, isFavorite }: CustomerWalletsItem) {
       </CardContent>
 
       <CardFooter className="p-0 flex items-center gap-3 border-t">
-        <Button variant="ghost" className="w-full rounded-none hover:text-primary">
-          <Send className="mr-2 h-4 w-4" />
-          <span>WhatsApp</span>
+        <Button variant="ghost" className="w-full rounded-none hover:text-primary" asChild>
+          <a href={`${links.WHATSAPP}${phone}&text=Olá, vim pelo Gestor`} target="_blank">
+            <Send className="mr-2 h-4 w-4" />
+            <span>WhatsApp</span>
+          </a>
         </Button>
         <Button variant="ghost" className="w-full rounded-none hover:text-primary" asChild>
 
@@ -100,6 +104,7 @@ function CustomerWalletsList({ user }: CustomerWalletsProps) {
           <CustomerWalletsItem
             name={wallet.company.name}
             slug={wallet.company.slug}
+            phone={wallet.company.phone}
             isFavorite
           />
         </li>
