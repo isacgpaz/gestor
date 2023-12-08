@@ -2,6 +2,51 @@ import { prisma } from "@/lib/prisma"
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
 import { NextRequest, NextResponse } from "next/server"
 
+export async function GET(request: NextRequest) {
+  const search = request.nextUrl.searchParams.get('search') ?? ''
+  const page = Number(request.nextUrl.searchParams.get('page') ?? 1)
+  const rowsPerPage = Number(request.nextUrl.searchParams.get('rowsPerPage') ?? 10)
+  const companyId = request.nextUrl.searchParams.get('companyId')
+
+  if (!companyId) {
+    return NextResponse.json({ status: 400 })
+  }
+
+  const [wallets, totalWallets] = await prisma.$transaction([
+    prisma.wallet.findMany({
+      skip: (page - 1) * rowsPerPage,
+      take: rowsPerPage,
+      where: {
+        companyId,
+        customer: {
+          name: {
+            contains: search
+          }
+        }
+      },
+      include: {
+        customer: true
+      },
+    }),
+    prisma.wallet.count()
+  ])
+
+  const totalPages = Math.ceil(totalWallets / rowsPerPage)
+  const hasNextPage = page !== totalPages
+  const hasPreviousPage = page !== 1
+
+  return NextResponse.json({
+    result: wallets,
+    meta: {
+      total: totalWallets,
+      page,
+      rowsPerPage,
+      hasNextPage,
+      hasPreviousPage
+    }
+  }, { status: 200 })
+}
+
 export async function POST(
   request: NextRequest,
 ) {
