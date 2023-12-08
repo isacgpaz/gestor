@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table"
+import { formatRelativeTime } from "@/utils/format-relative-date"
 import { ChevronRight, Loader2, MenuSquare, Pencil, SearchX, Trash } from "lucide-react"
 
 export function WalletsTable() {
@@ -46,7 +47,12 @@ export function WalletsTable() {
         <TableBody>
           {wallets.map((wallet) => (
             <TableRow key={wallet.id}>
-              <TableCell className="font-medium">{wallet.customer.name}</TableCell>
+              <TableCell className="flex flex-col">
+                <span className="font-medium">{wallet.customer.name}</span>
+                <span className="text-slate-500 text-xs">
+                  Última atualização: {formatRelativeTime(wallet.updatedAt)}
+                </span>
+              </TableCell>
               <TableCell className="text-right">{wallet.points}</TableCell>
               <TableCell>
                 <DropdownMenu>
@@ -110,7 +116,7 @@ function WalletsSearch() {
 
   return (
     <Form {...form}>
-      <form className="space-y-4 mt-6">
+      <form className="space-y-4 mt-4">
         <FormField
           control={form.control}
           name="search"
@@ -141,6 +147,8 @@ export function Wallets() {
 
   return (
     <div className="px-4 flex flex-col">
+      <h1 className="mt-6 font-medium text-xl">Carteiras</h1>
+
       <WalletsSearch />
       <WalletsTable />
 
