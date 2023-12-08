@@ -169,7 +169,7 @@ export function Wallets() {
 
   return (
     <div className="px-4 flex flex-col">
-      <h1 className="mt-6 font-medium text-xl">Carteiras</h1>
+      <h1 className="mt-6 font-medium text-xl">Carteiras de fidelidade</h1>
 
       <WalletsSearch />
       <WalletsTable />
