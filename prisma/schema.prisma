@@ -25,15 +25,16 @@ model User {
 }
 
 model Company {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  slug      String   @unique
-  manager   User     @relation(fields: [managerId], references: [id])
-  managerId String   @unique @db.ObjectId
-  address   Address?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  wallet    Wallet[]
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  slug           String          @unique
+  manager        User            @relation(fields: [managerId], references: [id])
+  managerId      String          @unique @db.ObjectId
+  address        Address?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  wallet         Wallet[]
+  walletSettings WalletSettings?
 }
 
 model Wallet {
@@ -62,4 +63,8 @@ type Address {
   city   String
   state  String
   zip    String
+}
+
+type WalletSettings {
+  size Int
 }

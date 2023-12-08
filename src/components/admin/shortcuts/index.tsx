@@ -1,12 +1,17 @@
+'use client'
+
 import { Button, ButtonProps } from "@/components/ui/button";
 import { CalendarCheck, LucideIcon, MenuSquare, Settings } from "lucide-react";
+import Link from "next/link";
 import { ScanUser } from "../scan-user";
 
 const shortcuts = [
   <ScanUser key='scan-user' />,
   <ShortcutItem icon={MenuSquare} key='menu' disabled />,
   <ShortcutItem icon={CalendarCheck} key='calendar' disabled />,
-  <ShortcutItem icon={Settings} key='settings' disabled />,
+  <Link href='/admin/settings' key='settings' >
+    <ShortcutItem icon={Settings} />
+  </Link>,
 ]
 
 function ShortcutsList() {

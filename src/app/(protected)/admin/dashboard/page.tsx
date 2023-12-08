@@ -5,7 +5,6 @@ import { IdentifyUser } from "@/components/admin/indentify-user"
 import { Shortcuts } from "@/components/admin/shortcuts"
 import { Wallets } from "@/components/admin/wallets"
 import { PointsProvider } from "@/contexts/points-context"
-import { signOut } from "next-auth/react"
 
 function Dashboard() {
   return (
@@ -17,10 +16,6 @@ function Dashboard() {
       <IdentifyUser />
 
       <DeleteWallet />
-
-      <button onClick={() => signOut({ callbackUrl: '/signin' })}>
-        sair
-      </button>
     </div>
   )
 }
