@@ -35,7 +35,12 @@ function WalletList() {
   const walletItems = Array.from({ length: company?.walletSettings?.size ?? 10 })
 
   if (!wallet) {
-    return null
+    return (
+      <span className="text-center text-slate-500">
+        Parece que você ainda não possui uma carteira em {company?.name}.
+        Comece a acumular pontos agora mesmo e ganhe prêmios exclusivos.
+      </span>
+    )
   }
 
   if (walletItems.length === wallet.points) {

@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { links } from "@/constants/links"
 import { findWallets } from "@/services/wallet/find"
 import { User } from "@prisma/client"
-import { Loader2, Send, Star, Trophy } from "lucide-react"
+import { Loader2, Send, Star, Trophy, Wallet2 } from "lucide-react"
 import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
 
@@ -93,6 +93,17 @@ function CustomerWalletsList({ user }: CustomerWalletsProps) {
       <div className="mt-6 flex items-center justify-center">
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         <span>Buscando carteiras...</span>
+      </div>
+    )
+  }
+
+  if (customerWallets.length === 0) {
+    return (
+      <div className="mt-6 flex flex-col items-center justify-center gap-2 text-slate-500">
+        <Wallet2 />
+        <span className="text-sm">Parece que você ainda não possui nenhuma carteira.</span>
+
+        <Button className="mt-4">Explorar lugares</Button>
       </div>
     )
   }
