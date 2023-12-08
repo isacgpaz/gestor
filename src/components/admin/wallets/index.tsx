@@ -17,12 +17,21 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table"
-import { ChevronRight, MenuSquare, Pencil, SearchX, Trash } from "lucide-react"
+import { ChevronRight, Loader2, MenuSquare, Pencil, SearchX, Trash } from "lucide-react"
 
 export function WalletsTable() {
-  const { walletsList } = usePoints()
+  const { walletsList, isLoading } = usePoints()
 
   const wallets = walletsList.result
+
+  if (isLoading) {
+    return (
+      <div className="mt-6 flex items-center justify-center">
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        <span>Buscando clientes...</span>
+      </div>
+    )
+  }
 
   if (wallets.length) {
     return (
@@ -108,7 +117,7 @@ function WalletsSearch() {
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <Input {...field} placeholder="Procurar clientes..." />
+                <Input {...field} placeholder="Procurar clientes..." type='search' />
               </FormControl>
               <FormMessage />
             </FormItem>

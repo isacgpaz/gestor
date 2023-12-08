@@ -27,6 +27,8 @@ type PointsContextProp = {
   setIsIdentifyUserModalOpen: (open: boolean) => void
   isScanUserModalOpen: boolean,
   setIsScanUserModalOpen: (open: boolean) => void,
+  isLoading: boolean,
+  setIsLoading: (open: boolean) => void,
   walletsList: WalletsList,
   setWalletsList: (walletsList: WalletsList) => void,
   filters: WalletFilters,
@@ -39,6 +41,7 @@ export function PointsProvider({ children }: PropsWithChildren) {
   const [selectedWallet, setSelectedWallet] = useState<Wallet | undefined>(undefined);
   const [isIdentifyUserModalOpen, setIsIdentifyUserModalOpen] = useState(false);
   const [isScanUserModalOpen, setIsScanUserModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [walletsList, setWalletsList] = useState<WalletsList>({
     result: [],
     meta: {
@@ -79,6 +82,8 @@ export function PointsProvider({ children }: PropsWithChildren) {
   }
 
   const applyWalletFilters = useCallback(async () => {
+    setIsLoading(true)
+
     await findWallets({
       ...filters,
       companyId: await getCompanyId()
@@ -90,6 +95,8 @@ export function PointsProvider({ children }: PropsWithChildren) {
       }
     }).catch((e) => {
       console.error(e)
+    }).finally(() => {
+      setIsLoading(false)
     })
   }, [filters])
 
@@ -107,7 +114,9 @@ export function PointsProvider({ children }: PropsWithChildren) {
     walletsList,
     setWalletsList,
     filters,
-    updateFilters
+    updateFilters,
+    isLoading,
+    setIsLoading
   }), [
     selectedWallet,
     setSelectedWallet,
@@ -118,7 +127,9 @@ export function PointsProvider({ children }: PropsWithChildren) {
     walletsList,
     setWalletsList,
     filters,
-    updateFilters
+    updateFilters,
+    isLoading,
+    setIsLoading
   ])
 
   return (
