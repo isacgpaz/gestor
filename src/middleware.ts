@@ -53,6 +53,7 @@ export const config = {
     "/admin/settings",
     "/settings",
     "/company/:path*",
-    "/admin/calendar"
+    "/admin/calendar",
+    "/schedule/:path*",
   ],
 }

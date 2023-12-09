@@ -20,6 +20,7 @@
     "@radix-ui/react-popover": "^1.0.7",
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-toast": "^1.1.5",
+    "@radix-ui/react-tooltip": "^1.0.7",
     "@uidotdev/usehooks": "^2.4.1",
     "@yudiel/react-qr-scanner": "^1.2.4",
     "bcrypt": "^5.1.1",

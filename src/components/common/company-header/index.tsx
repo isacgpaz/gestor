@@ -1,9 +1,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useCompany } from "@/contexts/company-context";
+import { Company } from "@prisma/client";
 
-export function CompanyHeader() {
-  const { company } = useCompany()
+type CompanyHeaderProps = {
+  company: Company
+}
 
+export function CompanyHeader({ company }: CompanyHeaderProps) {
   return (
     <div className="flex flex-col gap-3 items-center mt-4">
       <Avatar className="w-24 h-24">

@@ -1,6 +1,6 @@
 
 export const routes = {
-  public: ["/", "/signin", "/signup"],
+  public: ["/", "/signin", "/signup", "/schedule/"],
   protecteds: {
     both: [
       "/company/"

@@ -26,7 +26,7 @@ function Company() {
     <div className="p-6">
       <NavHeader backHref="/dashboard" />
 
-      <CompanyHeader />
+      <CompanyHeader company={company} />
 
       <Wallet />
     </div>
