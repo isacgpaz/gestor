@@ -3,6 +3,7 @@ import { CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useSchedule } from "@/contexts/schedule-context";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -10,22 +11,30 @@ import { z } from "zod";
 
 const formSchema = z.object({
   title: z.string(),
-  comments: z.string(),
+  additionalInfo: z.string(),
 })
 
 type FormSchema = z.infer<typeof formSchema>
 
 export function AdditionalInfoStep() {
+  const { schedule, goToNextStep, goToPreviousStep, setSchedule } = useSchedule()
+
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: '',
-      comments: '',
+      title: schedule?.title ?? '',
+      additionalInfo: schedule?.additionalInfo ?? '',
     },
   })
 
   function onSubmit(values: FormSchema) {
-    console.log(values)
+    setSchedule((schedule) => ({
+      ...schedule,
+      title: values.title,
+      additionalInfo: values.additionalInfo
+    }))
+
+    goToNextStep()
   }
 
   return (
@@ -46,7 +55,7 @@ export function AdditionalInfoStep() {
                 <FormItem>
                   <FormLabel>Título da reserva</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} placeholder="Nome do reservante ou empresa" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -55,7 +64,7 @@ export function AdditionalInfoStep() {
 
             <FormField
               control={form.control}
-              name="comments"
+              name="additionalInfo"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Observações</FormLabel>
@@ -69,7 +78,7 @@ export function AdditionalInfoStep() {
           </CardContent>
 
           <CardFooter className="pt-0 justify-between">
-            <Button size='sm' variant='outline'>
+            <Button size='sm' variant='outline' onClick={goToPreviousStep}>
               <ChevronLeft className="w-4 h-4 mr-2" />
               Voltar
             </Button>

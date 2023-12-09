@@ -1,12 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useSchedule } from "@/contexts/schedule-context";
 import dayjs from "dayjs";
-import { Calendar, ChevronLeft, ChevronRight, Clock, FileText, Info, User, Users } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Clock, FileText, User, Users } from "lucide-react";
 
 export function ResumeStep() {
+  const { schedule, goToNextStep, goToPreviousStep } = useSchedule()
+
   function onSubmit(values: any) {
     console.log(values)
+    goToNextStep()
   }
 
   return (
@@ -23,9 +26,9 @@ export function ResumeStep() {
             <User className="mr-2 h-4 w-4" />
 
             <span>
-              Responsável: {' '}
+              Título: {' '}
               <span className="text-slate-500">
-                Mike Ross
+                {schedule?.title}
               </span>
             </span>
           </li>
@@ -36,7 +39,7 @@ export function ResumeStep() {
             <span>
               Data: {' '}
               <span className="text-slate-400">
-                {dayjs().format('DD/MM/YYYY')}
+                {dayjs(schedule?.date).format('DD/MM/YYYY')}
               </span>
             </span>
           </li>
@@ -48,22 +51,7 @@ export function ResumeStep() {
               Hora: {' '}
 
               <span className="text-slate-500 flex items-center gap-1">
-                {dayjs().format('HH:mm')} à {dayjs().format('HH:mm')}
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Info className="w-3 h-3" />
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-[300px] text-xs">
-                      <p>
-                        Serão considerados <strong>15 minutos</strong> de tolerância.
-                        Caso não haja retorno por parte do responsável após
-                        esse período, o horário será liberado para novos agendamentos.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                {dayjs().format('HH:mm')} à {dayjs().add(2.5, 'hours').format('HH:mm')}
               </span>
             </span>
           </li>
@@ -74,26 +62,37 @@ export function ResumeStep() {
             <span>
               Qtd. de pessoas: {' '}
               <span className="text-slate-500">
-                {20} adultos e {2} crianças
+                {schedule?.adultsAmmount} adultos
+
+                {schedule?.kidsAmmount ?
+                  ` e ${schedule?.kidsAmmount} crianças` : null}
               </span>
             </span>
           </li>
 
-          <li className="flex items-center mt-1 text-sm">
-            <FileText className="mr-2 h-4 w-4" />
+          {schedule?.additionalInfo && (
+            <li className="flex items-center mt-1 text-sm">
+              <FileText className="mr-2 h-4 w-4" />
 
-            <span>
-              Observações: {' '}
-              <span className="text-slate-500">
-                Próximo ao parquinho
+              <span>
+                Observações: {' '}
+                <span className="text-slate-500">
+                  {schedule.additionalInfo}
+                </span>
               </span>
-            </span>
-          </li>
+            </li>
+          )}
         </ul>
+
+        <p className="mt-2 text-xs text-slate-500">
+          Serão considerados <strong>15 minutos de tolerância.</strong> Caso
+          não haja retorno por parte do responsável após esse período, o
+          horário será liberado para novos agendamentos.
+        </p>
       </CardContent>
 
       <CardFooter className="pt-0 justify-between">
-        <Button size='sm' variant='outline'>
+        <Button size='sm' variant='outline' onClick={goToPreviousStep}>
           <ChevronLeft className="w-4 h-4 mr-2" />
           Voltar
         </Button>

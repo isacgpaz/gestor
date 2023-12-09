@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useSchedule } from "@/contexts/schedule-context";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronRight } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -16,16 +17,24 @@ const formSchema = z.object({
 type FormSchema = z.infer<typeof formSchema>
 
 export function DateStep() {
+  const { schedule, goToNextStep, setSchedule } = useSchedule()
+
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: new Date(),
-      time: new Date()
+      date: schedule?.date ?? new Date(),
+      time: schedule?.time ?? new Date()
     },
   })
 
   function onSubmit(values: FormSchema) {
-    console.log(values)
+    setSchedule((schedule) => ({
+      ...schedule,
+      date: values.date,
+      time: values.time
+    }))
+
+    goToNextStep()
   }
 
   return (
