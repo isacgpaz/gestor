@@ -8,6 +8,7 @@ export const routes = {
     admin: [
       "/admin/dashboard",
       "/admin/settings",
+      "/admin/calendar"
     ],
     customer: [
       "/dashboard",

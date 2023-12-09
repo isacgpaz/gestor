@@ -27,7 +27,7 @@ export function ScanUser() {
       <AlertDialogTrigger asChild>
         <Button
           size='lg'
-          className="flex-shrink-0 w-full px-0"
+          className="flex-shrink-0 w-full h-12 px-0"
         >
           <ScanText />
         </Button>

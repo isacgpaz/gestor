@@ -8,8 +8,10 @@ import { ScanUser } from "../scan-user";
 const shortcuts = [
   <ScanUser key='scan-user' />,
   <ShortcutItem icon={MenuSquare} key='menu' disabled />,
-  <ShortcutItem icon={CalendarCheck} key='calendar' disabled />,
-  <Link href='/admin/settings' key='settings' >
+  <Link href='/admin/agenda' key='calendar'>
+    <ShortcutItem icon={CalendarCheck} />
+  </Link>,
+  <Link href='/admin/settings' key='settings'>
     <ShortcutItem icon={Settings} />
   </Link>,
 ]
@@ -36,7 +38,7 @@ export function ShortcutItem({ icon: Icon, primary = false, ...props }: Shortcut
     <Button
       size='lg'
       variant={primary ? 'default' : 'secondary'}
-      className="flex-shrink-0 w-full px-0"
+      className="flex-shrink-0 px-0 w-full h-12"
       {...props}
     >
       <Icon />
