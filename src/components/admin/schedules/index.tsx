@@ -1,10 +1,11 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu"
 import dayjs from "dayjs"
-import { Check, ClipboardEdit, Clock, FileText, MoreVertical, Trash, User, Users } from "lucide-react"
+import { Check, ChevronDown, ClipboardEdit, Clock, FileText, MoreVertical, Trash, User, Users } from "lucide-react"
 
 function ScheduleListItem() {
   return (
@@ -39,11 +40,6 @@ function ScheduleListItem() {
       <CardContent className="p-3 pt-0">
         <ul className="text-slate-500">
           <li className="flex items-center">
-            <User className="mr-2 h-4 w-4" />
-            <span className="text-sm">Mike Ross</span>
-          </li>
-
-          <li className="flex items-center mt-1">
             <Clock className="mr-2 h-4 w-4" />
             <span className="text-sm">
               {dayjs().format('HH:mm')} à {dayjs().format('HH:mm')}
@@ -61,11 +57,39 @@ function ScheduleListItem() {
           </li>
         </ul>
 
-        <Button variant='link' size='sm' className="mt-4 p-0 h-fit hover:no-underline">
+        <Collapsible>
+          <CollapsibleTrigger className="mt-1 text-sm flex items-center font-medium">
+            <ChevronDown className="mr-2 h-4 w-4" strokeWidth={3} />
+            Ver detalhes
+          </CollapsibleTrigger>
+
+          <CollapsibleContent>
+            <ul>
+              <li className="flex items-center mt-1 text-slate-500">
+                <User className="mr-2 h-4 w-4" />
+                <span className="text-sm">Mike Ross</span>
+              </li>
+
+              <li className="flex items-center mt-1 text-slate-500">
+                <Clock className="mr-2 h-4 w-4" />
+                <span className="text-sm">Criada em {dayjs().format('DD/MM/YYYY - HH:mm')}</span>
+              </li>
+
+              <li className="flex items-center mt-1 text-slate-500">
+                <Clock className="mr-2 h-4 w-4" />
+                <span className="text-sm">Atualizada em {dayjs().format('DD/MM/YYYY - HH:mm')}</span>
+              </li>
+            </ul>
+          </CollapsibleContent>
+        </Collapsible>
+      </CardContent>
+
+      <CardFooter className="py-3 px-4 pt-0 justify-end">
+        <Button variant='link' size='sm' className="p-0 h-min hover:no-underline">
           <Check className="w-4 h-4 mr-2" />
           Marcar como pronto
         </Button>
-      </CardContent>
+      </CardFooter>
     </Card>
   )
 }
