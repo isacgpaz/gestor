@@ -92,7 +92,7 @@ export function DateStep() {
           </CardContent>
 
           <CardFooter className="pt-0 justify-end">
-            <Button size='sm'>
+            <Button size='sm' type='submit'>
               Avançar
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>

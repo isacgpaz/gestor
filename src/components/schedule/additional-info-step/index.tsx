@@ -10,7 +10,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 const formSchema = z.object({
-  title: z.string(),
+  title: z.string().min(1, 'O título da reserva é obrigatório.'),
   additionalInfo: z.string(),
 })
 
@@ -78,12 +78,17 @@ export function AdditionalInfoStep() {
           </CardContent>
 
           <CardFooter className="pt-0 justify-between">
-            <Button size='sm' variant='outline' onClick={goToPreviousStep}>
+            <Button
+              size='sm'
+              variant='outline'
+              onClick={goToPreviousStep}
+              type='button'
+            >
               <ChevronLeft className="w-4 h-4 mr-2" />
               Voltar
             </Button>
 
-            <Button size='sm'>
+            <Button size='sm' type='submit'>
               Avançar
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>

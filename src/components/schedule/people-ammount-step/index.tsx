@@ -36,7 +36,7 @@ export function PeopleAmmountStep() {
     defaultValues: {
       adultsAmmount: schedule?.adultsAmmount ?? 0,
       kidsAmmount: schedule?.kidsAmmount ?? undefined,
-      includeKids: schedule?.kidsAmmount !== 0 ?? false
+      includeKids: Boolean(schedule?.kidsAmmount) ?? false
     },
   })
 
@@ -122,12 +122,17 @@ export function PeopleAmmountStep() {
           </CardContent>
 
           <CardFooter className="pt-0 justify-between">
-            <Button size='sm' variant='outline' onClick={goToPreviousStep}>
+            <Button
+              size='sm'
+              variant='outline'
+              onClick={goToPreviousStep}
+              type='button'
+            >
               <ChevronLeft className="w-4 h-4 mr-2" />
               Voltar
             </Button>
 
-            <Button size='sm'>
+            <Button size='sm' type='submit'>
               Avançar
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>

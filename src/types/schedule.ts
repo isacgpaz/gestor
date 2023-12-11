@@ -6,3 +6,9 @@ export type Schedule = {
   title: string,
   additionalInfo?: string
 }
+
+export enum AvailableTimesType {
+  DAY = 'DAY',
+  MONTH = 'MONTH',
+  NEXTDAYS = 'NEXTDAYS',
+}
