@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const {
     companyId,
-    title,
+    contact,
     adultsAmmount,
     kidsAmmount,
     startDate,
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
   const scheduleCreated = await prisma.schedule.create({
     data: {
       startDate,
-      title,
+      contact,
       additionalInfo,
       adultsAmmount,
       kidsAmmount,

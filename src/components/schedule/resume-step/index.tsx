@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSchedule } from "@/contexts/schedule-context";
+import { formatPhone } from "@/utils/format-phone";
 import dayjs from "dayjs";
-import { Calendar, ChevronLeft, ChevronRight, Clock, FileText, User, Users } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Clock, FileText, Phone, User, Users } from "lucide-react";
 
 export function ResumeStep() {
   const { schedule, goToNextStep, goToPreviousStep } = useSchedule()
@@ -26,9 +27,20 @@ export function ResumeStep() {
             <User className="mr-2 h-4 w-4" />
 
             <span>
-              Título: {' '}
+              Cliente: {' '}
               <span className="text-slate-500">
-                {schedule?.title}
+                {schedule?.contact?.name}
+              </span>
+            </span>
+          </li>
+
+          <li className="flex items-center mt-1 text-sm">
+            <Phone className="mr-2 h-4 w-4" />
+
+            <span>
+              Telefone: {' '}
+              <span className="text-slate-500">
+                {formatPhone(String(schedule?.contact?.phone))}
               </span>
             </span>
           </li>
@@ -62,10 +74,10 @@ export function ResumeStep() {
             <span>
               Qtd. de pessoas: {' '}
               <span className="text-slate-500">
-                {schedule?.adultsAmmount} adultos
+                {schedule?.adultsAmmount} adulto(s)
 
                 {schedule?.kidsAmmount ?
-                  ` e ${schedule?.kidsAmmount} crianças` : null}
+                  ` e ${schedule?.kidsAmmount} criança(s)` : null}
               </span>
             </span>
           </li>

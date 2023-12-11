@@ -75,18 +75,23 @@ model Agenda {
 }
 
 model Schedule {
-  id             String         @id @default(auto()) @map("_id") @db.ObjectId
-  company        Company        @relation(fields: [companyId], references: [id])
-  companyId      String         @db.ObjectId
-  agenda         Agenda         @relation(fields: [agendaId], references: [id])
-  agendaId       String         @db.ObjectId
-  status         ScheduleStatus @default(PENDING)
-  title          String
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  company        Company         @relation(fields: [companyId], references: [id])
+  companyId      String          @db.ObjectId
+  agenda         Agenda          @relation(fields: [agendaId], references: [id])
+  agendaId       String          @db.ObjectId
+  status         ScheduleStatus  @default(PENDING)
+  contact        ScheduleContact
   startDate      DateTime
   endDate        DateTime
-  adultsAmmount  Int            @default(0)
-  kidsAmmount    Int            @default(0)
+  adultsAmmount  Int             @default(0)
+  kidsAmmount    Int             @default(0)
   additionalInfo String?
+}
+
+type ScheduleContact {
+  name  String
+  phone String
 }
 
 type UnavailableDays {

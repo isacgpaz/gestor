@@ -3,8 +3,13 @@ export type Schedule = {
   time: Date,
   adultsAmmount: number,
   kidsAmmount?: number,
-  title: string,
+  contact: ScheduleContact,
   additionalInfo?: string
+}
+
+type ScheduleContact = {
+  name: string,
+  phone: string,
 }
 
 export enum AvailableTimesType {

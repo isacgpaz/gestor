@@ -4,13 +4,16 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useSchedule } from "@/contexts/schedule-context";
+import { phoneMask, phoneRegex } from "@/utils/format-phone";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMaskito } from '@maskito/react';
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 const formSchema = z.object({
-  title: z.string().min(1, 'O título da reserva é obrigatório.'),
+  name: z.string().min(1, 'O título da reserva é obrigatório.'),
+  phone: z.string().min(1, 'O telefone é obrigatório.').refine((phone) => phoneRegex.test(phone), 'Telefone inválido.'),
   additionalInfo: z.string(),
 })
 
@@ -19,10 +22,13 @@ type FormSchema = z.infer<typeof formSchema>
 export function AdditionalInfoStep() {
   const { schedule, goToNextStep, goToPreviousStep, setSchedule } = useSchedule()
 
+  const phoneRef = useMaskito({ options: phoneMask })
+
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: schedule?.title ?? '',
+      name: schedule?.contact?.name ?? '',
+      phone: schedule?.contact?.phone ?? '',
       additionalInfo: schedule?.additionalInfo ?? '',
     },
   })
@@ -30,7 +36,10 @@ export function AdditionalInfoStep() {
   function onSubmit(values: FormSchema) {
     setSchedule((schedule) => ({
       ...schedule,
-      title: values.title,
+      contact: {
+        name: values.name,
+        phone: values.phone,
+      },
       additionalInfo: values.additionalInfo
     }))
 
@@ -50,12 +59,31 @@ export function AdditionalInfoStep() {
           <CardContent className="p-5 pt-0 space-y-4">
             <FormField
               control={form.control}
-              name="title"
+              name="name"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Título da reserva</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="Nome do reservante ou empresa" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Telefone para contato</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      ref={phoneRef}
+                      onInput={(event) => field.onChange(event.currentTarget.value)}
+                      placeholder="(88) 9 9999-9999"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -16,12 +16,12 @@ function Schedule() {
     <div className="p-6 min-h-screen flex flex-col">
       <CompanyHeader company={company} />
 
-      <main className="flex-1 mt-6">
+      <main className="flex-1 my-6">
         <ScheduleCard />
       </main>
 
       <footer className='flex items-center justify-center gap-2 text-slate-500'>
-        <span className="text-xs">Powered by</span>
+        <span className="text-xs">Oferecido por</span>
 
         <Image
           src='/logo.svg'
