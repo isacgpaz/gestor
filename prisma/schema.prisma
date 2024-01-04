@@ -64,14 +64,46 @@ model Wallet {
 }
 
 model Agenda {
-  id              String            @id @default(auto()) @map("_id") @db.ObjectId
-  company         Company           @relation(fields: [companyId], references: [id])
-  companyId       String            @unique @db.ObjectId
-  businessHours   BusinessHours
-  unavailableDays UnavailableDays[]
-  range           Int?              @default(120)
-  buffer          Buffer?
-  schedule        Schedule[]
+  id               String            @id @default(auto()) @map("_id") @db.ObjectId
+  company          Company           @relation(fields: [companyId], references: [id])
+  companyId        String            @unique @db.ObjectId
+  availableHours   AvailableHours
+  unavailableDays  UnavailableDays[]
+  schedule         Schedule[]
+  buffer           Buffer? // time before or after
+  duration         Int?              @default(60) // duration of schedules
+  spotStep         Int?              @default(60) // frequency of available time slots
+  minimumNotice    Int?              @default(0) // minimum amount of notice
+  schedulingWindow Int?              @default(60)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+type Buffer {
+  after  Int @default(0)
+  before Int @default(0)
+}
+
+type UnavailableDays {
+  startDate String
+  endDate   String
+  reason    String
+}
+
+type AvailableHours {
+  monday    AvailableHour[]
+  tuesday   AvailableHour[]
+  wednesday AvailableHour[]
+  thursday  AvailableHour[]
+  friday    AvailableHour[]
+  saturday  AvailableHour[]
+  sunday    AvailableHour[]
+}
+
+type AvailableHour {
+  isActive  Boolean
+  startTime String
+  endTime   String
 }
 
 model Schedule {
@@ -87,38 +119,13 @@ model Schedule {
   adultsAmmount  Int             @default(0)
   kidsAmmount    Int             @default(0)
   additionalInfo String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 }
 
 type ScheduleContact {
   name  String
   phone String
-}
-
-type UnavailableDays {
-  startDate DateTime
-  endDate   DateTime
-  reason    String
-}
-
-type BusinessHours {
-  monday    BusinessHour[]
-  tuesday   BusinessHour[]
-  wednesday BusinessHour[]
-  thursday  BusinessHour[]
-  friday    BusinessHour[]
-  saturday  BusinessHour[]
-  sunday    BusinessHour[]
-}
-
-type BusinessHour {
-  isActive  Boolean
-  startTime String
-  endTime   String
-}
-
-type Buffer {
-  after  Int @default(0)
-  before Int @default(0)
 }
 
 type History {

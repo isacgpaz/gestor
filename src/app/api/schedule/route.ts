@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { AvailableTimesType } from "@/types/schedule";
 import { ScheduleStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import { getAvailableDays } from "../agenda/find-available-dates/route";
+import { getAvailableDates } from "../agenda/find-available-dates/route";
 
 export async function GET(request: NextRequest) {
   const startDate = request.nextUrl.searchParams.get('startDate') ?? ''
@@ -83,14 +83,16 @@ export async function POST(request: NextRequest) {
   }
 
   const startDateDayjs = dayjs.utc(startDate)
-  const endDate = startDateDayjs.clone().add(company.agenda.range ?? 60, 'minutes')
+  const endDate = startDateDayjs.clone().add(company.agenda.duration ?? 60, 'minutes')
 
-  const availableDates = await getAvailableDays({
-    agenda: company.agenda,
+  const { agenda } = company
+
+  const availableDates = await getAvailableDates(
+    agenda,
     company,
-    startDateUTC: startDateDayjs.toISOString(),
-    type: AvailableTimesType.DAY
-  })
+    startDateDayjs.toISOString(),
+    AvailableTimesType.HOURS
+  )
 
   if (!availableDates.some((availableDate) => startDateDayjs.isSame(availableDate))) {
     return NextResponse.json({ message: 'Data indisponível.' }, { status: 400 })

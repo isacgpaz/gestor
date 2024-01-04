@@ -13,7 +13,6 @@ type ScheduleContact = {
 }
 
 export enum AvailableTimesType {
-  DAY = 'DAY',
-  MONTH = 'MONTH',
-  NEXTDAYS = 'NEXTDAYS',
+  DAYS = 'DAYS',
+  HOURS = 'HOURS',
 }

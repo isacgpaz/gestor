@@ -1,44 +1,24 @@
 import { dayjs } from "@/lib/dayjs";
 import { prisma } from "@/lib/prisma";
 import { AvailableTimesType } from "@/types/schedule";
-import { Agenda, BusinessHours, Company, Schedule } from "@prisma/client";
+import { Agenda, Company, UnavailableDays } from "@prisma/client";
 import { Dayjs } from "dayjs";
 import { NextRequest, NextResponse } from "next/server";
-
-type GetAvailableDaysParams = {
-  startDateUTC: string,
-  agenda: Agenda,
-  company: Company,
-  type: AvailableTimesType
-}
-
-type CheckDatesAvailableParams = {
-  availableDays: Dayjs[],
-  agenda: Agenda,
-  schedules: Schedule[],
-  company: Company
-}
-
-type CheckDatesAvailablesBySchedules = {
-  availableDays: Dayjs[],
-  agenda: Agenda,
-  endDate: Dayjs,
-  startDate: Dayjs,
-  company: Company
-}
-
-type CheckIfIsDayAvailableParams = {
-  time: Dayjs,
-  agenda: Agenda
-}
 
 export async function GET(request: NextRequest) {
   const companyId = request.nextUrl.searchParams.get('companyId')
   const startDate = request.nextUrl.searchParams.get('startDate')
   const type = request.nextUrl.searchParams.get('type') as AvailableTimesType
 
-  if (!companyId || !startDate || !type) {
-    return NextResponse.json({}, { status: 400 })
+  if (!startDate) {
+    return NextResponse.json(
+      { message: 'A data é obrigatória.' },
+      { status: 400 }
+    )
+  }
+
+  if (!companyId) {
+    return NextResponse.json({ message: 'A empresa é obrigatória.' }, { status: 400 })
   }
 
   const company = await prisma.company.findUnique({
@@ -67,208 +47,200 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  const availableDays = await getAvailableDays({
-    agenda,
-    startDateUTC: startDate,
-    company,
-    type
-  })
+  const availableDates = await getAvailableDates(agenda, company, startDate, type)
 
-  if (type === AvailableTimesType.DAY) {
-    return NextResponse.json({ availableDays }, { status: 200 })
-  } else {
-    const uniqueDates = [...new Set(availableDays.map((availableDay) => dayjs(availableDay).format('DD/MM/YYYY')))]
-
-    return NextResponse.json({ uniqueDates })
-  }
+  return NextResponse.json(availableDates, { status: 200 })
 }
 
-export async function getAvailableDays({
-  agenda,
-  startDateUTC,
-  company,
-  type
-}: GetAvailableDaysParams) {
-  const { businessHours, range } = agenda
+export async function getAvailableDates(
+  agenda: Agenda,
+  company: Company,
+  startDate: string,
+  type: AvailableTimesType
+) {
+  const { unavailableDays } = agenda
 
-  const availableDays = []
+  const datesSpotSteps = getDatesSpotSteps(agenda, startDate, type)
 
-  const startDate = dayjs(startDateUTC)
-  let endDate = startDate.clone();
+  const availableDates = datesSpotSteps.filter((spotStep) => checkIfAvailable(
+    dayjs(spotStep), unavailableDays
+  ))
+
+  const clearedSpotSteps = await removeFilledSpotSteps(agenda, company, availableDates)
 
   switch (type) {
-    case AvailableTimesType.DAY:
-      endDate = endDate.endOf('day')
-      break
-    case AvailableTimesType.MONTH:
-      endDate = endDate.endOf('month')
-      break
+    case AvailableTimesType.DAYS:
+      return [...new Set(
+        clearedSpotSteps.map((date) => dayjs(date).format('DD/MM/YYYY'))
+      )]
+    case AvailableTimesType.HOURS:
+      return clearedSpotSteps;
     default: return []
   }
+}
 
-  let dayToSearch = startDate.clone().tz("America/Sao_Paulo").startOf('day')
+function getDatesSpotSteps(
+  agenda: Agenda,
+  startDateString: string,
+  type: AvailableTimesType
+) {
+  const {
+    availableHours,
+    schedulingWindow,
+    duration,
+    minimumNotice
+  } = agenda;
+
+  const availableDays: Date[] = [];
+
+  const startDate = dayjs(startDateString)
+  let endDate = startDate.clone()
+
+  switch (type) {
+    case AvailableTimesType.DAYS:
+      endDate = endDate.add(schedulingWindow ?? 60, 'days')
+      break;
+    case AvailableTimesType.HOURS:
+      endDate = endDate.endOf('day')
+      break;
+    default:
+      return [];
+  }
+
+  let dayToSearch = startDate.clone()
 
   while (dayToSearch.isBefore(endDate)) {
-    const dayOfWeek = dayToSearch.clone().format('dddd').toLowerCase() as keyof BusinessHours
+    const dayOfWeek = dayToSearch.format('dddd').toLowerCase() as keyof typeof availableHours
 
-    if (businessHours[dayOfWeek]) {
-      const timeDates = []
+    if (availableHours[dayOfWeek].length) {
+      const times = [];
 
-      for (let businessHour of businessHours[dayOfWeek]) {
-        const startTime = businessHour.startTime.split(':')
-        const endTime = businessHour.endTime.split(':')
+      for (const availableHour of availableHours[dayOfWeek]) {
+        if (availableHour.isActive) {
+          const [minHour, minMinute] = availableHour.startTime.split(':')
+          const [maxHour, maxMinute] = availableHour.endTime.split(':')
 
-        let currentDate = dayToSearch.clone()
-          .set('hours', Number(startTime[0]))
-          .set('minutes', Number(startTime[1]))
-          .set('seconds', 0)
-          .set('milliseconds', 0)
+          let currentDate = dayToSearch.clone()
+            .set('hour', Number(minHour))
+            .set('minutes', Number(minMinute))
+            .set('seconds', 0)
+            .set('milliseconds', 0)
 
-        const maxDate = dayToSearch.clone()
-          .set('hours', Number(endTime[0]))
-          .set('minutes', Number(endTime[1]))
-          .set('seconds', 0)
-          .set('milliseconds', 0)
+          const maxDate = currentDate.clone()
+            .set('hour', Number(maxHour))
+            .set('minutes', Number(maxMinute))
+            .set('seconds', 0)
+            .set('milliseconds', 0)
 
-        while (
-          currentDate.isBefore(maxDate)
-          && currentDate.clone()
-            .add(range!, 'minutes')
-            .isSameOrBefore(maxDate)
-        ) {
-          timeDates.push(currentDate)
-          currentDate = dayjs(currentDate).add(range!, 'minutes')
+          while (
+            currentDate.isBefore(maxDate) &&
+            currentDate
+              .clone()
+              .add(duration ?? 60, 'minutes')
+              .isSameOrBefore(maxDate)
+          ) {
+            times.push(currentDate);
+
+            currentDate = currentDate.clone().add(Number(duration), 'minutes');
+          }
         }
       }
 
-      for (const time of timeDates) {
+      for (const time of times) {
         if (
-          time.isSameOrAfter(startDate)
-          && time.isSameOrBefore(endDate)
-          && time.diff(dayjs().utc(), 'days') <= 60
-          && time.isAfter(dayjs().utc())
-          && checkIfIsDayAvailable({ time, agenda })
+          time.isSameOrAfter(startDate) &&
+          time.isSameOrBefore(endDate) &&
+          time.diff(dayjs(), 'hours') >= (minimumNotice ?? 0) &&
+          time.diff(dayjs(), 'days') <= 60 &&
+          time.isAfter(dayjs())
         ) {
-          availableDays.push(time)
+          availableDays.push(time.toDate());
         }
       }
     }
 
-    dayToSearch = dayToSearch.add(1, 'day');
+    dayToSearch = dayToSearch.add(1, 'day')
   }
 
-  const dateRangeAgenda = await checkDatesAvailablesBySchedules({
-    agenda,
-    availableDays,
-    endDate,
-    startDate,
-    company
-  })
-
-  return checkDatesAvailablesBySchedules({
-    agenda,
-    company,
-    endDate,
-    startDate,
-    availableDays: dateRangeAgenda
-  })
+  return availableDays
 }
 
-function checkIfIsDayAvailable({
-  time,
-  agenda
-}: CheckIfIsDayAvailableParams) {
-  let isDayAvailable = true;
+function checkIfAvailable(time: Dayjs, unavailableDays: UnavailableDays[]) {
+  let isAvailable = true;
 
-  if (agenda.unavailableDays) {
-    isDayAvailable = !agenda.unavailableDays.some(
-      (unavailableDay) => time.isBetween(
-        unavailableDay.startDate,
-        unavailableDay.endDate
-      ))
+  if (unavailableDays) {
+    isAvailable = !unavailableDays.some((day) =>
+      time.isBetween(dayjs(day.startDate), dayjs(day.endDate)),
+    );
   }
 
-  return isDayAvailable
-}
+  return isAvailable;
+};
 
-async function checkDatesAvailablesBySchedules({
-  availableDays,
-  agenda,
-  startDate,
-  endDate,
-  company
-}: CheckDatesAvailablesBySchedules) {
+async function removeFilledSpotSteps(
+  agenda: Agenda,
+  company: Company,
+  availableDates: Date[]
+) {
+  const {
+    duration,
+    buffer,
+    spotStep,
+    companyId
+  } = agenda;
+
+  const { scheduleSettings } = company
+
   const schedules = await prisma.schedule.findMany({
-    where: {
-      agendaId: agenda.id,
-      // TODO: startDate?
-    }
+    where: { companyId }
   })
 
-  return checkDatesAvailable({ agenda, availableDays, schedules, company })
-}
+  return availableDates.filter((dateAvailable) => {
+    let totalReserves = 0;
 
-async function checkDatesAvailable({
-  agenda,
-  availableDays,
-  schedules,
-  company
-}: CheckDatesAvailableParams) {
-  const bufferStart = agenda.buffer?.before
-  const bufferEnd = agenda.buffer?.after
-  const range = agenda.range!
+    const lastAvailableDate = dayjs(availableDates[availableDates.length - 1])
+      .add(spotStep ?? 60, 'minutes');
 
-  return availableDays.filter((availableDay, index) => {
-    let isDayAvailable = true
+    const serviceEndDate = dayjs(dateAvailable).add(duration ?? 60, 'minutes');
 
-    const endDateAvailable = dayjs.utc(availableDay).add(range, 'minutes')
+    if (dayjs(dateAvailable).isBefore(dayjs())) { return false; }
 
-    if (dayjs.utc(availableDay).isBefore(dayjs().utc())) {
-      isDayAvailable = false
-    }
+    if (dayjs(serviceEndDate).isAfter(lastAvailableDate)) { return false; }
 
-    for (var schedule of schedules) {
-      let datePeopleTotal = 0
+    for (const schedule of schedules) {
+      let isAvailable = true;
 
-      schedules.forEach((schedule) => {
-        const scheduleDatePeopleTotal = schedule.adultsAmmount + schedule.kidsAmmount
+      if (dayjs(schedule.startDate).isSame(dateAvailable)) { isAvailable = false; }
 
-        if (dayjs.utc(schedule.startDate).isSame(availableDay)) {
-          datePeopleTotal += scheduleDatePeopleTotal
-        }
-      })
+      if (dayjs(dateAvailable).isBetween(schedule.startDate, schedule.endDate, 'minute', '()')) { isAvailable = false; }
 
-      const maxCapacityPerDayExceeded = Number(company.scheduleSettings?.maxCapacity) <= datePeopleTotal
+      if (serviceEndDate.isBetween(schedule.startDate, schedule.endDate, 'minute', '()')) { isAvailable = false; }
 
-      if (dayjs.utc(schedule.startDate).isSame(availableDay) && maxCapacityPerDayExceeded) {
-        isDayAvailable = false
-      }
+      if (buffer?.before) {
+        const bufferTime = dayjs(schedule.startDate).subtract(buffer.before, 'minutes');
 
-      if (dayjs.utc(availableDay).isBetween(schedule.startDate, schedule.endDate, 'minute', '()') && maxCapacityPerDayExceeded) {
-        isDayAvailable = false
-      }
-
-      if (dayjs.utc(endDateAvailable).isBetween(schedule.startDate, schedule.endDate, 'minute', '()') && maxCapacityPerDayExceeded) {
-        isDayAvailable = false
-      }
-
-      if (bufferStart) {
-        const bufferTime = dayjs.utc(schedule.startDate).subtract(bufferStart, 'minutes')
-
-        if (dayjs.utc(availableDay).isBetween(bufferTime, schedule.startDate, 'minute', '()')) {
-          isDayAvailable = false
+        if (dayjs(dateAvailable).isBetween(bufferTime, schedule.startDate, 'minute', '()')) {
+          isAvailable = false;
         }
       }
 
-      if (bufferEnd) {
-        const bufferTime = dayjs.utc(schedule.endDate).add(bufferEnd, 'minutes')
+      if (buffer?.after) {
+        const bufferTime = dayjs(schedule.endDate).add(buffer.after, 'minutes');
 
-        if (dayjs.utc(availableDay).isBetween(bufferTime, schedule.endDate, 'minute', '()')) {
-          isDayAvailable = false
+        if (dayjs(dateAvailable).isBetween(bufferTime, schedule.endDate, 'minute', '()')) {
+          isAvailable = false;
         }
+      }
+
+      if (!isAvailable) {
+        totalReserves = schedule.adultsAmmount + schedule.kidsAmmount
       }
     }
 
-    return isDayAvailable
-  })
+    if (scheduleSettings?.maxCapacity) {
+      return totalReserves < scheduleSettings?.maxCapacity
+    }
+
+    return false
+  });
 }

@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
-  const { range, buffer, businessHours, companyId } = await request.json()
+  const { duration, buffer, availableHours, companyId } = await request.json()
 
   const company = await prisma.company.findUnique({
     where: { id: companyId }
@@ -14,10 +14,10 @@ export async function POST(request: NextRequest) {
 
   const agenda = await prisma.agenda.create({
     data: {
-      businessHours,
+      availableHours,
       buffer,
       companyId,
-      range,
+      duration
     }
   })
 
