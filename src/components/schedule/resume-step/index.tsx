@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSchedule } from "@/contexts/schedule-context";
+import { useCreateSchedule } from "@/hooks/schedule/use-create-schedule";
 import { formatPhone } from "@/utils/format-phone";
 import dayjs from "dayjs";
 import { Calendar, ChevronLeft, ChevronRight, Clock, FileText, Phone, User, Users } from "lucide-react";
@@ -8,9 +9,25 @@ import { Calendar, ChevronLeft, ChevronRight, Clock, FileText, Phone, User, User
 export function ResumeStep() {
   const { schedule, company, goToNextStep, goToPreviousStep } = useSchedule()
 
+  const { mutate: createSchedule, isPending } = useCreateSchedule()
+
+  const startDate = dayjs(schedule?.date)
+    .set('hours', dayjs(schedule?.time).hour())
+    .set('minutes', dayjs(schedule?.time).minute())
+    .set('seconds', 0)
+    .set('milliseconds', 0)
+
   function onSubmit() {
-    console.log(schedule)
-    goToNextStep()
+    createSchedule({
+      companyId: company?.id,
+      startDate: startDate.toISOString(),
+      contact: schedule?.contact,
+      additionalInfo: schedule?.additionalInfo,
+      adultsAmmount: schedule?.adultsAmmount,
+      kidsAmmount: schedule?.kidsAmmount,
+    })
+
+    // goToNextStep()
   }
 
   return (
@@ -120,7 +137,7 @@ export function ResumeStep() {
           Voltar
         </Button>
 
-        <Button size='sm' onClick={onSubmit}>
+        <Button size='sm' onClick={onSubmit} isLoading={isPending}>
           Concluir
           <ChevronRight className="w-4 h-4 ml-2" />
         </Button>
