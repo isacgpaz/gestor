@@ -21,7 +21,7 @@ export type SchedulesResponseProps = {
 
 export function useSchedules(params: SchedulesProps,) {
   const query = useInfiniteQuery({
-    queryKey: ['available-to-schedule-by-date', params],
+    queryKey: ['schedules', params],
     queryFn: ({ pageParam }) => findSchedules({ ...params, page: pageParam + 1 }),
     getNextPageParam: (response) => response?.result?.length === 0 ||
       response?.result?.length >=

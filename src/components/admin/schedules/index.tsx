@@ -8,9 +8,13 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useToast } from "@/components/ui/use-toast"
+import { useMarkScheduleAsFinished } from "@/hooks/schedule/use-mark-schedule-as-finished"
+import { useMarkScheduleAsReady } from "@/hooks/schedule/use-mark-schedule-as-ready"
 import { useSchedulesMeta } from "@/hooks/schedule/use-schedule-meta"
 import { SchedulesResponseProps, useSchedules } from "@/hooks/schedule/use-schedules"
 import { dayjs } from "@/lib/dayjs"
+import { queryClient } from "@/lib/query-client"
 import { cn } from "@/lib/utils"
 import { formatPhone } from "@/utils/format-phone"
 import { Company, Schedule, ScheduleStatus, User as UserType } from "@prisma/client"
@@ -26,6 +30,18 @@ const scheduleStatus = {
 }
 
 function ScheduleListItem({ schedule }: { schedule: Schedule }) {
+  const { toast } = useToast()
+
+  const {
+    mutate: markAsReady,
+    isPending: isMarkAsReadyPending
+  } = useMarkScheduleAsReady()
+
+  const {
+    mutate: markAsFinished,
+    isPending: isMarkAsFinishedPending
+  } = useMarkScheduleAsFinished()
+
   return (
     <Card className="p-0">
       <CardHeader className="flex flex-row items-start justify-between gap-4 p-3">
@@ -38,7 +54,7 @@ function ScheduleListItem({ schedule }: { schedule: Schedule }) {
             'text-white border-0',
             schedule.status === ScheduleStatus.PENDING && 'bg-orange-400',
             schedule.status === ScheduleStatus.READY && 'bg-primary',
-            schedule.status === ScheduleStatus.FINISHED && 'bg-emerald-600',
+            schedule.status === ScheduleStatus.FINISHED && 'bg-sky-700',
           )}>
             {scheduleStatus[schedule.status as keyof typeof scheduleStatus]}
           </Badge>
@@ -62,6 +78,7 @@ function ScheduleListItem({ schedule }: { schedule: Schedule }) {
         </DropdownMenu>
 
       </CardHeader>
+
       <CardContent className="p-3 pt-0">
         <ul className="text-black">
           <li className="flex items-center mt-1 text-sm">
@@ -154,7 +171,7 @@ function ScheduleListItem({ schedule }: { schedule: Schedule }) {
                     Atualizada em: {' '}
 
                     <span className="text-slate-500 flex items-center gap-1">
-                      {dayjs(schedule?.updatedAt).format('HH:mm')}
+                      {dayjs(schedule?.updatedAt).format('DD/MM/YYYY [às] HH:mm')}
                     </span>
                   </span>
                 </li>
@@ -166,9 +183,60 @@ function ScheduleListItem({ schedule }: { schedule: Schedule }) {
 
       <CardFooter className="py-3 px-4 pt-0 justify-end">
         {schedule.status === ScheduleStatus.PENDING && (
-          <Button variant='link' size='sm' className="p-0 h-min hover:no-underline">
+          <Button
+            variant='link'
+            size='sm'
+            className="p-0 h-min hover:no-underline"
+            onClick={() => markAsReady(schedule.id, {
+              onSuccess() {
+                queryClient.invalidateQueries({
+                  queryKey: ['schedules']
+                })
+
+                queryClient.invalidateQueries({
+                  queryKey: ['schedules-meta']
+                })
+
+                toast({
+                  title: 'A reserva foi marcada como pronta.',
+                  variant: 'default',
+                })
+              }
+            })}
+            isLoading={isMarkAsReadyPending}
+          >
             <Check className="w-4 h-4 mr-2" />
             Marcar como pronta
+          </Button>
+        )}
+
+        {schedule.status === ScheduleStatus.READY && (
+          <Button
+            variant='link'
+            size='sm'
+            className="p-0 h-min hover:no-underline"
+            onClick={() => markAsFinished(schedule.id, {
+              onSuccess() {
+                queryClient.invalidateQueries({
+                  queryKey: ['schedules']
+                })
+
+                queryClient.invalidateQueries({
+                  queryKey: ['schedules-meta']
+                })
+
+                toast({
+                  title: 'A reserva foi marcada como finalizada.',
+                  description: 'O horário da reserva agora está disponível para um novo agendamento.',
+                  variant: 'default',
+                })
+              }
+
+            })}
+            isLoading={isMarkAsFinishedPending}
+          >
+            <Check className="w-4 h-4 mr-2" />
+            Marcar como finalizado
           </Button>
         )}
       </CardFooter>

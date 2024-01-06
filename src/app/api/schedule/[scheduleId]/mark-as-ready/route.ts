@@ -31,4 +31,6 @@ export async function PATCH(
       status: ScheduleStatus.READY
     }
   })
+
+  return NextResponse.json({ status: 204 })
 }
