@@ -124,8 +124,9 @@ model Schedule {
 }
 
 type ScheduleContact {
-  name  String
-  phone String
+  name        String
+  firstPhone  String
+  secondPhone String
 }
 
 type History {
@@ -147,5 +148,6 @@ type WalletSettings {
 }
 
 type ScheduleSettings {
-  maxCapacity Int
+  maxCapacity                  Int
+  minimumQuantityForScheduling Int
 }

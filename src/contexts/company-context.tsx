@@ -1,5 +1,5 @@
 import { serverSession } from "@/lib/auth/server";
-import { findCompanyBySlug } from "@/services/company/find-by-slug";
+import { findCompanyBySlug } from "@/services/company/find-company-by-slug";
 import { findWalletByUserAndCompany } from "@/services/wallet/find-by-user-and-company";
 import { Company, Wallet } from "@prisma/client";
 import { useParams } from "next/navigation";

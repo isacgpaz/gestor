@@ -9,7 +9,8 @@ export type Schedule = {
 
 type ScheduleContact = {
   name: string,
-  phone: string,
+  firstPhone: string,
+  secondPhone: string,
 }
 
 export enum AvailableTimesType {

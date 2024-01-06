@@ -1,32 +1,27 @@
-import { findCompanyBySlug } from "@/services/company/find-by-slug";
 import { Schedule } from "@/types/schedule";
-import { Company } from "@prisma/client";
-import { useParams } from "next/navigation";
-import { Dispatch, PropsWithChildren, SetStateAction, createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { Agenda, Company } from "@prisma/client";
+import { PropsWithChildren, createContext, useCallback, useContext, useMemo, useState } from "react";
 
 type ScheduleContextProp = {
   schedule: Partial<Schedule> | undefined,
-  setSchedule: Dispatch<SetStateAction<Partial<Schedule> | undefined>>,
-  company: Company | undefined,
-  setCompany: (company: Company | undefined) => void,
+  company: Company & { agenda: Agenda } | undefined,
   isLoading: boolean,
   setIsLoading: (open: boolean) => void,
   step: number,
   setStep: (step: number) => void,
   goToNextStep: () => void,
   goToPreviousStep: () => void,
+  updateSchedule: (incomingSchedule: Partial<Schedule>) => void
 }
 
 export const ScheduleContext = createContext<ScheduleContextProp>({} as ScheduleContextProp)
 
-export function ScheduleProvider({ children }: PropsWithChildren) {
+export function ScheduleProvider({ children, company }: PropsWithChildren & {
+  company: Company & { agenda: Agenda }
+}) {
   const [schedule, setSchedule] = useState<Partial<Schedule> | undefined>(undefined);
-  const [company, setCompany] = useState<Company | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [step, setStep] = useState(0)
-
-  const params = useParams()
-  const { slug } = params
 
   const goToNextStep = useCallback(() => {
     setStep(step + 1)
@@ -38,33 +33,17 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
     }
   }, [step])
 
-  const getCompany = useCallback(async () => {
-    if (slug) {
-      setIsLoading(true)
-
-      await findCompanyBySlug({ slug: slug as string }).then(async (response) => {
-        if (response.ok) {
-          const company = await response.json() as Company
-
-          setCompany(company)
-        }
-      }).catch((e) => {
-        console.error(e)
-      }).finally(() => {
-        setIsLoading(false)
-      })
-    }
-  }, [slug])
-
-  useEffect(() => {
-    getCompany()
-  }, [getCompany])
+  const updateSchedule = useCallback((incomingSchedule: Partial<Schedule>) => {
+    setSchedule((schedule) => ({
+      ...schedule,
+      ...incomingSchedule,
+    }))
+  }, [])
 
   const value: ScheduleContextProp = useMemo(() => ({
     schedule,
-    setSchedule,
+    updateSchedule,
     company,
-    setCompany,
     isLoading,
     setIsLoading,
     step,
@@ -73,9 +52,8 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
     goToPreviousStep
   }), [
     schedule,
-    setSchedule,
+    updateSchedule,
     company,
-    setCompany,
     isLoading,
     setIsLoading,
     step,

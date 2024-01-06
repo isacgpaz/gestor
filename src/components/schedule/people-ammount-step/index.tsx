@@ -5,49 +5,83 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useSchedule } from "@/contexts/schedule-context";
+import { useAvailableToScheduleByDate } from "@/hooks/schedule/use-available-to-schedule-by-date";
+import { dayjs } from "@/lib/dayjs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-const formSchema = z.object({
-  adultsAmmount: z.number()
-    .min(1, 'É necessário pelo menos 1 pessoa para realizar a reserva.')
-    .int('A quantidade de adultos deve ser um número inteiro.')
-    .positive('A quantidade de adultos deve ser um número positivo.'),
-  includeKids: z.boolean().default(false),
-  kidsAmmount: z.number()
-    .int('A quantidade de crianças deve ser um número inteiro.')
-    .positive('A quantidade de crianças deve ser um número positivo.')
-    .optional()
-}).refine(input => {
-  if (input.includeKids && input.kidsAmmount === undefined) return false
+function getFormSchema(minimumQuantityForScheduling?: number) {
+  return z.object({
+    adultsAmmount: z.number()
+      .min(
+        minimumQuantityForScheduling ?? 1,
+        `É necessário pelo menos ${minimumQuantityForScheduling ?? 1} adulto(s) para realizar a reserva.`)
+      .int('A quantidade de adultos deve ser um número inteiro.')
+      .positive('A quantidade de adultos deve ser um número positivo.'),
+    includeKids: z.boolean().default(false),
+    kidsAmmount: z.number()
+      .int('A quantidade de crianças deve ser um número inteiro.')
+      .positive('A quantidade de crianças deve ser um número positivo.')
+      .optional()
+  }).refine(input => {
+    if (input.includeKids && input.kidsAmmount === undefined) return false
 
-  return true
-})
+    return true
+  })
+}
+
+const formSchema = getFormSchema()
 
 type FormSchema = z.infer<typeof formSchema>
 
 export function PeopleAmmountStep() {
-  const { schedule, goToNextStep, goToPreviousStep, setSchedule } = useSchedule()
+  const { schedule, company, goToNextStep, goToPreviousStep, updateSchedule } = useSchedule()
 
   const form = useForm<FormSchema>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(
+      getFormSchema(company?.scheduleSettings?.minimumQuantityForScheduling)
+    ),
     defaultValues: {
-      adultsAmmount: schedule?.adultsAmmount ?? 0,
+      adultsAmmount: schedule?.adultsAmmount ?? undefined,
       kidsAmmount: schedule?.kidsAmmount ?? undefined,
       includeKids: Boolean(schedule?.kidsAmmount) ?? false
     },
   })
 
+  const adultsAmmount = form.watch('adultsAmmount')
+  const kidsAmmount = form.watch('kidsAmmount')
   const includeKids = form.watch('includeKids')
 
+  const startDate = dayjs(schedule?.date)
+    .set('hours', dayjs(schedule?.time).hour())
+    .set('minutes', dayjs(schedule?.time).minute())
+    .set('seconds', 0)
+    .set('milliseconds', 0)
+
+  const {
+    data: availableAtMoment,
+    isLoading: isAmmountAvailableToScheduleByDateLoading,
+  } = useAvailableToScheduleByDate({
+    companyId: company?.id,
+    startDate:
+      startDate.toISOString()
+  })
+
+  useEffect(() => {
+    updateSchedule({
+      adultsAmmount,
+      kidsAmmount
+    })
+  }, [adultsAmmount, kidsAmmount, updateSchedule])
+
   function onSubmit(values: FormSchema) {
-    setSchedule((schedule) => ({
-      ...schedule,
+    updateSchedule({
       adultsAmmount: values.adultsAmmount,
       kidsAmmount: values.includeKids ? values.kidsAmmount : 0,
-    }))
+    })
 
     goToNextStep()
   }
@@ -66,6 +100,7 @@ export function PeopleAmmountStep() {
             <FormField
               control={form.control}
               name="adultsAmmount"
+              defaultValue={0}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Adultos</FormLabel>
@@ -74,6 +109,7 @@ export function PeopleAmmountStep() {
                       {...field}
                       onChange={(event) => field.onChange(event.target.valueAsNumber)}
                       type='number'
+                      placeholder="Quantidade de adultos"
                     />
                   </FormControl>
                   <FormMessage />
@@ -119,6 +155,17 @@ export function PeopleAmmountStep() {
               />
             )}
 
+
+            <p className="mt-2 text-xs text-slate-500">
+              {isAmmountAvailableToScheduleByDateLoading ? (
+                'Buscando número de lugares disponíveis...'
+              ) : (
+                <>
+                  Há <strong>{availableAtMoment}</strong> lugares disponíveis
+                  nesta data {startDate.format('DD [de] MMMM [às] HH:mm')}.
+                </>
+              )}
+            </p>
           </CardContent>
 
           <CardFooter className="pt-0 justify-between">

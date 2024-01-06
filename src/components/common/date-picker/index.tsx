@@ -4,7 +4,7 @@ import { format } from "date-fns"
 import { Calendar as CalendarIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
+import { Calendar, CalendarProps } from "@/components/ui/calendar"
 import {
   Popover,
   PopoverContent,
@@ -16,13 +16,14 @@ import { ptBR } from "date-fns/locale"
 type DatePickerProps = {
   date: Date | undefined,
   setDate: (date: Date | undefined) => void,
-  label?: string
-}
+  label?: string,
+} & Pick<CalendarProps, 'month' | 'onMonthChange' | 'disabled' | 'fromDate' | 'toDate'>
 
 export function DatePicker({
-  date,
   label,
-  setDate
+  date,
+  setDate,
+  ...props
 }: DatePickerProps) {
   return (
     <Popover>
@@ -45,6 +46,7 @@ export function DatePicker({
           selected={date}
           onSelect={setDate}
           initialFocus
+          {...props}
         />
       </PopoverContent>
     </Popover>

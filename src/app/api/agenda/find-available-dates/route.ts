@@ -71,7 +71,7 @@ export async function getAvailableDates(
   switch (type) {
     case AvailableTimesType.DAYS:
       return [...new Set(
-        clearedSpotSteps.map((date) => dayjs(date).format('DD/MM/YYYY'))
+        clearedSpotSteps.map((date) => dayjs(date).format('YYYY/MM/DD'))
       )]
     case AvailableTimesType.HOURS:
       return clearedSpotSteps;
@@ -87,7 +87,7 @@ function getDatesSpotSteps(
   const {
     availableHours,
     schedulingWindow,
-    duration,
+    spotStep,
     minimumNotice
   } = agenda;
 
@@ -110,7 +110,7 @@ function getDatesSpotSteps(
   let dayToSearch = startDate.clone()
 
   while (dayToSearch.isBefore(endDate)) {
-    const dayOfWeek = dayToSearch.format('dddd').toLowerCase() as keyof typeof availableHours
+    const dayOfWeek = dayToSearch.locale('en').format('dddd').toLowerCase() as keyof typeof availableHours
 
     if (availableHours[dayOfWeek].length) {
       const times = [];
@@ -136,12 +136,12 @@ function getDatesSpotSteps(
             currentDate.isBefore(maxDate) &&
             currentDate
               .clone()
-              .add(duration ?? 60, 'minutes')
+              .add(spotStep ?? 60, 'minutes')
               .isSameOrBefore(maxDate)
           ) {
             times.push(currentDate);
 
-            currentDate = currentDate.clone().add(Number(duration), 'minutes');
+            currentDate = currentDate.add(Number(spotStep), 'minutes');
           }
         }
       }

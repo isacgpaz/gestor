@@ -6,10 +6,10 @@ import dayjs from "dayjs";
 import { Calendar, ChevronLeft, ChevronRight, Clock, FileText, Phone, User, Users } from "lucide-react";
 
 export function ResumeStep() {
-  const { schedule, goToNextStep, goToPreviousStep } = useSchedule()
+  const { schedule, company, goToNextStep, goToPreviousStep } = useSchedule()
 
-  function onSubmit(values: any) {
-    console.log(values)
+  function onSubmit() {
+    console.log(schedule)
     goToNextStep()
   }
 
@@ -27,7 +27,7 @@ export function ResumeStep() {
             <User className="mr-2 h-4 w-4" />
 
             <span>
-              Cliente: {' '}
+              Reservante: {' '}
               <span className="text-slate-500">
                 {schedule?.contact?.name}
               </span>
@@ -38,9 +38,20 @@ export function ResumeStep() {
             <Phone className="mr-2 h-4 w-4" />
 
             <span>
-              Telefone: {' '}
+              Telefone 1: {' '}
               <span className="text-slate-500">
-                {formatPhone(String(schedule?.contact?.phone))}
+                {formatPhone(String(schedule?.contact?.firstPhone))}
+              </span>
+            </span>
+          </li>
+
+          <li className="flex items-center mt-1 text-sm">
+            <Phone className="mr-2 h-4 w-4" />
+
+            <span>
+              Telefone 2: {' '}
+              <span className="text-slate-500">
+                {formatPhone(String(schedule?.contact?.secondPhone))}
               </span>
             </span>
           </li>
@@ -50,7 +61,7 @@ export function ResumeStep() {
 
             <span>
               Data: {' '}
-              <span className="text-slate-400">
+              <span className="text-slate-500">
                 {dayjs(schedule?.date).format('DD/MM/YYYY')}
               </span>
             </span>
@@ -63,7 +74,7 @@ export function ResumeStep() {
               Hora: {' '}
 
               <span className="text-slate-500 flex items-center gap-1">
-                {dayjs().format('HH:mm')} à {dayjs().add(2.5, 'hours').format('HH:mm')}
+                {dayjs(schedule?.time).format('HH:mm')} à {dayjs(schedule?.time).add(company?.agenda?.duration ?? 60, 'minutes').format('HH:mm')}
               </span>
             </span>
           </li>
@@ -109,7 +120,7 @@ export function ResumeStep() {
           Voltar
         </Button>
 
-        <Button size='sm'>
+        <Button size='sm' onClick={onSubmit}>
           Concluir
           <ChevronRight className="w-4 h-4 ml-2" />
         </Button>

@@ -13,35 +13,38 @@ import { z } from "zod";
 
 const formSchema = z.object({
   name: z.string().min(1, 'O título da reserva é obrigatório.'),
-  phone: z.string().min(1, 'O telefone é obrigatório.').refine((phone) => phoneRegex.test(phone), 'Telefone inválido.'),
+  firstPhone: z.string().min(1, 'O telefone 1 é obrigatório.').refine((phone) => phoneRegex.test(phone), 'Telefone inválido.'),
+  secondPhone: z.string().min(1, 'O telefone 2 é obrigatório.').refine((phone) => phoneRegex.test(phone), 'Telefone inválido.'),
   additionalInfo: z.string(),
 })
 
 type FormSchema = z.infer<typeof formSchema>
 
 export function AdditionalInfoStep() {
-  const { schedule, goToNextStep, goToPreviousStep, setSchedule } = useSchedule()
+  const { schedule, goToNextStep, goToPreviousStep, updateSchedule } = useSchedule()
 
-  const phoneRef = useMaskito({ options: phoneMask })
+  const firstPhoneRef = useMaskito({ options: phoneMask })
+  const secondPhoneRef = useMaskito({ options: phoneMask })
 
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: schedule?.contact?.name ?? '',
-      phone: schedule?.contact?.phone ?? '',
+      firstPhone: schedule?.contact?.firstPhone ?? '',
+      secondPhone: schedule?.contact?.secondPhone ?? '',
       additionalInfo: schedule?.additionalInfo ?? '',
     },
   })
 
   function onSubmit(values: FormSchema) {
-    setSchedule((schedule) => ({
-      ...schedule,
+    updateSchedule({
       contact: {
         name: values.name,
-        phone: values.phone,
+        firstPhone: values.firstPhone,
+        secondPhone: values.secondPhone,
       },
       additionalInfo: values.additionalInfo
-    }))
+    })
 
     goToNextStep()
   }
@@ -73,14 +76,33 @@ export function AdditionalInfoStep() {
 
             <FormField
               control={form.control}
-              name="phone"
+              name="firstPhone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Telefone para contato</FormLabel>
+                  <FormLabel>Telefone 1</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      ref={phoneRef}
+                      ref={firstPhoneRef}
+                      onInput={(event) => field.onChange(event.currentTarget.value)}
+                      placeholder="(88) 9 9999-9999"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="secondPhone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Telefone 2</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      ref={secondPhoneRef}
                       onInput={(event) => field.onChange(event.currentTarget.value)}
                       placeholder="(88) 9 9999-9999"
                     />
