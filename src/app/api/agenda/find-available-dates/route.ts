@@ -233,7 +233,7 @@ async function removeFilledSpotSteps(
       }
 
       if (!isAvailable) {
-        totalReserves = schedule.adultsAmmount + schedule.kidsAmmount
+        totalReserves += schedule.adultsAmmount + schedule.kidsAmmount
       }
     }
 

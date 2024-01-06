@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { useSchedule } from "@/contexts/schedule-context";
 import { useAvailableToScheduleByDate } from "@/hooks/schedule/use-available-to-schedule-by-date";
 import { dayjs } from "@/lib/dayjs";
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect } from "react";
@@ -60,6 +61,8 @@ export function PeopleAmmountStep() {
     .set('minutes', dayjs(schedule?.time).minute())
     .set('seconds', 0)
     .set('milliseconds', 0)
+
+  const totalPeopleAmmount = adultsAmmount + (kidsAmmount ?? 0)
 
   const {
     data: availableAtMoment,
@@ -156,13 +159,14 @@ export function PeopleAmmountStep() {
             )}
 
 
-            <p className="mt-2 text-xs text-slate-500">
+            <p className={cn("mt-2 text-xs", totalPeopleAmmount > availableAtMoment
+              ? 'text-destructive' : 'text-slate-500')}>
               {isAmmountAvailableToScheduleByDateLoading ? (
                 'Buscando número de lugares disponíveis...'
               ) : (
                 <>
                   Há <strong>{availableAtMoment}</strong> lugares disponíveis
-                  nesta data {startDate.format('DD [de] MMMM [às] HH:mm')}.
+                  em {startDate.format('DD [de] MMMM [às] HH:mm')}.
                 </>
               )}
             </p>
@@ -179,7 +183,7 @@ export function PeopleAmmountStep() {
               Voltar
             </Button>
 
-            <Button size='sm' type='submit'>
+            <Button size='sm' type='submit' disabled={totalPeopleAmmount > availableAtMoment}>
               Avançar
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
