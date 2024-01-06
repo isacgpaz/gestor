@@ -24,10 +24,11 @@ function ScheduleSteps() {
 
 export function ScheduleCard({
   company,
-  schedule }: {
-    company: Company & { agenda: Agenda },
-    schedule?: Schedule
-  }) {
+  schedule
+}: {
+  company: Company & { agenda: Agenda },
+  schedule?: Schedule
+}) {
   return (
     <CreateScheduleProvider
       company={company}

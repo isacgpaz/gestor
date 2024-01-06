@@ -3,9 +3,24 @@ import { CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/
 import { useCreateScheduleContext } from "@/contexts/create-schedule-context";
 import { useCreateSchedule } from "@/hooks/schedule/use-create-schedule";
 import { formatPhone } from "@/utils/format-phone";
+import { Schedule } from "@prisma/client";
 import dayjs from "dayjs";
 import { Calendar, ChevronLeft, ChevronRight, Clock, FileText, Phone, User, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
+
+function storageSchedule(schedule: Schedule) {
+  const storagedSchedules = localStorage.getItem('@gestor:schedules')
+
+  let parsedSchedules = []
+
+  if (storagedSchedules) {
+    JSON.parse(storagedSchedules)
+  }
+
+  parsedSchedules.push(schedule)
+
+  localStorage.setItem('@gestor:schedules', JSON.stringify(parsedSchedules))
+}
 
 export function ResumeStep() {
   const router = useRouter()
@@ -29,8 +44,10 @@ export function ResumeStep() {
       adultsAmmount: schedule?.adultsAmmount,
       kidsAmmount: schedule?.kidsAmmount,
     }, {
-      onSuccess({ data }) {
-        router.push(`/schedule/${company?.slug}/${data.id}`)
+      onSuccess({ data: scheduleCreated }) {
+        storageSchedule(scheduleCreated)
+
+        router.push(`/schedule/${company?.slug}/${scheduleCreated.id}`)
       }
     })
   }
