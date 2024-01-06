@@ -42,7 +42,7 @@ export function ScheduleCard({
         id: schedule?.id,
       } : undefined}
     >
-      {schedule && <StatusAlert />}
+      <StatusAlert schedule={schedule} />
 
       <Card className="p-0 w-full max-w-xs mx-auto mt-6">
         <ScheduleSteps />
