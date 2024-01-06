@@ -1,12 +1,13 @@
 'use client'
 
 import { Card } from "@/components/ui/card";
-import { ScheduleProvider, useSchedule } from "@/contexts/schedule-context";
-import { Company } from "@prisma/client";
+import { CreateScheduleProvider, useCreateScheduleContext } from "@/contexts/create-schedule-context";
+import { Agenda, Company, Schedule } from "@prisma/client";
 import { AdditionalInfoStep } from "../additional-info-step";
 import { DateStep } from "../date-step";
 import { PeopleAmmountStep } from "../people-ammount-step";
 import { ResumeStep } from "../resume-step";
+import { StatusAlert } from "../status-alert";
 
 const scheduleSteps = [
   <DateStep key='date' />,
@@ -16,17 +17,35 @@ const scheduleSteps = [
 ]
 
 function ScheduleSteps() {
-  const { step } = useSchedule()
+  const { step } = useCreateScheduleContext()
 
   return scheduleSteps[step]
 }
 
-export function ScheduleCard({ company }: { company: Company }) {
+export function ScheduleCard({
+  company,
+  schedule }: {
+    company: Company & { agenda: Agenda },
+    schedule?: Schedule
+  }) {
   return (
-    <ScheduleProvider company={company}>
+    <CreateScheduleProvider
+      company={company}
+      schedule={schedule ? {
+        adultsAmmount: schedule?.adultsAmmount,
+        contact: schedule?.contact,
+        additionalInfo: schedule?.additionalInfo ?? undefined,
+        kidsAmmount: schedule?.kidsAmmount,
+        date: schedule?.startDate,
+        time: schedule?.endDate,
+        id: schedule?.id,
+      } : undefined}
+    >
+      {schedule && <StatusAlert />}
+
       <Card className="p-0 w-full max-w-xs mx-auto mt-6">
         <ScheduleSteps />
       </Card>
-    </ScheduleProvider>
+    </CreateScheduleProvider>
   )
 }

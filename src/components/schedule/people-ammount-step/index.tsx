@@ -4,7 +4,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useSchedule } from "@/contexts/schedule-context";
+import { useCreateScheduleContext } from "@/contexts/create-schedule-context";
 import { useAvailableToScheduleByDate } from "@/hooks/schedule/use-available-to-schedule-by-date";
 import { dayjs } from "@/lib/dayjs";
 import { cn } from "@/lib/utils";
@@ -39,7 +39,7 @@ const formSchema = getFormSchema()
 type FormSchema = z.infer<typeof formSchema>
 
 export function PeopleAmmountStep() {
-  const { schedule, company, goToNextStep, goToPreviousStep, updateSchedule } = useSchedule()
+  const { schedule, company, goToNextStep, goToPreviousStep, updateSchedule } = useCreateScheduleContext()
 
   const form = useForm<FormSchema>({
     resolver: zodResolver(

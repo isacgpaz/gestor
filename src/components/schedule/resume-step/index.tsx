@@ -1,15 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useSchedule } from "@/contexts/schedule-context";
+import { useCreateScheduleContext } from "@/contexts/create-schedule-context";
 import { useCreateSchedule } from "@/hooks/schedule/use-create-schedule";
 import { formatPhone } from "@/utils/format-phone";
 import dayjs from "dayjs";
 import { Calendar, ChevronLeft, ChevronRight, Clock, FileText, Phone, User, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export function ResumeStep() {
-  const { schedule, company, goToNextStep, goToPreviousStep } = useSchedule()
+  const router = useRouter()
 
-  const { mutate: createSchedule, isPending } = useCreateSchedule()
+  const { schedule, company, goToPreviousStep } = useCreateScheduleContext()
+
+  const { mutate: createSchedule, isPending, isSuccess } = useCreateSchedule()
 
   const startDate = dayjs(schedule?.date)
     .set('hours', dayjs(schedule?.time).hour())
@@ -25,9 +28,11 @@ export function ResumeStep() {
       additionalInfo: schedule?.additionalInfo,
       adultsAmmount: schedule?.adultsAmmount,
       kidsAmmount: schedule?.kidsAmmount,
+    }, {
+      onSuccess({ data }) {
+        router.push(`/schedule/${company?.slug}/${data.id}`)
+      }
     })
-
-    // goToNextStep()
   }
 
   return (
@@ -132,15 +137,21 @@ export function ResumeStep() {
       </CardContent>
 
       <CardFooter className="pt-0 justify-between">
-        <Button size='sm' variant='outline' onClick={goToPreviousStep}>
+        <Button
+          size='sm'
+          variant='outline'
+          onClick={schedule?.id ? router.back : goToPreviousStep}
+        >
           <ChevronLeft className="w-4 h-4 mr-2" />
           Voltar
         </Button>
 
-        <Button size='sm' onClick={onSubmit} isLoading={isPending}>
-          Concluir
-          <ChevronRight className="w-4 h-4 ml-2" />
-        </Button>
+        {!isSuccess && !schedule?.id && (
+          <Button size='sm' onClick={onSubmit} isLoading={isPending}>
+            Concluir
+            <ChevronRight className="w-4 h-4 ml-2" />
+          </Button>
+        )}
       </CardFooter>
     </>
   )

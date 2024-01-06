@@ -3,7 +3,7 @@ import { CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useSchedule } from "@/contexts/schedule-context";
+import { useCreateScheduleContext } from "@/contexts/create-schedule-context";
 import { phoneMask, phoneRegex } from "@/utils/format-phone";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMaskito } from '@maskito/react';
@@ -21,7 +21,7 @@ const formSchema = z.object({
 type FormSchema = z.infer<typeof formSchema>
 
 export function AdditionalInfoStep() {
-  const { schedule, goToNextStep, goToPreviousStep, updateSchedule } = useSchedule()
+  const { schedule, goToNextStep, goToPreviousStep, updateSchedule } = useCreateScheduleContext()
 
   const firstPhoneRef = useMaskito({ options: phoneMask })
   const secondPhoneRef = useMaskito({ options: phoneMask })
@@ -65,7 +65,7 @@ export function AdditionalInfoStep() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Título da reserva</FormLabel>
+                  <FormLabel>Reservante</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="Nome do reservante ou empresa" />
                   </FormControl>

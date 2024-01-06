@@ -13,7 +13,8 @@ export function useAvailableToScheduleByDate(
   const query = useQuery({
     queryKey: ['available-to-schedule-by-date', { startDate, companyId }],
     queryFn: () => findAvailableToScheduleByDate({ startDate, companyId }),
-    enabled: Boolean(startDate) && Boolean(companyId)
+    enabled: Boolean(startDate) && Boolean(companyId),
+    ...config
   })
 
   return query

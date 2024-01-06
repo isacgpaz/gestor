@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useSchedule } from "@/contexts/schedule-context";
+import { useCreateScheduleContext } from "@/contexts/create-schedule-context";
 import { useAgendaAvailableDates } from "@/hooks/agenda/use-agenda-available-dates";
 import { dayjs } from "@/lib/dayjs";
 import { AvailableTimesType } from "@/types/schedule";
@@ -28,7 +28,7 @@ const formSchema = z.object({
 type FormSchema = z.infer<typeof formSchema>
 
 export function DateStep() {
-  const { schedule, goToNextStep, updateSchedule, company } = useSchedule()
+  const { schedule, goToNextStep, updateSchedule, company } = useCreateScheduleContext()
 
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),

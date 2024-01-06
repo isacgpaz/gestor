@@ -4,8 +4,11 @@ export type Schedule = {
   adultsAmmount: number,
   kidsAmmount?: number,
   contact: ScheduleContact,
-  additionalInfo?: string
+  additionalInfo?: string,
+  id: string
 }
+
+export type CreateSchedule = Omit<Schedule, 'id'>
 
 type ScheduleContact = {
   name: string,

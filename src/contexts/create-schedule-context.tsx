@@ -1,8 +1,8 @@
-import { Schedule } from "@/types/schedule";
+import { CreateSchedule, Schedule } from "@/types/schedule";
 import { Agenda, Company } from "@prisma/client";
-import { PropsWithChildren, createContext, useCallback, useContext, useMemo, useState } from "react";
+import { PropsWithChildren, createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-type ScheduleContextProp = {
+type CreateScheduleContextProp = {
   schedule: Partial<Schedule> | undefined,
   company: Company & { agenda: Agenda } | undefined,
   isLoading: boolean,
@@ -11,17 +11,22 @@ type ScheduleContextProp = {
   setStep: (step: number) => void,
   goToNextStep: () => void,
   goToPreviousStep: () => void,
-  updateSchedule: (incomingSchedule: Partial<Schedule>) => void
+  updateSchedule: (incomingSchedule: Partial<CreateSchedule>) => void
 }
 
-export const ScheduleContext = createContext<ScheduleContextProp>({} as ScheduleContextProp)
+export const CreateScheduleContext = createContext<CreateScheduleContextProp>({} as CreateScheduleContextProp)
 
-export function ScheduleProvider({ children, company }: PropsWithChildren & {
-  company: Company & { agenda: Agenda }
+export function CreateScheduleProvider({
+  children,
+  company,
+  schedule: defaultSchedule
+}: PropsWithChildren & {
+  company: Company & { agenda: Agenda },
+  schedule?: Partial<Schedule>
 }) {
-  const [schedule, setSchedule] = useState<Partial<Schedule> | undefined>(undefined);
+  const [schedule, setSchedule] = useState<Partial<Schedule> | undefined>(defaultSchedule ?? undefined);
   const [isLoading, setIsLoading] = useState(true);
-  const [step, setStep] = useState(0)
+  const [step, setStep] = useState(defaultSchedule ? 3 : 0)
 
   const goToNextStep = useCallback(() => {
     setStep(step + 1)
@@ -40,7 +45,14 @@ export function ScheduleProvider({ children, company }: PropsWithChildren & {
     }))
   }, [])
 
-  const value: ScheduleContextProp = useMemo(() => ({
+  useEffect(() => {
+    if (defaultSchedule) {
+      setSchedule(defaultSchedule)
+      setStep(3)
+    }
+  }, [defaultSchedule])
+
+  const value: CreateScheduleContextProp = useMemo(() => ({
     schedule,
     updateSchedule,
     company,
@@ -63,14 +75,14 @@ export function ScheduleProvider({ children, company }: PropsWithChildren & {
   ])
 
   return (
-    <ScheduleContext.Provider value={value}>
+    <CreateScheduleContext.Provider value={value}>
       {children}
-    </ScheduleContext.Provider>
+    </CreateScheduleContext.Provider>
   )
 }
 
-export const useSchedule = () => {
-  const context = useContext(ScheduleContext);
+export const useCreateScheduleContext = () => {
+  const context = useContext(CreateScheduleContext);
 
   if (!context) {
     throw new Error("useSchedule must be used within a ScheduleProvider");
