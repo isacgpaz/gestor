@@ -7,7 +7,7 @@ export function useSchedule(
   config?: Omit<UseQueryOptions<Schedule, Error>, 'queryKey'>
 ) {
   const query = useQuery({
-    queryKey: ['available-to-schedule-by-date', scheduleId],
+    queryKey: ['schedule', scheduleId],
     queryFn: () => findUniqueSchedule(scheduleId),
     enabled: Boolean(scheduleId),
     ...config
