@@ -8,7 +8,7 @@ type AvailableToScheduleByDateProps = {
 
 export function useAvailableToScheduleByDate(
   { startDate, companyId }: AvailableToScheduleByDateProps,
-  config?: Omit<UseQueryOptions<string[], Error>, 'queryKey'>
+  config?: Omit<UseQueryOptions<number, Error>, 'queryKey'>
 ) {
   const query = useQuery({
     queryKey: ['available-to-schedule-by-date', { startDate, companyId }],
