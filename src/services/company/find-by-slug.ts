@@ -1,13 +1,8 @@
-type FindCompanyBySlugProps = {
-  slug: string,
-}
+import { Company } from '@prisma/client'
+import axios from 'axios'
 
-export async function findCompanyBySlug(
-  { slug }: FindCompanyBySlugProps
-) {
-  const response = await fetch(`/api/company/by-slug/${slug}`, {
-    method: 'GET',
-  })
+export async function findCompanyBySlug(slug: string) {
+  const response = await axios<Company>(`/api/company/by-slug/${slug}`)
 
-  return response
+  return response.data
 }

@@ -12,6 +12,13 @@ enum UserRole {
   ADMIN
 }
 
+enum ScheduleStatus {
+  READY
+  PENDING
+  CANCELED
+  FINISHED
+}
+
 model User {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   email     String   @unique
@@ -25,18 +32,21 @@ model User {
 }
 
 model Company {
-  id             String          @id @default(auto()) @map("_id") @db.ObjectId
-  name           String
-  slug           String          @unique
-  phone          String          @unique
-  slogan         String
-  manager        User            @relation(fields: [managerId], references: [id])
-  managerId      String          @unique @db.ObjectId
-  address        Address?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  wallet         Wallet[]
-  walletSettings WalletSettings?
+  id               String            @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  slug             String            @unique
+  phone            String            @unique
+  slogan           String
+  manager          User              @relation(fields: [managerId], references: [id])
+  managerId        String            @unique @db.ObjectId
+  address          Address?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  wallet           Wallet[]
+  walletSettings   WalletSettings?
+  scheduleSettings ScheduleSettings?
+  agenda           Agenda?
+  schedule         Schedule[]
 }
 
 model Wallet {
@@ -51,6 +61,72 @@ model Wallet {
   updatedAt  DateTime  @updatedAt
 
   @@unique([companyId, customerId])
+}
+
+model Agenda {
+  id               String            @id @default(auto()) @map("_id") @db.ObjectId
+  company          Company           @relation(fields: [companyId], references: [id])
+  companyId        String            @unique @db.ObjectId
+  availableHours   AvailableHours
+  unavailableDays  UnavailableDays[]
+  schedule         Schedule[]
+  buffer           Buffer? // time before or after
+  duration         Int?              @default(60) // duration of schedules
+  spotStep         Int?              @default(60) // frequency of available time slots
+  minimumNotice    Int?              @default(0) // minimum amount of notice
+  schedulingWindow Int?              @default(60)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+type Buffer {
+  after  Int @default(0)
+  before Int @default(0)
+}
+
+type UnavailableDays {
+  startDate String
+  endDate   String
+  reason    String
+}
+
+type AvailableHours {
+  monday    AvailableHour[]
+  tuesday   AvailableHour[]
+  wednesday AvailableHour[]
+  thursday  AvailableHour[]
+  friday    AvailableHour[]
+  saturday  AvailableHour[]
+  sunday    AvailableHour[]
+}
+
+type AvailableHour {
+  isActive  Boolean
+  startTime String
+  endTime   String
+}
+
+model Schedule {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  company        Company         @relation(fields: [companyId], references: [id])
+  companyId      String          @db.ObjectId
+  agenda         Agenda          @relation(fields: [agendaId], references: [id])
+  agendaId       String          @db.ObjectId
+  status         ScheduleStatus  @default(PENDING)
+  contact        ScheduleContact
+  startDate      DateTime
+  endDate        DateTime
+  adultsAmmount  Int             @default(0)
+  kidsAmmount    Int             @default(0)
+  additionalInfo String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+type ScheduleContact {
+  name        String
+  firstPhone  String
+  secondPhone String
 }
 
 type History {
@@ -69,4 +145,9 @@ type Address {
 
 type WalletSettings {
   size Int
+}
+
+type ScheduleSettings {
+  maxCapacity                  Int
+  minimumQuantityForScheduling Int
 }

@@ -1,6 +1,6 @@
 
 export const routes = {
-  public: ["/", "/signin", "/signup"],
+  public: ["/", "/signin", "/signup", "/schedule/"],
   protecteds: {
     both: [
       "/company/"
@@ -8,6 +8,7 @@ export const routes = {
     admin: [
       "/admin/dashboard",
       "/admin/settings",
+      "/admin/calendar"
     ],
     customer: [
       "/dashboard",

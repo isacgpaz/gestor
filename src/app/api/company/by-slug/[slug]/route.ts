@@ -14,7 +14,10 @@ export async function GET(
   const { slug } = params
 
   const company = await prisma.company.findUnique({
-    where: { slug }
+    where: { slug },
+    include: {
+      agenda: true
+    }
   })
 
   if (!company) {

@@ -20,7 +20,7 @@ import {
   TableRow
 } from "@/components/ui/table"
 import { formatRelativeTime } from "@/utils/format-relative-date"
-import { ChevronRight, Loader2, SearchX, Trash, Trophy } from "lucide-react"
+import { Loader2, MoreVertical, SearchX, Trash, Trophy } from "lucide-react"
 
 export function WalletsTable() {
   const {
@@ -74,7 +74,7 @@ export function WalletsTable() {
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger>
-                    <ChevronRight />
+                    <MoreVertical />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => {
