@@ -327,8 +327,8 @@ function ScheduleTabs(
       value={status}
       onValueChange={(value) => setStatus(value as ScheduleStatus)}
     >
-      <TabsList className="w-full">
-        <TabsTrigger value={ScheduleStatus.PENDING}>
+      <TabsList className="w-full flex gap-1">
+        <TabsTrigger value={ScheduleStatus.PENDING} className="text-xs px-1">
           Pendentes
 
           {(isSuccess && typeof schedulesMeta?.totalPending !== 'undefined') ? (
@@ -341,7 +341,7 @@ function ScheduleTabs(
           ) : null}
         </TabsTrigger>
 
-        <TabsTrigger value={ScheduleStatus.READY}>
+        <TabsTrigger value={ScheduleStatus.READY} className="text-xs px-1">
           Prontas
 
           {(isSuccess && typeof schedulesMeta?.totalReady !== 'undefined') ? (
@@ -354,7 +354,7 @@ function ScheduleTabs(
           ) : null}
         </TabsTrigger>
 
-        <TabsTrigger value={ScheduleStatus.FINISHED}>
+        <TabsTrigger value={ScheduleStatus.FINISHED} className="text-xs px-1">
           Finalizadas
 
           {(isSuccess && typeof schedulesMeta?.totalFinished !== 'undefined') ? (
