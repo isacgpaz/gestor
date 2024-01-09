@@ -1,6 +1,7 @@
 'use client'
 
 import { DatePicker } from "@/components/common/date-picker";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
@@ -51,7 +52,7 @@ export function InventoryLastMovement(
     resolver: zodResolver(formSchema),
     defaultValues: {
       search: '',
-      date: new Date(),
+      date: undefined,
       type: '',
     },
   })
@@ -59,6 +60,8 @@ export function InventoryLastMovement(
   const search = form.watch('search')
   const date = form.watch('date')
   const type = form.watch('type')
+
+  console.log(date)
 
   const debouncedSearch = useDebounce(search, 300)
 
@@ -91,12 +94,13 @@ export function InventoryLastMovement(
               )}
             />
 
-            <Collapsible className="w-full">
-              <CollapsibleTrigger className="my-1 text-sm text-slate-500 flex items-center">
+            <Collapsible className="w-full flex flex-col items-end">
+              <CollapsibleTrigger className="mt-1 text-sm text-primary flex items-center">
                 Busca avançada
+                <ChevronDown className="ml-1 h-4 w-4" />
               </CollapsibleTrigger>
 
-              <CollapsibleContent className="flex flex-col mt-2">
+              <CollapsibleContent className="flex flex-col mt-2 w-full">
                 <div className="w-full">
                   <FormField
                     control={form.control}
@@ -106,6 +110,7 @@ export function InventoryLastMovement(
                         <FormControl>
                           <DatePicker
                             date={value}
+                            label='Selecionar data'
                             setDate={(date) => {
                               onChange(date)
                             }}
@@ -183,7 +188,7 @@ function LastMovementList({
     hasNextPage
   } = useMovements({
     type,
-    date: dayjs(date).format('YYYY-MM-DD'),
+    date: date ? dayjs(date).format('YYYY-MM-DD') : undefined,
     companyId: user?.company.id,
     search
   })
@@ -201,13 +206,25 @@ function LastMovementList({
 
   if (movements.length) {
     return (
-      <ul className="mt-4 flex flex-col gap-4">
-        {movements.map((movement) => (
-          <li key={movement.id}>
-            <MovementCard movement={movement} />
-          </li>
-        ))}
-      </ul>
+      <>
+        <ul className="mt-4 flex flex-col gap-4">
+          {movements.map((movement) => (
+            <li key={movement.id}>
+              <MovementCard movement={movement} />
+            </li>
+          ))}
+        </ul>
+
+        {hasNextPage && (
+          <Button
+            className="mt-4 w-fit mx-auto text-primary"
+            variant='ghost'
+            onClick={() => fetchNextPage()}
+          >
+            Carregar mais
+          </Button>
+        )}
+      </>
     )
   }
 

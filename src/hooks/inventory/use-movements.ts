@@ -3,7 +3,7 @@ import { Movement, MovementType } from "@prisma/client"
 import { useInfiniteQuery } from "@tanstack/react-query"
 
 type MovementsProps = {
-  date: string,
+  date?: string,
   companyId?: string,
   type?: MovementType,
   search?: string,

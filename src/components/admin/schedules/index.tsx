@@ -297,8 +297,6 @@ function ScheduleTabs(
 
   const isInitialDataReady = count > 1
 
-  console.log(count)
-
   const {
     data: schedulesResponse,
     isPending: isSchedulesPending,

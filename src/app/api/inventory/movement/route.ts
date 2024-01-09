@@ -24,10 +24,10 @@ export async function GET(request: NextRequest) {
         type: {
           in: type ? [type as MovementType] : undefined
         },
-        createdAt: {
+        createdAt: date ? {
           gte: dayjs.utc(date).startOf('day').toDate(),
           lte: dayjs.utc(date).endOf('day').toDate(),
-        },
+        } : undefined,
         inventoryItem: {
           description: {
             contains: search,
@@ -53,10 +53,10 @@ export async function GET(request: NextRequest) {
         type: {
           in: type ? [type as MovementType] : undefined
         },
-        createdAt: {
+        createdAt: date ? {
           gte: dayjs.utc(date).startOf('day').toDate(),
           lte: dayjs.utc(date).endOf('day').toDate(),
-        },
+        } : undefined,
         inventoryItem: {
           description: {
             contains: search,
