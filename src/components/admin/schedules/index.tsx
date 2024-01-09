@@ -12,16 +12,15 @@ import { useToast } from "@/components/ui/use-toast"
 import { useMarkScheduleAsFinished } from "@/hooks/schedule/use-mark-schedule-as-finished"
 import { useMarkScheduleAsReady } from "@/hooks/schedule/use-mark-schedule-as-ready"
 import { useSchedulesMeta } from "@/hooks/schedule/use-schedule-meta"
-import { SchedulesResponseProps, useSchedules } from "@/hooks/schedule/use-schedules"
+import { useSchedules } from "@/hooks/schedule/use-schedules"
 import { dayjs } from "@/lib/dayjs"
 import { queryClient } from "@/lib/query-client"
 import { cn } from "@/lib/utils"
 import { formatPhone } from "@/utils/format-phone"
 import { Company, Schedule, ScheduleStatus, User as UserType } from "@prisma/client"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu"
-import { InfiniteData } from "@tanstack/react-query"
 import { Check, ChevronDown, ClipboardEdit, Clock, FileText, MoreVertical, Phone, SearchX, Trash, Users } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 const scheduleStatus = {
   PENDING: 'PENDENTE',
@@ -245,23 +244,21 @@ function ScheduleListItem({ schedule }: { schedule: Schedule }) {
 }
 
 type SchedulesListProps = {
-  schedulesResponse?: InfiniteData<SchedulesResponseProps, unknown>,
+  schedules?: Schedule[],
   hasNextPage?: boolean,
   fetchNextPage?: () => void
 }
 
 function SchedulesList({
-  schedulesResponse,
+  schedules,
   hasNextPage,
   fetchNextPage
 }: SchedulesListProps) {
-  const result = schedulesResponse?.pages.map((page) => page.result).flat()
-
-  if (result?.length) {
+  if (schedules?.length) {
     return (
       <>
         <ul className="mt-2 flex flex-col gap-3 w-full">
-          {result?.map((schedule) => (
+          {schedules?.map((schedule) => (
             <li key={schedule.id}>
               <ScheduleListItem schedule={schedule} />
             </li>
@@ -295,30 +292,77 @@ function ScheduleTabs(
     user?: UserType & { company: Company }
   }) {
   const [status, setStatus] = useState<ScheduleStatus>(ScheduleStatus.PENDING)
+  const [schedules, setSchedules] = useState<Schedule[]>([])
+  const [count, setCount] = useState(0)
+
+  const isInitialDataReady = count > 1
+
+  console.log(count)
 
   const {
     data: schedulesResponse,
-    isLoading: isSchedulesLoading,
+    isPending: isSchedulesPending,
     isSuccess: isSchedulesSuccess,
     fetchNextPage,
-    hasNextPage
+    hasNextPage,
   } = useSchedules({
     status,
     startDate: dayjs(date).format('YYYY-MM-DD'),
     companyId: user?.company.id,
+    setCount
   })
+
+  useEffect(() => {
+    setCount(0)
+  }, [status, date, user?.company.id])
 
   const {
     data: schedulesMeta,
-    isLoading: isSchedulesMetaLoading,
+    isPending: isSchedulesMetaPending,
     isSuccess: isSchedulesMetaSuccess,
   } = useSchedulesMeta({
     startDate: dayjs(date).format('YYYY-MM-DD'),
     companyId: user?.company.id,
   })
 
-  const isLoading = isSchedulesLoading || isSchedulesMetaLoading
+  const isPending = isSchedulesPending || isSchedulesMetaPending
   const isSuccess = isSchedulesSuccess || isSchedulesMetaSuccess
+
+  const notificationSound = useMemo(
+    () => new Audio('/sound/notification.wav'),
+    []
+  )
+
+  useEffect(() => {
+    if (isSchedulesSuccess) {
+      setSchedules(schedulesResponse.pages.map((page) => page.result).flat())
+    }
+
+  }, [isSchedulesSuccess, schedulesResponse])
+
+  useEffect(() => {
+    if (isSchedulesSuccess) {
+      const schedulesResults = schedulesResponse?.pages.map(
+        (page) => page.result
+      ).flat() ?? []
+
+      schedulesResults.forEach(scheduleResultItem => {
+        if (
+          isInitialDataReady
+          && scheduleAlreadyExists(scheduleResultItem, schedules)
+        ) {
+          notificationSound.play()
+        }
+      });
+    }
+  }, [schedules, schedulesResponse, isInitialDataReady, notificationSound, isSchedulesSuccess])
+
+  function scheduleAlreadyExists(
+    schedule: Schedule,
+    schedules: Schedule[]
+  ) {
+    return !schedules.some(({ id }) => id === schedule.id);
+  }
 
   return (
     <Tabs
@@ -369,11 +413,11 @@ function ScheduleTabs(
       </TabsList>
 
       <TabsContent value={status} className="flex flex-col flex-1">
-        {isLoading ? (
+        {isPending ? (
           <Loader label="Carregando reservas..." />
         ) : (
           <SchedulesList
-            schedulesResponse={schedulesResponse}
+            schedules={schedules}
             fetchNextPage={fetchNextPage}
             hasNextPage={hasNextPage}
           />

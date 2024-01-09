@@ -29,7 +29,10 @@ export async function GET(request: NextRequest) {
     prisma.schedule.findMany({
       skip: (page - 1) * rowsPerPage,
       take: rowsPerPage,
-      where
+      where,
+      orderBy: {
+        createdAt: 'desc'
+      }
     }),
     prisma.schedule.count({
       where

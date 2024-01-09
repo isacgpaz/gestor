@@ -18,6 +18,7 @@ export function useSchedulesMeta(
   const query = useQuery({
     queryKey: ['schedules-meta', params],
     queryFn: () => findSchedulesMeta(params),
+    refetchInterval: 1000 * 60 * 5, // 5 minutes,
     ...config
   })
 
