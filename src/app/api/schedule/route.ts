@@ -1,9 +1,9 @@
 import { dayjs } from "@/lib/dayjs";
 import { prisma } from "@/lib/prisma";
+import { getAvailableDates } from "@/modules/agenda";
 import { AvailableTimesType } from "@/types/schedule";
 import { ScheduleStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import { getAvailableDates } from "../agenda/find-available-dates/route";
 
 export async function GET(request: NextRequest) {
   const startDate = request.nextUrl.searchParams.get('startDate') ?? ''
