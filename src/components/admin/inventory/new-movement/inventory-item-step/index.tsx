@@ -156,7 +156,7 @@ export function InventoryItemStep({ user }: {
               disabled={!inventoryItem}
               isLoading={isPending}
             >
-              Concluir movimentação
+              Concluir
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           </CardFooter>
