@@ -9,27 +9,32 @@ export async function GET(request: NextRequest) {
   const page = Number(request.nextUrl.searchParams.get('page') ?? 1)
   const rowsPerPage = Number(request.nextUrl.searchParams.get('rowsPerPage') ?? 10)
   const companyId = request.nextUrl.searchParams.get('companyId')
+  const search = request.nextUrl.searchParams.get('search') ?? ''
 
   if (!companyId) {
     return NextResponse.json({}, { status: 400 })
-  }
-
-  const where = {
-    companyId,
-    type: {
-      in: type ? [type as MovementType] : undefined
-    },
-    createdAt: {
-      gte: dayjs.utc(date).startOf('day').toDate(),
-      lte: dayjs.utc(date).endOf('day').toDate(),
-    }
   }
 
   const [movements, totalMovements] = await prisma.$transaction([
     prisma.movement.findMany({
       skip: (page - 1) * rowsPerPage,
       take: rowsPerPage,
-      where,
+      where: {
+        companyId,
+        type: {
+          in: type ? [type as MovementType] : undefined
+        },
+        createdAt: {
+          gte: dayjs.utc(date).startOf('day').toDate(),
+          lte: dayjs.utc(date).endOf('day').toDate(),
+        },
+        inventoryItem: {
+          description: {
+            contains: search,
+            mode: "insensitive"
+          }
+        }
+      },
       include: {
         user: true,
         inventoryItem: {
@@ -43,7 +48,22 @@ export async function GET(request: NextRequest) {
       }
     }),
     prisma.movement.count({
-      where
+      where: {
+        companyId,
+        type: {
+          in: type ? [type as MovementType] : undefined
+        },
+        createdAt: {
+          gte: dayjs.utc(date).startOf('day').toDate(),
+          lte: dayjs.utc(date).endOf('day').toDate(),
+        },
+        inventoryItem: {
+          description: {
+            contains: search,
+            mode: "insensitive"
+          }
+        }
+      }
     })
   ])
 

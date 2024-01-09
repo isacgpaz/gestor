@@ -6,7 +6,8 @@ type MovementsProps = {
   date: string,
   companyId?: string,
   page?: number,
-  type?: MovementType
+  type?: MovementType,
+  search?: string,
 }
 
 type MovementsResponseProps = {

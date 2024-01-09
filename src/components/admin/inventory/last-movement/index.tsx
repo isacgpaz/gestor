@@ -1,11 +1,10 @@
 'use client'
 
 import { DatePicker } from "@/components/common/date-picker";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { movementType } from "@/contants/inventory";
 import { useMovements } from "@/hooks/inventory/use-movements";
@@ -14,9 +13,12 @@ import { cn } from "@/lib/utils";
 import { MovementWithItemAndUser } from "@/types/inventory";
 import { formatCurrency } from "@/utils/format-currency";
 import { formatWeight } from "@/utils/format-weight";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Company, MovementType, User } from "@prisma/client";
-import { BadgeDollarSign, ChevronDown, Filter, Loader2, Package2, PackageOpen, Ruler, Weight } from "lucide-react";
-import { useState } from "react";
+import { useDebounce } from "@uidotdev/usehooks";
+import { BadgeDollarSign, ChevronDown, Loader2, Package2, PackageOpen, Ruler, Weight } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const movementTypeOptions = [
   {
@@ -24,18 +26,41 @@ const movementTypeOptions = [
     value: '',
   },
   {
-    label: movementType[MovementType.ENTRY],
+    label: movementType[MovementType.ENTRY] + 's',
     value: MovementType.ENTRY,
   },
   {
-    label: movementType[MovementType.EGRESS],
+    label: movementType[MovementType.EGRESS] + 's',
     value: MovementType.EGRESS,
   },
 ]
 
-export function InventoryLastMovement({ user }: { user?: User & { company: Company } }) {
-  const [date, setDate] = useState<Date | undefined>(new Date())
-  const [type, setType] = useState<MovementType | ''>('')
+const formSchema = z.object({
+  search: z.string(),
+  date: z.date(),
+  type: z.enum(['', MovementType.ENTRY, MovementType.EGRESS]),
+})
+
+type FormSchema = z.infer<typeof formSchema>
+
+export function InventoryLastMovement(
+  { user }: {
+    user?: User & { company: Company }
+  }) {
+  const form = useForm<FormSchema>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      search: '',
+      date: new Date(),
+      type: '',
+    },
+  })
+
+  const search = form.watch('search')
+  const date = form.watch('date')
+  const type = form.watch('type')
+
+  const debouncedSearch = useDebounce(search, 300)
 
   return (
     <section className="mt-4">
@@ -48,48 +73,88 @@ export function InventoryLastMovement({ user }: { user?: User & { company: Compa
       </span>
 
       <div className="flex gap-2">
-        <DatePicker
-          date={date}
-          setDate={setDate}
-          label="Selecionar data"
-        />
+        <Form {...form}>
+          <form className="space-y-3 mt-4 w-full">
+            <FormField
+              control={form.control}
+              name="search"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Procurar itens..."
+                      type='search'
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button size='icon' className="flex-shrink-0">
-              <Filter className="h-4 w-4" />
-            </Button>
-          </PopoverTrigger>
+            <Collapsible className="w-full">
+              <CollapsibleTrigger className="my-1 text-sm text-slate-500 flex items-center">
+                Busca avançada
+              </CollapsibleTrigger>
 
-          <PopoverContent side="top" align="end" className="grid-cols-3">
-            <span className="text-sm text-slate-500 mb-1 block">Filtrar por:</span>
-
-            <RadioGroup
-              defaultValue={undefined}
-              value={type}
-              onValueChange={(value) => setType(value as MovementType | '')}
-            >
-              {movementTypeOptions.map((option) => (
-                <div className="flex items-center space-x-2" key={option.value}>
-                  <RadioGroupItem
-                    value={option.value}
-                    id={option.value}
+              <CollapsibleContent className="flex flex-col mt-2">
+                <div className="w-full">
+                  <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field: { value, onChange } }) => (
+                      <FormItem>
+                        <FormControl>
+                          <DatePicker
+                            date={value}
+                            setDate={(date) => {
+                              onChange(date)
+                            }}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
                   />
-
-                  <Label
-                    htmlFor={option.value}
-                    className={cn(option.value === type ? "font-medium" : "font-normal")}
-                  >
-                    {option.label}
-                  </Label>
                 </div>
-              ))}
-            </RadioGroup>
-          </PopoverContent>
-        </Popover>
+
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3 flex items-center gap-2">
+                      <FormLabel className="mt-3">Filtrar por:</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex space-y-1 gap-4"
+                        >
+                          {movementTypeOptions.map((option) => (
+                            <FormItem
+                              key={option.value}
+                              className="flex items-center space-x-2 space-y-0"
+                            >
+                              <FormControl>
+                                <RadioGroupItem value={option.value} />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                {option.label}
+                              </FormLabel>
+                            </FormItem>
+                          ))}
+                        </RadioGroup>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </CollapsibleContent>
+            </Collapsible>
+
+          </form>
+        </Form>
       </div>
 
       <LastMovementList
+        search={debouncedSearch}
         date={date}
         type={type === '' ? undefined : type}
         user={user}
@@ -99,12 +164,14 @@ export function InventoryLastMovement({ user }: { user?: User & { company: Compa
 }
 
 type LastMovementList = {
+  search?: string,
   date?: Date,
   user?: User & { company: Company },
   type?: MovementType
 }
 
 function LastMovementList({
+  search,
   date,
   user,
   type
@@ -118,6 +185,7 @@ function LastMovementList({
     type,
     date: dayjs(date).format('YYYY-MM-DD'),
     companyId: user?.company.id,
+    search
   })
 
   const movements = movementsResponse?.pages.map((page) => page.result).flat() ?? []
@@ -215,7 +283,11 @@ function MovementCard({ movement }: MovementCardProps) {
             <span className="flex gap-1">
               Quantidade movimentada: {' '}
 
-              <span className="text-slate-500 flex items-center gap-1">
+              <span className={cn(
+                "flex items-center gap-1 font-medium",
+                movement.type === MovementType.ENTRY && 'text-primary',
+                movement.type === MovementType.EGRESS && 'text-destructive',
+              )}>
                 {movement.type === MovementType.ENTRY ? '+' : '-'}
                 {movement.quantity}
               </span>
@@ -274,7 +346,6 @@ function MovementCard({ movement }: MovementCardProps) {
                   </span>
                 </span>
               </li>
-
             </ul>
           </CollapsibleContent>
         </Collapsible>

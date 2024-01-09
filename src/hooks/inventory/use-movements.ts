@@ -5,7 +5,8 @@ import { useInfiniteQuery } from "@tanstack/react-query"
 type MovementsProps = {
   date: string,
   companyId?: string,
-  type?: MovementType
+  type?: MovementType,
+  search?: string,
 }
 
 export type MovementsResponseProps = {
