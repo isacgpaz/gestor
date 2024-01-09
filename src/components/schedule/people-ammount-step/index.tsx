@@ -65,7 +65,7 @@ export function PeopleAmmountStep() {
   const totalPeopleAmmount = adultsAmmount + (kidsAmmount ?? 0)
 
   const {
-    data: availableAtMoment,
+    data: availableAtMoment = 0,
     isLoading: isAmmountAvailableToScheduleByDateLoading,
   } = useAvailableToScheduleByDate({
     companyId: company?.id,

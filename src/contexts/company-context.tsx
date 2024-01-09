@@ -1,13 +1,10 @@
 import { serverSession } from "@/lib/auth/server";
-import { findCompanyBySlug } from "@/services/company/find-company-by-slug";
 import { findWalletByUserAndCompany } from "@/services/wallet/find-by-user-and-company";
 import { Company, Wallet } from "@prisma/client";
-import { useParams } from "next/navigation";
 import { PropsWithChildren, createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 type CompanyContextProp = {
   company: Company | undefined,
-  setCompany: (company: Company | undefined) => void,
   wallet: Wallet | undefined,
   setWallet: (wallet: Wallet | undefined) => void,
   isLoading: boolean,
@@ -16,35 +13,12 @@ type CompanyContextProp = {
 
 export const CompanyContext = createContext<CompanyContextProp>({} as CompanyContextProp)
 
-export function CompanyProvider({ children }: PropsWithChildren) {
-  const [company, setCompany] = useState<Company | undefined>(undefined);
+export function CompanyProvider({
+  children,
+  company
+}: PropsWithChildren & { company?: Company }) {
   const [wallet, setWallet] = useState<Wallet | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
-
-  const params = useParams()
-  const { slug } = params
-
-  const getCompany = useCallback(async () => {
-    if (slug) {
-      setIsLoading(true)
-
-      await findCompanyBySlug({ slug: slug as string }).then(async (response) => {
-        if (response.ok) {
-          const company = await response.json() as Company
-
-          setCompany(company)
-        }
-      }).catch((e) => {
-        console.error(e)
-      }).finally(() => {
-        setIsLoading(false)
-      })
-    }
-  }, [slug])
-
-  useEffect(() => {
-    getCompany()
-  }, [getCompany])
 
   async function getCustomerId() {
     const session = await serverSession()
@@ -87,7 +61,6 @@ export function CompanyProvider({ children }: PropsWithChildren) {
 
   const value: CompanyContextProp = useMemo(() => ({
     company,
-    setCompany,
     isLoading,
     setIsLoading,
     wallet,

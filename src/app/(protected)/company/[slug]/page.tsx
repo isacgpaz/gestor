@@ -4,6 +4,7 @@ import { CompanyHeader } from "@/components/common/company-header"
 import { NavHeader } from "@/components/common/nav-header"
 import { Wallet } from "@/components/customer/wallet"
 import { CompanyProvider, useCompany } from "@/contexts/company-context"
+import { useCompanyBySlug } from "@/hooks/company/use-company-by-slug"
 import { Loader2 } from "lucide-react"
 
 function Company() {
@@ -33,9 +34,18 @@ function Company() {
   )
 }
 
-export default function CompanyPage() {
+type CompanyPageProps = {
+  params: {
+    slug: string
+  }
+}
+
+
+export default function CompanyPage({ params: { slug } }: CompanyPageProps) {
+  const { data: company } = useCompanyBySlug(slug)
+
   return (
-    <CompanyProvider>
+    <CompanyProvider company={company}>
       <Company />
     </CompanyProvider>
   )

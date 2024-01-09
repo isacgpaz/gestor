@@ -88,11 +88,10 @@ function SearchResults({
 
   if (!enabled) return null;
 
-  const result = data?.pages.map((page) => page.result).flat()
+  const result = data?.pages.map((page: any) => page.result).flat()
 
   return (
     <CommandList>
-      {/* TODO: these should have proper loading aria */}
       {isLoading && (
         <div className="p-4 text-sm">
           <Loader className='m-0' />
@@ -105,7 +104,7 @@ function SearchResults({
 
       {isError && <div className="p-4 text-sm">Algo deu errado.</div>}
 
-      {result?.map((item) => {
+      {result?.map((item: any) => {
         return (
           <CommandItem
             key={item.id}
