@@ -15,8 +15,8 @@ import { dayjs } from "@/lib/dayjs"
 import { queryClient } from "@/lib/query-client"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Company, InventoryItem, User } from "@prisma/client"
-import { Loader2, PackageOpen } from "lucide-react"
-import { useState } from "react"
+import { Loader2, PackageOpen, PackagePlus } from "lucide-react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
@@ -49,6 +49,17 @@ export function InventoryItemsListContainer(
 
   return (
     <section>
+      <div className="flex flex-col flex-1 mt-6 w-full">
+        <Button
+          size='sm'
+          className="w-fit"
+          onClick={() => onOpenChange(true)}
+        >
+          <PackagePlus className="mr-2 h-4 w-4" />
+          Criar novo item
+        </Button>
+      </div>
+
       <div className="flex gap-2">
         <Form {...form}>
           <form className="space-y-3 mt-4 w-full">
@@ -77,13 +88,18 @@ export function InventoryItemsListContainer(
         selectItemAndOpenDrawer={selectItemAndOpenDrawer}
       />
 
-      {selectedItem && (
-        <ItemDetailsDrawer
-          item={selectedItem}
-          isOpen={isOpen}
-          onOpenChange={onOpenChange}
-        />
-      )}
+      <ItemDetailsDrawer
+        item={selectedItem}
+        user={user}
+        isOpen={isOpen}
+        onOpenChange={(value) => {
+          if (!value) {
+            setSelectedItem(undefined)
+          }
+
+          onOpenChange(value)
+        }}
+      />
     </section>
   )
 }
@@ -192,12 +208,14 @@ function ItemCard({ item }: ItemCardProps) {
 }
 
 type ItemDetailsDrawerProps = {
-  item: InventoryItem,
+  user?: User & { company: Company },
+  item?: InventoryItem,
   isOpen: boolean,
   onOpenChange: (isOpen: boolean) => void
 }
 
 function ItemDetailsDrawer({
+  user,
   item,
   isOpen,
   onOpenChange
@@ -207,70 +225,95 @@ function ItemDetailsDrawer({
       <DrawerContent>
         <DrawerHeader className="flex flex-col items-center">
           <DrawerTitle className="text-2xl">
-            {item.description}
+            {item?.description ?? 'Criar novo item'}
           </DrawerTitle>
 
-          <DrawerDescription>
-            <span className="flex gap-1 text-black">
-              Quantidade em estoque: {' '}
+          {item && (
+            <DrawerDescription>
+              <span className="flex gap-1 text-black">
+                Quantidade em estoque: {' '}
 
-              <span className="text-slate-500 flex items-center gap-1">
-                {item.quantity}
+                <span className="text-slate-500 flex items-center gap-1">
+                  {item?.quantity}
+                </span>
               </span>
-            </span>
-          </DrawerDescription>
+            </DrawerDescription>
+          )}
         </DrawerHeader>
 
-        <ItemForm item={item} onOpenChange={onOpenChange} />
+        <ItemForm
+          user={user}
+          item={item}
+          onOpenChange={onOpenChange}
+        />
       </DrawerContent>
     </Drawer>
   )
 }
 
 type ItemFormProps = {
-  item: InventoryItem,
+  user?: User & { company: Company },
+  item?: InventoryItem,
   onOpenChange: (isOpen: boolean) => void
 }
 
-const formItemSchema = z.object({
-  description: z.string().min(1, 'A descrição é obrigatória.'),
-  weight: z.number({
-    invalid_type_error: 'O peso deve ser maior ou igual a 0.'
-  }).min(0, 'O peso deve ser maior ou igual a 0.')
-    .optional(),
-  cost: z.number({
-    invalid_type_error: 'O custo deve ser maior ou igual a 0.'
-  }).min(0, 'O custo deve ser maior ou igual a 0.')
-    .optional(),
-  minQuantity: z.number({
-    invalid_type_error: 'O estoque mínimo é obrigatório.'
+function getFormSchema(item?: InventoryItem) {
+  return z.object({
+    description: z.string().min(1, 'A descrição é obrigatória.'),
+    weight: z.number({
+      invalid_type_error: 'O peso deve ser maior ou igual a 0.'
+    }).min(0, 'O peso deve ser maior ou igual a 0.')
+      .optional(),
+    cost: z.number({
+      invalid_type_error: 'O custo deve ser maior ou igual a 0.'
+    }).min(0, 'O custo deve ser maior ou igual a 0.')
+      .optional(),
+    minQuantity: z.number({
+      invalid_type_error: item ? undefined : 'O estoque mínimo é obrigatório.'
+    })
+      .int(item ? undefined : 'O estoque mínimo deve ser um número inteiro.')
+      .min(0, 'O estoque mínimo deve ser maior ou igual a 0.'),
+    quantity: z.number({
+      invalid_type_error: 'A estoque mínimo é obrigatório.'
+    })
+      .int('O estoque mínimo deve ser um número inteiro.')
+      .min(0, 'O estoque mínimo deve ser maior ou igual a 0.'),
+    chamberId: z.string().min(1, 'A câmara é obrigatória.'),
+    gtin: item
+      ? z.string().optional()
+      : z.string().min(1, 'O código de barras é obrigatória.')
   })
-    .int('O estoque mínimo deve ser um número inteiro.')
-    .min(0, 'O estoque mínimo deve ser maior ou igual a 0.'),
-  chamberId: z.string().min(1, 'A câmara é obrigatória.')
-})
+}
+
+const formItemSchema = getFormSchema()
 
 type FormItemSchema = z.infer<typeof formItemSchema>
 
-function ItemForm({ item, onOpenChange }: ItemFormProps) {
+function ItemForm({
+  user,
+  item,
+  onOpenChange
+}: ItemFormProps) {
   const [isReadonly, setIsReadonly] = useState(true)
 
   const {
     data: chambersResponse
   } = useInventoryChambers({
-    companyId: item.companyId,
+    companyId: user?.company.id,
   })
 
   const chambers = chambersResponse?.pages.map((page) => page.result).flat() ?? []
 
   const form = useForm<FormItemSchema>({
-    resolver: zodResolver(formItemSchema),
+    resolver: zodResolver(getFormSchema(item)),
     defaultValues: {
-      description: item.description,
-      weight: item.weight,
-      cost: item.cost,
-      minQuantity: item.minQuantity,
-      chamberId: item.chamberId
+      description: item?.description ?? '',
+      weight: item?.weight ?? 0,
+      cost: item?.cost ?? 0,
+      minQuantity: item?.minQuantity ?? 0,
+      quantity: item?.quantity ?? 0,
+      chamberId: item?.chamberId ?? '',
+      gtin: item?.gtin ?? '',
     },
   })
 
@@ -287,28 +330,62 @@ function ItemForm({ item, onOpenChange }: ItemFormProps) {
   const isPending = isUpdateItemPending || isCreateItemPending
 
   function onSubmit(values: FormItemSchema) {
-    updateItem({
-      id: item.id,
-      chamberId: values.chamberId,
-      companyId: item.companyId,
-      cost: values.cost,
-      description: values.description,
-      gtin: item.gtin,
-      minQuantity: values.minQuantity,
-      weight: values.weight,
-    }, {
-      onSuccess() {
-        setIsReadonly(true)
+    if (item) {
+      updateItem({
+        id: item?.id,
+        chamberId: values.chamberId,
+        companyId: item?.companyId,
+        cost: values.cost,
+        description: values.description,
+        gtin: item?.gtin,
+        minQuantity: values.minQuantity,
+        weight: values.weight,
+      }, {
+        onSuccess() {
+          setIsReadonly(true)
 
-        queryClient.invalidateQueries({ queryKey: ['inventory-items'] })
+          queryClient.invalidateQueries({ queryKey: ['inventory-items'] })
 
-        toast({
-          title: 'Item atualizado com sucesso!',
-          variant: 'default'
-        })
-      }
-    })
+          toast({
+            title: 'Item atualizado com sucesso!',
+            variant: 'default'
+          })
+        }
+      })
+    } else {
+      createItem({
+        chamberId: values.chamberId,
+        companyId: user?.company.id,
+        cost: values.cost,
+        description: values.description,
+        gtin: values?.gtin,
+        minQuantity: values.minQuantity,
+        quantity: values.quantity,
+        weight: values.weight,
+      }, {
+        onSuccess() {
+          setIsReadonly(true)
+
+          queryClient.invalidateQueries({ queryKey: ['inventory-items'] })
+
+          toast({
+            title: 'Item criado com sucesso!',
+            variant: 'default'
+          })
+
+          onOpenChange(false)
+        }
+      })
+
+    }
   }
+
+  useEffect(() => {
+    if (!item) {
+      setIsReadonly(false)
+    }
+  }, [item])
+
 
   return (
     <Form {...form}>
@@ -333,12 +410,25 @@ function ItemForm({ item, onOpenChange }: ItemFormProps) {
             )}
           />
 
-          <FormItem>
-            <FormLabel>Cód. de barras</FormLabel>
-            <FormControl>
-              <Input defaultValue={item.gtin} disabled />
-            </FormControl>
-          </FormItem>
+          <FormField
+            control={form.control}
+            disabled={!!item}
+            name="gtin"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormLabel>Cód. de barras</FormLabel>
+
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="Adicionar código de barras do item"
+                    className="disabled:opacity-100"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <div className="flex gap-3 w-full">
             <FormField
@@ -385,6 +475,30 @@ function ItemForm({ item, onOpenChange }: ItemFormProps) {
               )}
             />
           </div>
+
+          {!item && (
+            <FormField
+              control={form.control}
+              disabled={isReadonly}
+              name="quantity"
+              render={({ field }) => (
+                <FormItem className="w-full">
+                  <FormLabel>Quantidade inicial</FormLabel>
+
+                  <FormControl>
+                    <Input
+                      {...field}
+                      onChange={(event) => field.onChange(event.target.valueAsNumber)}
+                      placeholder="Adicionar quantidade inicial do item"
+                      type='number'
+                      className="disabled:opacity-100"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           <FormField
             control={form.control}
