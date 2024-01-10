@@ -3,7 +3,7 @@ import { MovementType } from "@prisma/client"
 import axios from "axios"
 
 type MovementsProps = {
-  date: string,
+  date?: string,
   companyId?: string,
   page?: number,
   type?: MovementType,

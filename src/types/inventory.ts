@@ -12,3 +12,5 @@ export type MovementWithItemAndUser = Movement & {
   inventoryItem: InventoryItemWithChamber;
   user: User
 }
+
+export type CreateInventoryItem = Omit<InventoryItem, 'id' | 'createdAt' | 'updatedAt'>

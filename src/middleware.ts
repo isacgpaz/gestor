@@ -9,8 +9,6 @@ export default withAuth(
     const token = req.nextauth.token;
     const search = req.nextUrl.search
 
-    console.log(search)
-
     if (routes.public.includes(pathname) && token && !search.includes('callbackUrl')) {
       if (token?.role === UserRole.ADMIN) {
         return NextResponse.redirect(new URL(routes.protecteds.admin[0], req.url))

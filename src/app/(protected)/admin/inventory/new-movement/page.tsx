@@ -1,4 +1,4 @@
-import { InventoryNewMovement } from "@/components/admin/inventory/new-movement";
+import { InventoryNewMovement } from "@/components/admin/inventory/movements/new-movement";
 import { NavHeader } from "@/components/common/nav-header";
 import { serverSession } from "@/lib/auth/server";
 
