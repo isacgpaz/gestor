@@ -1,15 +1,15 @@
-import { findInventoryItems } from "@/services/inventory/find-items"
+import { findInventoryChambers } from "@/services/inventory/find-chambers"
 import { useInfiniteQuery } from "@tanstack/react-query"
 
-type InventoryItemsProps = {
+type InventoryChambersProps = {
   companyId?: string,
   search?: string
 }
 
-export function useInventoryItems(params: InventoryItemsProps,) {
+export function useInventoryChambers(params: InventoryChambersProps,) {
   const query = useInfiniteQuery({
-    queryKey: ['inventory-items', { params }],
-    queryFn: ({ pageParam }) => findInventoryItems({ ...params, page: pageParam + 1 }),
+    queryKey: ['inventory-chambers', { params }],
+    queryFn: ({ pageParam }) => findInventoryChambers({ ...params, page: pageParam + 1 }),
     getNextPageParam: (response) => response?.result?.length === 0 ||
       response?.result?.length >=
       response?.meta?.total

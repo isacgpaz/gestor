@@ -1,4 +1,4 @@
-import { InventoryLastMovement } from "@/components/admin/inventory/last-movement";
+import { InventoryLastMovement } from "@/components/admin/inventory/movements/last-movement";
 import { NavHeader } from "@/components/common/nav-header";
 import { Button } from "@/components/ui/button";
 import { serverSession } from "@/lib/auth/server";

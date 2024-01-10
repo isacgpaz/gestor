@@ -61,8 +61,6 @@ export function InventoryLastMovement(
   const date = form.watch('date')
   const type = form.watch('type')
 
-  console.log(date)
-
   const debouncedSearch = useDebounce(search, 300)
 
   return (

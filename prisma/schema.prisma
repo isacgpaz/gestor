@@ -163,6 +163,7 @@ model InventoryItem {
   description String
   gtin        String
   quantity    Int
+  minQuantity Int
   weight      Float
   cost        Float
   chamber     Chamber   @relation(fields: [chamberId], references: [id])
