@@ -13,6 +13,7 @@ import { useInventoryItems } from "@/hooks/inventory/use-inventory-items"
 import { useUpdateItem } from "@/hooks/inventory/use-update-item"
 import { dayjs } from "@/lib/dayjs"
 import { queryClient } from "@/lib/query-client"
+import { cn } from "@/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Company, InventoryItem, User } from "@prisma/client"
 import { Loader2, PackageOpen, PackagePlus } from "lucide-react"
@@ -224,6 +225,8 @@ function ItemDetailsDrawer({
   isOpen,
   onOpenChange
 }: ItemDetailsDrawerProps) {
+  const isBelowMinimumQuantity = Number(item?.quantity) < Number(item?.minQuantity)
+
   return (
     <Drawer open={isOpen} onOpenChange={onOpenChange}>
       <DrawerContent>
@@ -234,10 +237,16 @@ function ItemDetailsDrawer({
 
           {item && (
             <DrawerDescription>
-              <span className="flex gap-1 text-black">
+              <span className={cn(
+                "flex gap-1 text-black",
+                isBelowMinimumQuantity && 'text-destructive'
+              )}>
                 Quantidade em estoque: {' '}
 
-                <span className="text-slate-500 flex items-center gap-1">
+                <span className={cn(
+                  "text-slate-500 flex items-center gap-1",
+                  isBelowMinimumQuantity && 'text-destructive'
+                )}>
                   {item?.quantity}
                 </span>
               </span>

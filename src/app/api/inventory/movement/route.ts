@@ -141,15 +141,27 @@ export async function POST(request: NextRequest) {
     }
   })
 
+  const data = {
+    quantity: {}
+  }
+
+  if (type === MovementType.ENTRY) {
+    data.quantity = {
+      increment: quantity
+    }
+  }
+
+  if (type === MovementType.EGRESS) {
+    data.quantity = {
+      decrement: quantity
+    }
+  }
+
   await prisma.inventoryItem.update({
     where: {
       id: inventoryItemId
     },
-    data: {
-      quantity: {
-        increment: quantity
-      }
-    }
+    data
   })
 
   return NextResponse.json({ movement }, { status: 201 })
