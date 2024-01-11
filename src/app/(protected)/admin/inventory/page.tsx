@@ -1,3 +1,4 @@
+import { Chambers } from "@/components/admin/inventory/chambers";
 import { InventoryLastMovement } from "@/components/admin/inventory/movements/last-movement";
 import { NavHeader } from "@/components/common/nav-header";
 import { Button } from "@/components/ui/button";
@@ -22,9 +23,13 @@ export default async function Inventory() {
               variant='secondary'
             >
               <Link href='/admin/inventory/items'>
-                Ver itens cadastrados
+                Itens
               </Link>
             </Button>
+          </li>
+
+          <li>
+            <Chambers user={user} />
           </li>
 
           <li>
