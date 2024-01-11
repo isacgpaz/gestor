@@ -11,12 +11,10 @@ import { useCreateInventoryMovementContext } from "@/contexts/create-inventory-m
 import { useCreateMovement } from "@/hooks/inventory/use-create-movement";
 import { useInventoryItems } from "@/hooks/inventory/use-inventory-items";
 import { InventoryItemWithChamber } from "@/types/inventory";
-import { formatCurrency } from "@/utils/format-currency";
-import { formatWeight } from "@/utils/format-weight";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Company, MovementType, User } from "@prisma/client";
 import { useDebounce } from "@uidotdev/usehooks";
-import { BadgeDollarSign, Boxes, ChevronLeft, ChevronRight, Package2, Ruler, Weight } from "lucide-react";
+import { Boxes, ChevronLeft, ChevronRight, Package2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -31,11 +29,10 @@ function getFormSchema(
     .positive('A quantidade a ser movimentada deve ser um número positivo.')
 
   if (type == MovementType.EGRESS) {
-    quantityProps = quantityProps
-      .max(
-        item?.quantity ?? 0,
-        `A quantidade máxima para saída deve ser ${item?.quantity ?? 0}.`
-      )
+    quantityProps = quantityProps.max(
+      item?.quantity ?? 0,
+      `A quantidade máxima para saída deve ser ${item?.quantity ?? 0}.`
+    )
   }
 
   return z.object({
@@ -241,40 +238,6 @@ function InventoryItemInfo({
 
             <span className="text-slate-500 flex items-center gap-1">
               {inventoryItemSelected.quantity}
-            </span>
-          </span>
-        </li>
-
-        <li className="col-start-1">
-          <span className="flex gap-1">
-            <Weight className="h-4 w-4 mr-1" />
-
-            Peso: {' '}
-
-            <span className="text-slate-500 flex items-center gap-1">
-              {formatWeight(inventoryItemSelected.weight)}
-            </span>
-          </span>
-        </li>
-
-        <li>
-          <span className="flex gap-1">
-            <Ruler className="h-4 w-4 mr-1" />
-            Unidade: {' '}
-
-            <span className="text-slate-500 flex items-center gap-1">
-              {/* {inventoryItemSelected.unity} */}
-            </span>
-          </span>
-        </li>
-
-        <li className="col-start-1">
-          <span className="flex gap-1">
-            <BadgeDollarSign className="h-4 w-4 mr-1" />
-            Custo: {' '}
-
-            <span className="text-slate-500 flex items-center gap-1">
-              {formatCurrency(inventoryItemSelected.cost)}
             </span>
           </span>
         </li>
