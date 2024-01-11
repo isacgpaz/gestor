@@ -33,7 +33,7 @@ export function useSchedules({ setCount, ...params }: SchedulesProps,) {
       response?.result?.length >=
       response?.meta?.total
       ? undefined
-      : response?.meta?.page + 1,
+      : response?.meta?.page,
     initialPageParam: 0,
     refetchInterval: 1000 * 60 * 5, // 5 minutes,
   })

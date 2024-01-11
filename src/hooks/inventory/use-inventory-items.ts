@@ -14,7 +14,7 @@ export function useInventoryItems(params: InventoryItemsProps,) {
       response?.result?.length >=
       response?.meta?.total
       ? undefined
-      : response?.meta?.page + 1,
+      : response?.meta?.page,
     initialPageParam: 0
   })
 
