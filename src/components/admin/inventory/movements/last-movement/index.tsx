@@ -122,7 +122,7 @@ export function InventoryLastMovement(
                   name="type"
                   render={({ field }) => (
                     <FormItem className="space-y-3 flex items-center gap-2">
-                      <FormLabel className="mt-3">Filtrar por:</FormLabel>
+                      <FormLabel className="mt-4">Filtrar por:</FormLabel>
                       <FormControl>
                         <RadioGroup
                           onValueChange={field.onChange}
@@ -181,7 +181,8 @@ function LastMovementList({
     data: movementsResponse,
     isLoading: isMovementsLoading,
     fetchNextPage,
-    hasNextPage
+    hasNextPage,
+    isFetchingNextPage
   } = useMovements({
     type,
     date: date ? dayjs(date).format('YYYY-MM-DD') : undefined,
@@ -212,13 +213,16 @@ function LastMovementList({
         </ul>
 
         {hasNextPage && (
-          <Button
-            className="mt-4 w-fit mx-auto text-primary"
-            variant='ghost'
-            onClick={() => fetchNextPage()}
-          >
-            Carregar mais
-          </Button>
+          <div className="w-full flex items-center justify-center">
+            <Button
+              className="mt-4 w-fit text-primary"
+              variant='ghost'
+              onClick={() => fetchNextPage()}
+              isLoading={isFetchingNextPage}
+            >
+              Carregar mais
+            </Button>
+          </div>
         )}
       </>
     )

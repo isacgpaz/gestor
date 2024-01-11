@@ -119,7 +119,8 @@ function InventoryItemsList({
     data: itemsResponse,
     isLoading: isItemsLoading,
     fetchNextPage,
-    hasNextPage
+    hasNextPage,
+    isFetchingNextPage
   } = useInventoryItems({
     companyId: user?.company.id,
     search
@@ -151,13 +152,16 @@ function InventoryItemsList({
         </ul>
 
         {hasNextPage && (
-          <Button
-            className="mt-4 w-fit mx-auto text-primary"
-            variant='ghost'
-            onClick={() => fetchNextPage()}
-          >
-            Carregar mais
-          </Button>
+          <div className="w-full flex items-center justify-center">
+            <Button
+              className="mt-4 w-fit text-primary"
+              variant='ghost'
+              onClick={() => fetchNextPage()}
+              isLoading={isFetchingNextPage}
+            >
+              Carregar mais
+            </Button>
+          </div>
         )}
       </>
     )
