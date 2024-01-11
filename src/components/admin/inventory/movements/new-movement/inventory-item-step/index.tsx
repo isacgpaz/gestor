@@ -22,13 +22,30 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-const formSchema = z.object({
-  search: z.string(),
-  inventoryItem: z.any(),
-  quantity: z.number()
+function getFormSchema(
+  item?: InventoryItemWithChamber,
+  type?: MovementType
+) {
+  let quantityProps = z.number()
     .int('A quantidade a ser movimentada deve ser um número inteiro.')
-    .positive('A quantidade a ser movimentada deve ser um número positivo.'),
-})
+    .positive('A quantidade a ser movimentada deve ser um número positivo.')
+
+  if (type == MovementType.EGRESS) {
+    quantityProps = quantityProps
+      .max(
+        item?.quantity ?? 0,
+        `A quantidade máxima para saída deve ser ${item?.quantity ?? 0}.`
+      )
+  }
+
+  return z.object({
+    search: z.string(),
+    inventoryItem: z.any(),
+    quantity: quantityProps
+  })
+}
+
+const formSchema = getFormSchema()
 
 type FormSchema = z.infer<typeof formSchema>
 
@@ -49,7 +66,10 @@ export function InventoryItemStep({ user }: {
   } = useCreateMovement()
 
   const form = useForm<FormSchema>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(getFormSchema(
+      movement?.inventoryItem,
+      movement?.type
+    )),
     defaultValues: {
       search: '',
       inventoryItem: movement?.inventoryItem ?? undefined,
@@ -271,6 +291,5 @@ function InventoryItemInfo({
         </li>
       </ul>
     </div>
-
   )
 }
