@@ -62,7 +62,7 @@ export function InventoryLastMovement(
   const debouncedSearch = useDebounce(search, 300)
 
   return (
-    <section className="mt-4">
+    <section className="mt-4 px-6">
       <header className="flex">
         <h2 className="font-medium text-lg">Últimas movimentações</h2>
       </header>

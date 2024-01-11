@@ -20,6 +20,7 @@ import { Loader2, PackageOpen, PackagePlus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
+import { Chambers } from "../../chambers"
 
 const formSchema = z.object({
   search: z.string()
@@ -50,16 +51,22 @@ export function InventoryItemsListContainer(
 
   return (
     <section>
-      <div className="flex flex-col flex-1 mt-6 w-full">
-        <Button
-          size='sm'
-          className="w-fit"
-          onClick={() => onOpenChange(true)}
-        >
-          <PackagePlus className="mr-2 h-4 w-4" />
-          Criar novo item
-        </Button>
-      </div>
+      <ul className="flex gap-3 mt-6 w-full">
+        <li>
+          <Button
+            size='sm'
+            className="w-fit"
+            onClick={() => onOpenChange(true)}
+          >
+            <PackagePlus className="mr-2 h-4 w-4" />
+            Criar novo item
+          </Button>
+        </li>
+
+        <li>
+          <Chambers user={user} />
+        </li>
+      </ul>
 
       <div className="flex gap-2">
         <Form {...form}>
