@@ -272,10 +272,10 @@ function ShoppingListInventoryItemCard(
 
               <li className="text-destructive">
                 <span className="flex gap-1">
-                  Quantidade em mínima: {' '}
+                  Quantidade mínima: {' '}
 
                   <span className="flex items-center gap-1 font-medium">
-                    {inventoryItem.quantity}
+                    {inventoryItem.minQuantity}
                   </span>
                 </span>
               </li>
@@ -326,25 +326,31 @@ type ItemFormProps = {
   onOpenChange: (isOpen: boolean) => void
 }
 
-const formItemSchema = z.object({
-  cost: z.number({
-    invalid_type_error: 'O custo deve ser maior que 0.'
-  }).positive('O custo deve ser um número positivo.'),
-  newQuantity: z.number({
-    invalid_type_error: 'A quantidade deve ser maior ou igual a 1.'
-  }).min(1, 'A quantidade deve ser maior ou igual a 1.')
-    .positive('A quantidade deve ser um número positivo.'),
-})
+function getFormSchema(minQuantity?: number) {
+  return z.object({
+    newQuantity: z.number({
+      invalid_type_error: `A quantidade deve ser maior ou igual a ${minQuantity ?? 1}.`
+    }).min(minQuantity ?? 1, `A quantidade deve ser maior ou igual a ${minQuantity ?? 1}.`)
+      .positive('A quantidade deve ser um número positivo.'),
+    cost: z.number({
+      invalid_type_error: 'O custo deve ser maior que 0.'
+    }).positive('O custo deve ser um número positivo.'),
+  })
+}
 
-type FormItemSchema = z.infer<typeof formItemSchema>
+const formSchema = getFormSchema()
+
+type FormSchema = z.infer<typeof formSchema>
 
 function ItemForm({
   item,
   setShoppingList,
   onOpenChange
 }: ItemFormProps) {
-  const form = useForm<FormItemSchema>({
-    resolver: zodResolver(formItemSchema),
+  const form = useForm<FormSchema>({
+    resolver: zodResolver(getFormSchema(
+      Number(item?.minQuantity ?? 0) - Number(item?.quantity ?? 0)
+    )),
     defaultValues: {
       cost: item?.cost ?? 0,
       newQuantity: item?.newQuantity ?? 0
@@ -368,7 +374,7 @@ function ItemForm({
     )
   }
 
-  function onSubmit(values: FormItemSchema) {
+  function onSubmit(values: FormSchema) {
     if (item) {
       toogleToCart({
         ...item,
