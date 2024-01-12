@@ -370,7 +370,6 @@ function ScheduleTabs(
 
   return (
     <Tabs
-      defaultValue="account"
       className="w-full flex flex-col flex-1"
       value={status}
       onValueChange={(value) => setStatus(value as ScheduleStatus)}

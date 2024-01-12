@@ -6,7 +6,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
-import { movementType } from "@/contants/inventory";
+import { movementType } from "@/constants/inventory";
 import { useCreateInventoryMovementContext } from "@/contexts/create-inventory-movement-context";
 import { useCreateMovement } from "@/hooks/inventory/use-create-movement";
 import { useInventoryItems } from "@/hooks/inventory/use-inventory-items";

@@ -51,7 +51,6 @@ model Company {
   chamber          Chamber[]
   inventoryItem    InventoryItem[]
   movement         Movement[]
-  shoppingList     ShoppingList[]
 }
 
 model Wallet {
@@ -158,22 +157,20 @@ type ScheduleSettings {
 }
 
 model InventoryItem {
-  id             String        @id @default(auto()) @map("_id") @db.ObjectId
-  company        Company       @relation(fields: [companyId], references: [id])
-  companyId      String        @db.ObjectId
-  description    String
-  gtin           String
-  quantity       Int
-  minQuantity    Int
-  weight         Float
-  cost           Float
-  chamber        Chamber       @relation(fields: [chamberId], references: [id])
-  chamberId      String        @db.ObjectId
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  movement       Movement?
-  shoppingList   ShoppingList? @relation(fields: [shoppingListId], references: [id])
-  shoppingListId String?       @db.ObjectId
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  company     Company   @relation(fields: [companyId], references: [id])
+  companyId   String    @db.ObjectId
+  description String
+  gtin        String
+  quantity    Int
+  minQuantity Int
+  weight      Float
+  cost        Float
+  chamber     Chamber   @relation(fields: [chamberId], references: [id])
+  chamberId   String    @db.ObjectId
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  movement    Movement?
 }
 
 model Chamber {
@@ -203,14 +200,4 @@ model Movement {
 enum MovementType {
   ENTRY
   EGRESS
-}
-
-model ShoppingList {
-  id        String          @id @default(auto()) @map("_id") @db.ObjectId
-  company   Company         @relation(fields: [companyId], references: [id])
-  companyId String          @db.ObjectId
-  items     InventoryItem[]
-  newItems  String[]
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
 }

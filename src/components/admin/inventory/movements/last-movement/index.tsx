@@ -7,7 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { movementType } from "@/contants/inventory";
+import { movementType } from "@/constants/inventory";
 import { useMovements } from "@/hooks/inventory/use-movements";
 import { dayjs } from "@/lib/dayjs";
 import { cn } from "@/lib/utils";

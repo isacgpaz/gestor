@@ -1,7 +1,7 @@
 'use client'
 
 import { Card } from "@/components/ui/card"
-import { movementType } from "@/contants/inventory"
+import { movementType } from "@/constants/inventory"
 import { CreateInventoryMovementProvider, useCreateInventoryMovementContext } from "@/contexts/create-inventory-movement-context"
 import { cn } from "@/lib/utils"
 import { Company, MovementType, User } from "@prisma/client"
