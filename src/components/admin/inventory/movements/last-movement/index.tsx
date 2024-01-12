@@ -7,17 +7,15 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { movementType } from "@/contants/inventory";
+import { movementType } from "@/constants/inventory";
 import { useMovements } from "@/hooks/inventory/use-movements";
 import { dayjs } from "@/lib/dayjs";
 import { cn } from "@/lib/utils";
 import { MovementWithItemAndUser } from "@/types/inventory";
-import { formatCurrency } from "@/utils/format-currency";
-import { formatWeight } from "@/utils/format-weight";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Company, MovementType, User } from "@prisma/client";
 import { useDebounce } from "@uidotdev/usehooks";
-import { BadgeDollarSign, ChevronDown, Loader2, Package2, PackageOpen, Ruler, Weight } from "lucide-react";
+import { ChevronDown, Loader2, PackageOpen } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -64,7 +62,7 @@ export function InventoryLastMovement(
   const debouncedSearch = useDebounce(search, 300)
 
   return (
-    <section className="mt-4">
+    <section className="mt-4 px-6">
       <header className="flex">
         <h2 className="font-medium text-lg">Últimas movimentações</h2>
       </header>
@@ -124,7 +122,7 @@ export function InventoryLastMovement(
                   name="type"
                   render={({ field }) => (
                     <FormItem className="space-y-3 flex items-center gap-2">
-                      <FormLabel className="mt-3">Filtrar por:</FormLabel>
+                      <FormLabel className="mt-4">Filtrar por:</FormLabel>
                       <FormControl>
                         <RadioGroup
                           onValueChange={field.onChange}
@@ -183,7 +181,8 @@ function LastMovementList({
     data: movementsResponse,
     isLoading: isMovementsLoading,
     fetchNextPage,
-    hasNextPage
+    hasNextPage,
+    isFetchingNextPage
   } = useMovements({
     type,
     date: date ? dayjs(date).format('YYYY-MM-DD') : undefined,
@@ -214,13 +213,16 @@ function LastMovementList({
         </ul>
 
         {hasNextPage && (
-          <Button
-            className="mt-4 w-fit mx-auto text-primary"
-            variant='ghost'
-            onClick={() => fetchNextPage()}
-          >
-            Carregar mais
-          </Button>
+          <div className="w-full flex items-center justify-center">
+            <Button
+              className="mt-4 w-fit text-primary"
+              variant='ghost'
+              onClick={() => fetchNextPage()}
+              isLoading={isFetchingNextPage}
+            >
+              Carregar mais
+            </Button>
+          </div>
         )}
       </>
     )
@@ -279,14 +281,10 @@ function MovementCard({ movement }: MovementCardProps) {
       <hr className="mx-6" />
 
       <CardContent className="mt-3">
-        <h2 className="text-base font-medium">
-          Informações do item
-        </h2>
-
         <ul className="text-sm mt-2">
           <li>
             <span className="flex gap-1">
-              Descrição: {' '}
+              Item: {' '}
 
               <span className="text-slate-500 flex items-center gap-1">
                 {movement.inventoryItem.description}
@@ -309,61 +307,6 @@ function MovementCard({ movement }: MovementCardProps) {
             </span>
           </li>
         </ul>
-
-        <Collapsible>
-          <CollapsibleTrigger className="my-1 text-sm flex items-center font-medium">
-            <ChevronDown className="mr-2 h-4 w-4" strokeWidth={3} />
-            Ver detalhes
-          </CollapsibleTrigger>
-
-          <CollapsibleContent>
-            <ul className="text-black text-sm">
-              <li className="col-start-1">
-                <span className="flex gap-1">
-                  <Weight className="h-4 w-4 mr-1" />
-                  Peso: {' '}
-
-                  <span className="text-slate-500 flex items-center gap-1">
-                    {formatWeight(movement.inventoryItem.weight)}
-                  </span>
-                </span>
-              </li>
-
-              <li>
-                <span className="flex gap-1">
-                  <Ruler className="h-4 w-4 mr-1" />
-                  Unidade: {' '}
-
-                  <span className="text-slate-500 flex items-center gap-1">
-                    {/* {movement.inventoryItem.unity} */}
-                  </span>
-                </span>
-              </li>
-
-              <li className="col-start-1">
-                <span className="flex gap-1">
-                  <BadgeDollarSign className="h-4 w-4 mr-1" />
-                  Custo: {' '}
-
-                  <span className="text-slate-500 flex items-center gap-1">
-                    {formatCurrency(movement.inventoryItem.cost)}
-                  </span>
-                </span>
-              </li>
-
-              <li>
-                <span className="flex gap-1">
-                  <Package2 className="h-4 w-4 mr-1" />
-                  Câmara: {' '}
-
-                  <span className="text-slate-500 flex items-center gap-1">
-                    {movement.inventoryItem.chamber.name}
-                  </span>
-                </span>
-              </li>
-            </ul>
-          </CollapsibleContent>
-        </Collapsible>
       </CardContent>
     </Card>
   )

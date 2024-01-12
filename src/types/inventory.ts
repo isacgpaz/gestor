@@ -14,3 +14,8 @@ export type MovementWithItemAndUser = Movement & {
 }
 
 export type CreateInventoryItem = Omit<InventoryItem, 'id' | 'createdAt' | 'updatedAt'>
+
+export enum ShoppingListStatus {
+  PENDING = 'PENDING',
+  ADDED = 'ADDED',
+}

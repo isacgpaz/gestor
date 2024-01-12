@@ -6,29 +6,43 @@ import { Combobox } from "@/components/ui/combobox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
-import { movementType } from "@/contants/inventory";
+import { movementType } from "@/constants/inventory";
 import { useCreateInventoryMovementContext } from "@/contexts/create-inventory-movement-context";
 import { useCreateMovement } from "@/hooks/inventory/use-create-movement";
 import { useInventoryItems } from "@/hooks/inventory/use-inventory-items";
 import { InventoryItemWithChamber } from "@/types/inventory";
-import { formatCurrency } from "@/utils/format-currency";
-import { formatWeight } from "@/utils/format-weight";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Company, MovementType, User } from "@prisma/client";
 import { useDebounce } from "@uidotdev/usehooks";
-import { BadgeDollarSign, Boxes, ChevronLeft, ChevronRight, Package2, Ruler, Weight } from "lucide-react";
+import { Boxes, ChevronLeft, ChevronRight, Package2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-const formSchema = z.object({
-  search: z.string(),
-  inventoryItem: z.any(),
-  quantity: z.number()
+function getFormSchema(
+  item?: InventoryItemWithChamber,
+  type?: MovementType
+) {
+  let quantityProps = z.number()
     .int('A quantidade a ser movimentada deve ser um número inteiro.')
-    .positive('A quantidade a ser movimentada deve ser um número positivo.'),
-})
+    .positive('A quantidade a ser movimentada deve ser um número positivo.')
+
+  if (type == MovementType.EGRESS) {
+    quantityProps = quantityProps.max(
+      item?.quantity ?? 0,
+      `A quantidade máxima para saída deve ser ${item?.quantity ?? 0}.`
+    )
+  }
+
+  return z.object({
+    search: z.string(),
+    inventoryItem: z.any(),
+    quantity: quantityProps
+  })
+}
+
+const formSchema = getFormSchema()
 
 type FormSchema = z.infer<typeof formSchema>
 
@@ -49,7 +63,10 @@ export function InventoryItemStep({ user }: {
   } = useCreateMovement()
 
   const form = useForm<FormSchema>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(getFormSchema(
+      movement?.inventoryItem,
+      movement?.type
+    )),
     defaultValues: {
       search: '',
       inventoryItem: movement?.inventoryItem ?? undefined,
@@ -225,40 +242,6 @@ function InventoryItemInfo({
           </span>
         </li>
 
-        <li className="col-start-1">
-          <span className="flex gap-1">
-            <Weight className="h-4 w-4 mr-1" />
-
-            Peso: {' '}
-
-            <span className="text-slate-500 flex items-center gap-1">
-              {formatWeight(inventoryItemSelected.weight)}
-            </span>
-          </span>
-        </li>
-
-        <li>
-          <span className="flex gap-1">
-            <Ruler className="h-4 w-4 mr-1" />
-            Unidade: {' '}
-
-            <span className="text-slate-500 flex items-center gap-1">
-              {/* {inventoryItemSelected.unity} */}
-            </span>
-          </span>
-        </li>
-
-        <li className="col-start-1">
-          <span className="flex gap-1">
-            <BadgeDollarSign className="h-4 w-4 mr-1" />
-            Custo: {' '}
-
-            <span className="text-slate-500 flex items-center gap-1">
-              {formatCurrency(inventoryItemSelected.cost)}
-            </span>
-          </span>
-        </li>
-
         <li>
           <span className="flex gap-1">
             <Package2 className="h-4 w-4 mr-1" />
@@ -271,6 +254,5 @@ function InventoryItemInfo({
         </li>
       </ul>
     </div>
-
   )
 }

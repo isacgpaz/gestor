@@ -13,12 +13,14 @@ import { useInventoryItems } from "@/hooks/inventory/use-inventory-items"
 import { useUpdateItem } from "@/hooks/inventory/use-update-item"
 import { dayjs } from "@/lib/dayjs"
 import { queryClient } from "@/lib/query-client"
+import { cn } from "@/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Company, InventoryItem, User } from "@prisma/client"
 import { Loader2, PackageOpen, PackagePlus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
+import { Chambers } from "../../chambers"
 
 const formSchema = z.object({
   search: z.string()
@@ -49,16 +51,22 @@ export function InventoryItemsListContainer(
 
   return (
     <section>
-      <div className="flex flex-col flex-1 mt-6 w-full">
-        <Button
-          size='sm'
-          className="w-fit"
-          onClick={() => onOpenChange(true)}
-        >
-          <PackagePlus className="mr-2 h-4 w-4" />
-          Criar novo item
-        </Button>
-      </div>
+      <ul className="flex gap-3 mt-6 w-full">
+        <li>
+          <Button
+            size='sm'
+            className="w-fit"
+            onClick={() => onOpenChange(true)}
+          >
+            <PackagePlus className="mr-2 h-4 w-4" />
+            Criar novo item
+          </Button>
+        </li>
+
+        <li>
+          <Chambers user={user} />
+        </li>
+      </ul>
 
       <div className="flex gap-2">
         <Form {...form}>
@@ -119,7 +127,8 @@ function InventoryItemsList({
     data: itemsResponse,
     isLoading: isItemsLoading,
     fetchNextPage,
-    hasNextPage
+    hasNextPage,
+    isFetchingNextPage
   } = useInventoryItems({
     companyId: user?.company.id,
     search
@@ -151,13 +160,16 @@ function InventoryItemsList({
         </ul>
 
         {hasNextPage && (
-          <Button
-            className="mt-4 w-fit mx-auto text-primary"
-            variant='ghost'
-            onClick={() => fetchNextPage()}
-          >
-            Carregar mais
-          </Button>
+          <div className="w-full flex items-center justify-center">
+            <Button
+              className="mt-4 w-fit text-primary"
+              variant='ghost'
+              onClick={() => fetchNextPage()}
+              isLoading={isFetchingNextPage}
+            >
+              Carregar mais
+            </Button>
+          </div>
         )}
       </>
     )
@@ -220,6 +232,8 @@ function ItemDetailsDrawer({
   isOpen,
   onOpenChange
 }: ItemDetailsDrawerProps) {
+  const isBelowMinimumQuantity = Number(item?.quantity) < Number(item?.minQuantity)
+
   return (
     <Drawer open={isOpen} onOpenChange={onOpenChange}>
       <DrawerContent>
@@ -230,10 +244,16 @@ function ItemDetailsDrawer({
 
           {item && (
             <DrawerDescription>
-              <span className="flex gap-1 text-black">
+              <span className={cn(
+                "flex gap-1 text-black",
+                isBelowMinimumQuantity && 'text-destructive'
+              )}>
                 Quantidade em estoque: {' '}
 
-                <span className="text-slate-500 flex items-center gap-1">
+                <span className={cn(
+                  "text-slate-500 flex items-center gap-1",
+                  isBelowMinimumQuantity && 'text-destructive'
+                )}>
                   {item?.quantity}
                 </span>
               </span>

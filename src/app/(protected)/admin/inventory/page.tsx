@@ -10,11 +10,21 @@ export default async function Inventory() {
   const user = session?.user
 
   return (
-    <div className="p-6 flex flex-col min-h-screen">
-      <NavHeader backHref="/admin/dashboard" title="Estoque" />
+    <div className="py-6 flex flex-col min-h-screen">
+      <div className="px-6">
+        <NavHeader backHref="/admin/dashboard" title="Estoque" />
+      </div>
 
       <div className="flex flex-col flex-1 mt-6 w-full">
-        <ul className="flex gap-3 w-full">
+        <ul className="flex gap-3 w-full px-6 whitespace-nowrap overflow-auto scrollbar-hide">
+          <li>
+            <Button asChild size='sm' className="w-fit">
+              <Link href='/admin/inventory/new-movement'>
+                Nova movimentação
+              </Link>
+            </Button>
+          </li>
+
           <li>
             <Button
               asChild size='sm'
@@ -22,15 +32,19 @@ export default async function Inventory() {
               variant='secondary'
             >
               <Link href='/admin/inventory/items'>
-                Ver itens cadastrados
+                Itens
               </Link>
             </Button>
           </li>
 
           <li>
-            <Button asChild size='sm' className="w-fit">
-              <Link href='/admin/inventory/new-movement'>
-                Nova movimentação
+            <Button
+              asChild size='sm'
+              className="w-fit text-primary"
+              variant='secondary'
+            >
+              <Link href='/admin/inventory/shopping-list'>
+                Lista de compras
               </Link>
             </Button>
           </li>

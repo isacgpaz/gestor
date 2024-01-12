@@ -246,12 +246,14 @@ function ScheduleListItem({ schedule }: { schedule: Schedule }) {
 type SchedulesListProps = {
   schedules?: Schedule[],
   hasNextPage?: boolean,
+  isFetchingNextPage?: boolean,
   fetchNextPage?: () => void
 }
 
 function SchedulesList({
   schedules,
   hasNextPage,
+  isFetchingNextPage,
   fetchNextPage
 }: SchedulesListProps) {
   if (schedules?.length) {
@@ -266,13 +268,16 @@ function SchedulesList({
         </ul>
 
         {hasNextPage && (
-          <Button
-            className="mt-4 w-fit mx-auto text-primary"
-            variant='ghost'
-            onClick={fetchNextPage}
-          >
-            Carregar mais
-          </Button>
+          <div className="w-full flex items-center justify-center">
+            <Button
+              className="mt-4 w-fit text-primary"
+              variant='ghost'
+              onClick={fetchNextPage}
+              isLoading={isFetchingNextPage}
+            >
+              Carregar mais
+            </Button>
+          </div>
         )}
       </>
     )
@@ -303,6 +308,7 @@ function ScheduleTabs(
     isSuccess: isSchedulesSuccess,
     fetchNextPage,
     hasNextPage,
+    isFetchingNextPage
   } = useSchedules({
     status,
     startDate: dayjs(date).format('YYYY-MM-DD'),
@@ -364,7 +370,6 @@ function ScheduleTabs(
 
   return (
     <Tabs
-      defaultValue="account"
       className="w-full flex flex-col flex-1"
       value={status}
       onValueChange={(value) => setStatus(value as ScheduleStatus)}
@@ -418,6 +423,7 @@ function ScheduleTabs(
             schedules={schedules}
             fetchNextPage={fetchNextPage}
             hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
           />
         )}
       </TabsContent>
