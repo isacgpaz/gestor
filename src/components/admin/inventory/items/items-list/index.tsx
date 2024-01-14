@@ -198,10 +198,14 @@ function ItemCard({ item }: ItemCardProps) {
 
       <CardContent className="flex items-center justify-between gap-4">
         <div className="text-sm flex flex-col">
-          <span className="flex gap-1">
+          <span className={cn(
+            "flex gap-1 text-slate-500",
+            item.quantity === item.minQuantity && "text-orange-500",
+            item.quantity < item.minQuantity && "text-destructive",
+          )}>
             Quantidade em estoque: {' '}
 
-            <span className="text-slate-500 flex items-center gap-1">
+            <span className="flex items-center gap-1">
               {item.quantity}
             </span>
           </span>
@@ -232,8 +236,6 @@ function ItemDetailsDrawer({
   isOpen,
   onOpenChange
 }: ItemDetailsDrawerProps) {
-  const isBelowMinimumQuantity = Number(item?.quantity) < Number(item?.minQuantity)
-
   return (
     <Drawer open={isOpen} onOpenChange={onOpenChange}>
       <DrawerContent>
@@ -245,16 +247,14 @@ function ItemDetailsDrawer({
           {item && (
             <DrawerDescription>
               <span className={cn(
-                "flex gap-1 text-black",
-                isBelowMinimumQuantity && 'text-destructive'
+                "flex gap-1 text-slate-500",
+                item.quantity === item.minQuantity && "text-orange-500",
+                item.quantity < item.minQuantity && "text-destructive",
               )}>
                 Quantidade em estoque: {' '}
 
-                <span className={cn(
-                  "text-slate-500 flex items-center gap-1",
-                  isBelowMinimumQuantity && 'text-destructive'
-                )}>
-                  {item?.quantity}
+                <span className="flex items-center gap-1">
+                  {item.quantity}
                 </span>
               </span>
             </DrawerDescription>
