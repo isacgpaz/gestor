@@ -7,6 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { movementType } from "@/constants/inventory";
+import { translatedUnitsOfMeasurement } from "@/constants/units-of-measurement";
 import { useCreateInventoryMovementContext } from "@/contexts/create-inventory-movement-context";
 import { useCreateMovement } from "@/hooks/inventory/use-create-movement";
 import { useInventoryItems } from "@/hooks/inventory/use-inventory-items";
@@ -14,7 +15,7 @@ import { InventoryItemWithChamber } from "@/types/inventory";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Company, MovementType, User } from "@prisma/client";
 import { useDebounce } from "@uidotdev/usehooks";
-import { Boxes, ChevronLeft, ChevronRight, Package2 } from "lucide-react";
+import { Boxes, ChevronLeft, ChevronRight, Package2, Ruler } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -238,6 +239,17 @@ function InventoryItemInfo({
 
             <span className="text-slate-500 flex items-center gap-1">
               {inventoryItemSelected.currentInventory}
+            </span>
+          </span>
+        </li>
+
+        <li>
+          <span className="flex gap-1">
+            <Ruler className="h-4 w-4 mr-1" />
+            Unidade de medida: {' '}
+
+            <span className="text-slate-500 flex items-center gap-1">
+              {translatedUnitsOfMeasurement[inventoryItemSelected.unitOfMeasurement]}
             </span>
           </span>
         </li>

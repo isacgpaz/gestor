@@ -7,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
-import { unitsOfMeasurement } from "@/constants/units-of-measurement"
+import { translatedUnitsOfMeasurement } from "@/constants/units-of-measurement"
 import { useCreateItem } from "@/hooks/inventory/use-create-item"
 import { useInventoryChambers } from "@/hooks/inventory/use-inventory-chambers"
 import { useInventoryItems } from "@/hooks/inventory/use-inventory-items"
@@ -301,6 +301,15 @@ const formItemSchema = z.object({
 
 type FormItemSchema = z.infer<typeof formItemSchema>
 
+const unitOfMeasurementOptions = [
+  UnitOfMeasurement.UNIT,
+  UnitOfMeasurement.GRAM,
+  UnitOfMeasurement.MILLIGRAM,
+  UnitOfMeasurement.KILOGRAM,
+  UnitOfMeasurement.MILLILITER,
+  UnitOfMeasurement.LITER,
+]
+
 function ItemForm({
   user,
   item,
@@ -461,12 +470,12 @@ function ItemForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {unitsOfMeasurement.map((unit) => (
+                      {unitOfMeasurementOptions.map((unit) => (
                         <SelectItem
-                          key={unit.value}
-                          value={unit.value}
+                          key={unit}
+                          value={unit}
                         >
-                          {unit.label}
+                          {translatedUnitsOfMeasurement[unit]}
                         </SelectItem>
                       ))}
                     </SelectContent>
