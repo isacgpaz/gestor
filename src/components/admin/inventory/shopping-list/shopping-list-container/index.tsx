@@ -192,6 +192,7 @@ function ConfirmListEntry({
       cart: addedShoppingList.map((item) => ({
         inventoryItemId: item.id,
         quantity: item.newQuantity,
+        cost: item.cost,
       })),
       userId: user?.id,
     }, {

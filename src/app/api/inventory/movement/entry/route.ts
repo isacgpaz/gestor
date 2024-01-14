@@ -73,7 +73,8 @@ export async function POST(request: NextRequest) {
     const data = {
       quantity: {
         increment: item.quantity
-      }
+      },
+      cost: item.cost
     }
 
     await prisma.inventoryItem.update({
