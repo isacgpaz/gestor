@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   })
 
   const inventoryItemsBelowMinQuantity = inventoryItems.filter(
-    (inventoryItem) => inventoryItem.quantity <= inventoryItem.minQuantity
+    (inventoryItem) => inventoryItem.currentInventory <= inventoryItem.minInventory
   )
 
   return NextResponse.json(

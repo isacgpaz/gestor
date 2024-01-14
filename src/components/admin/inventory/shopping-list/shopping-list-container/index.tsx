@@ -350,20 +350,20 @@ function ShoppingListInventoryItemCard(
                   Quantidade em estoque: {' '}
 
                   <span className="text-slate-500 flex items-center gap-1">
-                    {inventoryItem.quantity}
+                    {inventoryItem.currentInventory}
                   </span>
                 </span>
               </li>
 
               <li className={cn(
-                inventoryItem.quantity === inventoryItem.minQuantity && "text-orange-500",
-                inventoryItem.quantity < inventoryItem.minQuantity && "text-destructive",
+                inventoryItem.currentInventory === inventoryItem.minInventory && "text-orange-500",
+                inventoryItem.currentInventory < inventoryItem.minInventory && "text-destructive",
               )}>
                 <span className="flex gap-1">
                   Quantidade mínima: {' '}
 
                   <span className="flex items-center gap-1 font-medium">
-                    {inventoryItem.minQuantity}
+                    {inventoryItem.minInventory}
                   </span>
                 </span>
               </li>
@@ -437,7 +437,7 @@ function ItemForm({
 }: ItemFormProps) {
   const form = useForm<FormSchema>({
     resolver: zodResolver(getFormSchema(
-      Number(item?.minQuantity ?? 0) - Number(item?.quantity ?? 0)
+      Number(item?.minInventory ?? 0) - Number(item?.currentInventory ?? 0)
     )),
     defaultValues: {
       cost: item?.cost ?? 0,

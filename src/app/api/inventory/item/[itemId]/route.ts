@@ -18,8 +18,8 @@ export async function PUT(
     chamberId,
     description,
     gtin,
-    minQuantity,
-    weight,
+    minInventory,
+    unitOfMeasurement,
     cost,
   } = await request.json()
 
@@ -51,8 +51,8 @@ export async function PUT(
       cost,
       description,
       gtin,
-      weight,
-      minQuantity,
+      minInventory,
+      unitOfMeasurement,
       chamberId,
       companyId,
     }

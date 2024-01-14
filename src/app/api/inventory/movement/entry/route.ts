@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
   for (const item of cart) {
     const data = {
-      quantity: {
+      currentInventory: {
         increment: item.quantity
       },
       cost: item.cost
