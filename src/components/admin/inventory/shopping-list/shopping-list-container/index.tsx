@@ -1,5 +1,6 @@
 'use client'
 
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,12 +9,15 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/components/ui/use-toast"
+import { useEntryInventory } from "@/hooks/inventory/use-entry-movement"
 import { useShoppingList } from "@/hooks/inventory/use-shopping-list"
+import { queryClient } from "@/lib/query-client"
+import { cn } from "@/lib/utils"
 import { ShoppingListStatus } from "@/types/inventory"
 import { formatCurrency } from "@/utils/format-currency"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Company, InventoryItem, User } from "@prisma/client"
-import { Loader2, PackageOpen, ShoppingCart } from "lucide-react"
+import { Check, Loader2, PackageOpen, ShoppingCart } from "lucide-react"
 import { Dispatch, SetStateAction, useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -69,6 +73,7 @@ export function ShoppingListContainer({ user }: {
 
       <div className="mt-2 flex flex-1">
         <ShoppingListTabs
+          user={user}
           pendingShoppingList={pendingShoppingList}
           addedShoppingList={addedShoppingList}
           isLoading={isLoading}
@@ -94,6 +99,7 @@ export function ShoppingListContainer({ user }: {
 }
 
 type ShoppingListTabsProps = {
+  user?: User & { company: Company }
   addedShoppingList: CartInventoryItem[],
   pendingShoppingList: CartInventoryItem[],
   isLoading: boolean,
@@ -101,6 +107,7 @@ type ShoppingListTabsProps = {
 }
 
 function ShoppingListTabs({
+  user,
   pendingShoppingList,
   addedShoppingList,
   isLoading,
@@ -145,6 +152,13 @@ function ShoppingListTabs({
       </TabsContent>
 
       <TabsContent value={ShoppingListStatus.ADDED} className="flex flex-col flex-1">
+        {addedShoppingList.length ? (
+          <ConfirmListEntry
+            user={user}
+            addedShoppingList={addedShoppingList}
+          />
+        ) : null}
+
         <ShoppingList
           type={ShoppingListStatus.ADDED}
           shoppingList={addedShoppingList}
@@ -153,6 +167,78 @@ function ShoppingListTabs({
         />
       </TabsContent>
     </Tabs>
+  )
+}
+
+type ConfirmListEntryProps = {
+  user?: User & { company: Company },
+  addedShoppingList: CartInventoryItem[],
+}
+
+function ConfirmListEntry({
+  user,
+  addedShoppingList
+}: ConfirmListEntryProps) {
+  const [isOpen, onOpenChange] = useState(false)
+
+  const {
+    mutate: entryInventory,
+    isPending,
+  } = useEntryInventory()
+
+  function onConfirmEntry() {
+    entryInventory({
+      companyId: user?.company.id,
+      cart: addedShoppingList.map((item) => ({
+        inventoryItemId: item.id,
+        quantity: item.newQuantity,
+        cost: item.cost,
+      })),
+      userId: user?.id,
+    }, {
+      onSuccess() {
+        queryClient.invalidateQueries({
+          queryKey: ['shopping-list']
+        })
+
+        toast({
+          title: 'Entrada de estoque realizada com sucesso.',
+          variant: 'success'
+        })
+
+        onOpenChange(false)
+      }
+    })
+  }
+
+  return (
+    <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
+      <AlertDialogTrigger asChild>
+        <Button>
+          <Check className="w-4 h-4 mr-2" />
+          Finalizar lista
+        </Button>
+      </AlertDialogTrigger>
+
+      <AlertDialogContent className="max-w-sm">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Confirmar finalização de lista?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Os itens adicionados serão incluídos ao estoque.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <Button
+            onClick={onConfirmEntry}
+            isLoading={isPending}
+          >
+            Confirmar
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }
 
@@ -265,17 +351,20 @@ function ShoppingListInventoryItemCard(
                   Quantidade em estoque: {' '}
 
                   <span className="text-slate-500 flex items-center gap-1">
-                    {inventoryItem.quantity}
+                    {inventoryItem.currentInventory}
                   </span>
                 </span>
               </li>
 
-              <li className="text-destructive">
+              <li className={cn(
+                inventoryItem.currentInventory === inventoryItem.minInventory && "text-orange-500",
+                inventoryItem.currentInventory < inventoryItem.minInventory && "text-destructive",
+              )}>
                 <span className="flex gap-1">
                   Quantidade mínima: {' '}
 
                   <span className="flex items-center gap-1 font-medium">
-                    {inventoryItem.minQuantity}
+                    {inventoryItem.minInventory}
                   </span>
                 </span>
               </li>
@@ -349,7 +438,7 @@ function ItemForm({
 }: ItemFormProps) {
   const form = useForm<FormSchema>({
     resolver: zodResolver(getFormSchema(
-      Number(item?.minQuantity ?? 0) - Number(item?.quantity ?? 0)
+      Number(item?.minInventory ?? 0) - Number(item?.currentInventory ?? 0)
     )),
     defaultValues: {
       cost: item?.cost ?? 0,
@@ -387,11 +476,13 @@ function ItemForm({
 
       if (item.isAddedToCart) {
         toast({
-          title: 'Item removido do carrinho.'
+          title: 'Item removido do carrinho.',
+          variant: 'success'
         })
       } else {
         toast({
-          title: 'Item adicionado ao carrinho.'
+          title: 'Item adicionado ao carrinho.',
+          variant: 'success'
         })
       }
     }

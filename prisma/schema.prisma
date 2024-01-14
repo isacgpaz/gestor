@@ -157,20 +157,29 @@ type ScheduleSettings {
 }
 
 model InventoryItem {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  company     Company   @relation(fields: [companyId], references: [id])
-  companyId   String    @db.ObjectId
-  description String
-  gtin        String
-  quantity    Int
-  minQuantity Int
-  weight      Float
-  cost        Float
-  chamber     Chamber   @relation(fields: [chamberId], references: [id])
-  chamberId   String    @db.ObjectId
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  movement    Movement?
+  id                String            @id @default(auto()) @map("_id") @db.ObjectId
+  company           Company           @relation(fields: [companyId], references: [id])
+  companyId         String            @db.ObjectId
+  description       String
+  gtin              String
+  currentInventory  Float
+  minInventory      Float
+  unitOfMeasurement UnitOfMeasurement
+  cost              Float
+  chamber           Chamber           @relation(fields: [chamberId], references: [id])
+  chamberId         String            @db.ObjectId
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  movement          Movement?
+}
+
+enum UnitOfMeasurement {
+  UNIT
+  GRAM
+  MILLIGRAM
+  KILOGRAM
+  MILLILITER
+  LITER
 }
 
 model Chamber {

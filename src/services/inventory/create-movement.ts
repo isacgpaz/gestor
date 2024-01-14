@@ -6,7 +6,7 @@ type CreateMovementParams = {
   inventoryItemId: string,
   userId: string,
   companyId: string,
-  quantity: number,
+  currentInventory: number,
 }
 
 export const createMovement = (params: CreateMovementParams) =>

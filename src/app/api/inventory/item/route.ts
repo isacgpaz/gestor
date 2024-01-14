@@ -59,9 +59,9 @@ export async function POST(request: NextRequest) {
     chamberId,
     description,
     gtin,
-    quantity,
-    minQuantity,
-    weight,
+    currentInventory,
+    minInventory,
+    unitOfMeasurement,
     cost,
   } = await request.json()
 
@@ -92,9 +92,9 @@ export async function POST(request: NextRequest) {
       cost,
       description,
       gtin,
-      weight,
-      quantity,
-      minQuantity,
+      currentInventory,
+      minInventory,
+      unitOfMeasurement,
       chamberId,
       companyId,
     }

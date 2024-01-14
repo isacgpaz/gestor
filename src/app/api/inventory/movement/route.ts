@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
   const {
     type,
     inventoryItemId,
-    quantity,
+    currentInventory,
     userId,
     companyId
   } = await request.json()
@@ -135,25 +135,25 @@ export async function POST(request: NextRequest) {
     data: {
       type,
       inventoryItemId,
-      quantity,
+      quantity: currentInventory,
       userId,
       companyId
     }
   })
 
   const data = {
-    quantity: {}
+    currentInventory: {}
   }
 
   if (type === MovementType.ENTRY) {
-    data.quantity = {
-      increment: quantity
+    data.currentInventory = {
+      increment: currentInventory
     }
   }
 
   if (type === MovementType.EGRESS) {
-    data.quantity = {
-      decrement: quantity
+    data.currentInventory = {
+      decrement: currentInventory
     }
   }
 

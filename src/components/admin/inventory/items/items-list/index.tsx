@@ -7,6 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
+import { translatedUnitsOfMeasurement } from "@/constants/units-of-measurement"
 import { useCreateItem } from "@/hooks/inventory/use-create-item"
 import { useInventoryChambers } from "@/hooks/inventory/use-inventory-chambers"
 import { useInventoryItems } from "@/hooks/inventory/use-inventory-items"
@@ -15,7 +16,7 @@ import { dayjs } from "@/lib/dayjs"
 import { queryClient } from "@/lib/query-client"
 import { cn } from "@/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Company, InventoryItem, User } from "@prisma/client"
+import { Company, InventoryItem, UnitOfMeasurement, User } from "@prisma/client"
 import { Loader2, PackageOpen, PackagePlus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
@@ -198,11 +199,15 @@ function ItemCard({ item }: ItemCardProps) {
 
       <CardContent className="flex items-center justify-between gap-4">
         <div className="text-sm flex flex-col">
-          <span className="flex gap-1">
+          <span className={cn(
+            "flex gap-1 text-slate-500",
+            item.currentInventory === item.minInventory && "text-orange-500",
+            item.currentInventory < item.minInventory && "text-destructive",
+          )}>
             Quantidade em estoque: {' '}
 
-            <span className="text-slate-500 flex items-center gap-1">
-              {item.quantity}
+            <span className="flex items-center gap-1">
+              {item.currentInventory}
             </span>
           </span>
 
@@ -232,8 +237,6 @@ function ItemDetailsDrawer({
   isOpen,
   onOpenChange
 }: ItemDetailsDrawerProps) {
-  const isBelowMinimumQuantity = Number(item?.quantity) < Number(item?.minQuantity)
-
   return (
     <Drawer open={isOpen} onOpenChange={onOpenChange}>
       <DrawerContent>
@@ -245,16 +248,14 @@ function ItemDetailsDrawer({
           {item && (
             <DrawerDescription>
               <span className={cn(
-                "flex gap-1 text-black",
-                isBelowMinimumQuantity && 'text-destructive'
+                "flex gap-1 text-slate-500",
+                item.currentInventory === item.minInventory && "text-orange-500",
+                item.currentInventory < item.minInventory && "text-destructive",
               )}>
                 Quantidade em estoque: {' '}
 
-                <span className={cn(
-                  "text-slate-500 flex items-center gap-1",
-                  isBelowMinimumQuantity && 'text-destructive'
-                )}>
-                  {item?.quantity}
+                <span className="flex items-center gap-1">
+                  {item.currentInventory}
                 </span>
               </span>
             </DrawerDescription>
@@ -277,37 +278,37 @@ type ItemFormProps = {
   onOpenChange: (isOpen: boolean) => void
 }
 
-function getFormSchema(item?: InventoryItem) {
-  return z.object({
-    description: z.string().min(1, 'A descrição é obrigatória.'),
-    weight: z.number({
-      invalid_type_error: 'O peso deve ser maior ou igual a 0.'
-    }).min(0, 'O peso deve ser maior ou igual a 0.')
-      .optional(),
-    cost: z.number({
-      invalid_type_error: 'O custo deve ser maior ou igual a 0.'
-    }).min(0, 'O custo deve ser maior ou igual a 0.')
-      .optional(),
-    minQuantity: z.number({
-      invalid_type_error: item ? undefined : 'O estoque mínimo é obrigatório.'
-    })
-      .int(item ? undefined : 'O estoque mínimo deve ser um número inteiro.')
-      .min(0, 'O estoque mínimo deve ser maior ou igual a 0.'),
-    quantity: z.number({
-      invalid_type_error: 'A estoque mínimo é obrigatório.'
-    })
-      .int('O estoque mínimo deve ser um número inteiro.')
-      .min(0, 'O estoque mínimo deve ser maior ou igual a 0.'),
-    chamberId: z.string().min(1, 'A câmara é obrigatória.'),
-    gtin: item
-      ? z.string().optional()
-      : z.string().min(1, 'O código de barras é obrigatória.')
+const formItemSchema = z.object({
+  description: z.string().min(1, 'A descrição é obrigatória.'),
+  cost: z.number({
+    invalid_type_error: 'O custo deve ser maior ou igual a 0.'
+  }).min(0, 'O custo deve ser maior ou igual a 0.')
+    .optional(),
+  minInventory: z.number({
+    invalid_type_error: 'O estoque mínimo é obrigatório.'
   })
-}
-
-const formItemSchema = getFormSchema()
+    .int('O estoque mínimo deve ser um número inteiro.')
+    .min(0, 'O estoque mínimo deve ser maior ou igual a 0.'),
+  currentInventory: z.number({
+    invalid_type_error: 'A estoque mínimo é obrigatório.'
+  })
+    .int('O estoque mínimo deve ser um número inteiro.')
+    .min(0, 'O estoque mínimo deve ser maior ou igual a 0.'),
+  chamberId: z.string().min(1, 'A câmara é obrigatória.'),
+  unitOfMeasurement: z.nativeEnum(UnitOfMeasurement),
+  gtin: z.string().min(1, 'O código de barras é obrigatória.')
+})
 
 type FormItemSchema = z.infer<typeof formItemSchema>
+
+const unitOfMeasurementOptions = [
+  UnitOfMeasurement.UNIT,
+  UnitOfMeasurement.GRAM,
+  UnitOfMeasurement.MILLIGRAM,
+  UnitOfMeasurement.KILOGRAM,
+  UnitOfMeasurement.MILLILITER,
+  UnitOfMeasurement.LITER,
+]
 
 function ItemForm({
   user,
@@ -325,15 +326,15 @@ function ItemForm({
   const chambers = chambersResponse?.pages.map((page) => page.result).flat() ?? []
 
   const form = useForm<FormItemSchema>({
-    resolver: zodResolver(getFormSchema(item)),
+    resolver: zodResolver(formItemSchema),
     defaultValues: {
       description: item?.description ?? '',
-      weight: item?.weight ?? 0,
       cost: item?.cost ?? 0,
-      minQuantity: item?.minQuantity ?? 0,
-      quantity: item?.quantity ?? 0,
+      minInventory: item?.minInventory ?? 0,
+      currentInventory: item?.currentInventory ?? 0,
       chamberId: item?.chamberId ?? '',
       gtin: item?.gtin ?? '',
+      unitOfMeasurement: item?.unitOfMeasurement ?? UnitOfMeasurement.UNIT,
     },
   })
 
@@ -358,8 +359,7 @@ function ItemForm({
         cost: values.cost,
         description: values.description,
         gtin: item?.gtin,
-        minQuantity: values.minQuantity,
-        weight: values.weight,
+        minInventory: values.minInventory,
       }, {
         onSuccess() {
           setIsReadonly(true)
@@ -368,7 +368,7 @@ function ItemForm({
 
           toast({
             title: 'Item atualizado com sucesso!',
-            variant: 'default'
+            variant: 'success'
           })
         }
       })
@@ -379,9 +379,9 @@ function ItemForm({
         cost: values.cost,
         description: values.description,
         gtin: values?.gtin,
-        minQuantity: values.minQuantity,
-        quantity: values.quantity,
-        weight: values.weight,
+        minInventory: values.minInventory,
+        currentInventory: values.currentInventory,
+        unitOfMeasurement: values.unitOfMeasurement
       }, {
         onSuccess() {
           setIsReadonly(true)
@@ -390,7 +390,7 @@ function ItemForm({
 
           toast({
             title: 'Item criado com sucesso!',
-            variant: 'default'
+            variant: 'success'
           })
 
           onOpenChange(false)
@@ -404,8 +404,9 @@ function ItemForm({
     if (!item) {
       setIsReadonly(false)
     }
-  }, [item])
 
+    form.reset()
+  }, [form, item])
 
   return (
     <Form {...form}>
@@ -453,21 +454,32 @@ function ItemForm({
           <div className="flex gap-3 w-full">
             <FormField
               control={form.control}
-              disabled={isReadonly}
-              name="weight"
+              disabled={!!item}
+              name="unitOfMeasurement"
               render={({ field }) => (
                 <FormItem className="w-full">
-                  <FormLabel>Peso (kg)</FormLabel>
-
-                  <FormControl>
-                    <Input
-                      {...field}
-                      onChange={(event) => field.onChange(event.target.valueAsNumber)}
-                      placeholder="Adicionar peso do item"
-                      type='number'
-                      className="disabled:opacity-100"
-                    />
-                  </FormControl>
+                  <FormLabel>Unidade de medida</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled={!!item}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="disabled:opacity-100 disabled:bg-zinc-50">
+                        <SelectValue placeholder="Selecionar unidade" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {unitOfMeasurementOptions.map((unit) => (
+                        <SelectItem
+                          key={unit}
+                          value={unit}
+                        >
+                          {translatedUnitsOfMeasurement[unit]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -479,7 +491,7 @@ function ItemForm({
               name="cost"
               render={({ field }) => (
                 <FormItem className="w-full">
-                  <FormLabel>Custo (R$)</FormLabel>
+                  <FormLabel>Custo unitário (R$)</FormLabel>
 
                   <FormControl>
                     <Input
@@ -500,16 +512,16 @@ function ItemForm({
             <FormField
               control={form.control}
               disabled={isReadonly}
-              name="quantity"
+              name="currentInventory"
               render={({ field }) => (
                 <FormItem className="w-full">
-                  <FormLabel>Quantidade inicial</FormLabel>
+                  <FormLabel>Estoque inicial</FormLabel>
 
                   <FormControl>
                     <Input
                       {...field}
                       onChange={(event) => field.onChange(event.target.valueAsNumber)}
-                      placeholder="Adicionar quantidade inicial do item"
+                      placeholder="Adicionar estoque inicial do item"
                       type='number'
                       className="disabled:opacity-100"
                     />
@@ -523,7 +535,7 @@ function ItemForm({
           <FormField
             control={form.control}
             disabled={isReadonly}
-            name="minQuantity"
+            name="minInventory"
             render={({ field }) => (
               <FormItem className="w-full">
                 <FormLabel>Estoque mínimo</FormLabel>
@@ -532,7 +544,7 @@ function ItemForm({
                   <Input
                     {...field}
                     onChange={(event) => field.onChange(event.target.valueAsNumber)}
-                    placeholder="Adicionar quantidade mínima do item"
+                    placeholder="Adicionar estoque mínimo para o item"
                     type='number'
                     className="disabled:opacity-100"
                   />
@@ -555,7 +567,7 @@ function ItemForm({
                   disabled={isReadonly}
                 >
                   <FormControl>
-                    <SelectTrigger className="disabled:opacity-100">
+                    <SelectTrigger className="disabled:opacity-100 disabled:bg-zinc-50">
                       <SelectValue placeholder="Selecionar câmara" />
                     </SelectTrigger>
                   </FormControl>
@@ -581,13 +593,13 @@ function ItemForm({
             type='button'
             variant='outline'
             onClick={(event) => {
+              if (!item || isReadonly) {
+                onOpenChange(false)
+              }
+
               event.preventDefault()
               setIsReadonly(true)
               form.reset()
-
-              if (isReadonly) {
-                onOpenChange(false)
-              }
             }}
           >
             {isReadonly ? 'Fechar' : 'Cancelar'}

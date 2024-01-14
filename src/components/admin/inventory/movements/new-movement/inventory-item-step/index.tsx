@@ -7,6 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { movementType } from "@/constants/inventory";
+import { translatedUnitsOfMeasurement } from "@/constants/units-of-measurement";
 import { useCreateInventoryMovementContext } from "@/contexts/create-inventory-movement-context";
 import { useCreateMovement } from "@/hooks/inventory/use-create-movement";
 import { useInventoryItems } from "@/hooks/inventory/use-inventory-items";
@@ -14,7 +15,7 @@ import { InventoryItemWithChamber } from "@/types/inventory";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Company, MovementType, User } from "@prisma/client";
 import { useDebounce } from "@uidotdev/usehooks";
-import { Boxes, ChevronLeft, ChevronRight, Package2 } from "lucide-react";
+import { Boxes, ChevronLeft, ChevronRight, Package2, Ruler } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -30,15 +31,15 @@ function getFormSchema(
 
   if (type == MovementType.EGRESS) {
     quantityProps = quantityProps.max(
-      item?.quantity ?? 0,
-      `A quantidade máxima para saída deve ser ${item?.quantity ?? 0}.`
+      item?.currentInventory ?? 0,
+      `A quantidade máxima para saída deve ser ${item?.currentInventory ?? 0}.`
     )
   }
 
   return z.object({
     search: z.string(),
     inventoryItem: z.any(),
-    quantity: quantityProps
+    currentInventory: quantityProps
   })
 }
 
@@ -70,7 +71,7 @@ export function InventoryItemStep({ user }: {
     defaultValues: {
       search: '',
       inventoryItem: movement?.inventoryItem ?? undefined,
-      quantity: 0
+      currentInventory: 0
     },
   })
 
@@ -81,7 +82,7 @@ export function InventoryItemStep({ user }: {
     if (movement && user) {
       createMovement({
         inventoryItemId: values.inventoryItem.id,
-        quantity: values.quantity,
+        currentInventory: values.currentInventory,
         type: movement.type!,
         userId: user.id!,
         companyId: user.company.id!
@@ -89,7 +90,7 @@ export function InventoryItemStep({ user }: {
         onSuccess() {
           toast({
             title: `${movement.type === MovementType.ENTRY ? 'Entrada em' : 'Saída de'} estoque realizada com sucesso!`,
-            variant: 'default'
+            variant: 'success'
           })
 
           router.push('/admin/inventory')
@@ -133,7 +134,7 @@ export function InventoryItemStep({ user }: {
 
                 <FormField
                   control={form.control}
-                  name="quantity"
+                  name="currentInventory"
                   defaultValue={0}
                   render={({ field }) => (
                     <FormItem>
@@ -237,7 +238,18 @@ function InventoryItemInfo({
             Quantidade em estoque: {' '}
 
             <span className="text-slate-500 flex items-center gap-1">
-              {inventoryItemSelected.quantity}
+              {inventoryItemSelected.currentInventory}
+            </span>
+          </span>
+        </li>
+
+        <li>
+          <span className="flex gap-1">
+            <Ruler className="h-4 w-4 mr-1" />
+            Unidade de medida: {' '}
+
+            <span className="text-slate-500 flex items-center gap-1">
+              {translatedUnitsOfMeasurement[inventoryItemSelected.unitOfMeasurement]}
             </span>
           </span>
         </li>

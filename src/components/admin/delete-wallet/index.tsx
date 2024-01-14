@@ -28,7 +28,7 @@ export function DeleteWallet() {
 
         toast({
           title: 'Carteira excluída com sucesso!',
-          variant: 'default'
+          variant: 'success'
         })
       }).catch((e) => {
         toast({
