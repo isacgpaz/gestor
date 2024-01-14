@@ -46,7 +46,7 @@ export function WalletSettings({ company }: WalletSettingsProps) {
     }).then(() => {
       toast({
         title: 'Configurações da carteira de fidelidade atualizadas com sucesso!',
-        variant: 'default',
+        variant: 'success'
       })
 
       setIsReadonly(true)

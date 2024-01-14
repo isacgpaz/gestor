@@ -202,7 +202,8 @@ function ConfirmListEntry({
         })
 
         toast({
-          title: 'Entrada de estoque realizada com sucesso.'
+          title: 'Entrada de estoque realizada com sucesso.',
+          variant: 'success'
         })
 
         onOpenChange(false)
@@ -475,11 +476,13 @@ function ItemForm({
 
       if (item.isAddedToCart) {
         toast({
-          title: 'Item removido do carrinho.'
+          title: 'Item removido do carrinho.',
+          variant: 'success'
         })
       } else {
         toast({
-          title: 'Item adicionado ao carrinho.'
+          title: 'Item adicionado ao carrinho.',
+          variant: 'success'
         })
       }
     }

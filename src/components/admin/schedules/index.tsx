@@ -198,7 +198,7 @@ function ScheduleListItem({ schedule }: { schedule: Schedule }) {
 
                 toast({
                   title: 'A reserva foi marcada como pronta.',
-                  variant: 'default',
+                  variant: 'success'
                 })
               }
             })}
@@ -227,7 +227,7 @@ function ScheduleListItem({ schedule }: { schedule: Schedule }) {
                 toast({
                   title: 'A reserva foi marcada como finalizada.',
                   description: 'O horário da reserva agora está disponível para um novo agendamento.',
-                  variant: 'default',
+                  variant: 'success'
                 })
               }
 

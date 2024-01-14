@@ -91,7 +91,7 @@ function ChamberForm({ user }: {
 
         toast({
           title: "Câmara adicionada com sucesso!",
-          variant: 'default'
+          variant: 'success'
         })
       }
     })

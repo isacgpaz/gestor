@@ -89,7 +89,7 @@ export function InventoryItemStep({ user }: {
         onSuccess() {
           toast({
             title: `${movement.type === MovementType.ENTRY ? 'Entrada em' : 'Saída de'} estoque realizada com sucesso!`,
-            variant: 'default'
+            variant: 'success'
           })
 
           router.push('/admin/inventory')

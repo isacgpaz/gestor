@@ -43,7 +43,7 @@ export function IdentifyUser() {
         toast({
           title: 'Carteira atualizada com sucesso!',
           description: `+${points} pts adicionados para ${selectedWallet.customer.name}`,
-          variant: 'default',
+          variant: 'success',
         })
 
         setIsIdentifyUserModalOpen(false)

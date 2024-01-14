@@ -359,7 +359,7 @@ function ItemForm({
 
           toast({
             title: 'Item atualizado com sucesso!',
-            variant: 'default'
+            variant: 'success'
           })
         }
       })
@@ -381,7 +381,7 @@ function ItemForm({
 
           toast({
             title: 'Item criado com sucesso!',
-            variant: 'default'
+            variant: 'success'
           })
 
           onOpenChange(false)
