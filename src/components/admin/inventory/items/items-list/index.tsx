@@ -581,13 +581,13 @@ function ItemForm({
             type='button'
             variant='outline'
             onClick={(event) => {
+              if (!item || isReadonly) {
+                onOpenChange(false)
+              }
+
               event.preventDefault()
               setIsReadonly(true)
               form.reset()
-
-              if (isReadonly) {
-                onOpenChange(false)
-              }
             }}
           >
             {isReadonly ? 'Fechar' : 'Cancelar'}
