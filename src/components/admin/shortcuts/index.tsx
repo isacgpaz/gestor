@@ -13,10 +13,12 @@ const shortcuts = [
   <Link href='/admin/inventory' key='inventory'>
     <ShortcutItem icon={Package} />
   </Link>,
-  <ShortcutItem icon={MenuSquare} key='menu' disabled />,
+  <Link href='/admin/catalog' key='menu' >
+    <ShortcutItem icon={MenuSquare} />
+  </Link>,
   <Link href='/admin/settings' key='settings'>
     <ShortcutItem icon={Settings} />
-  </Link>,
+  </Link>
 ]
 
 function ShortcutsList() {

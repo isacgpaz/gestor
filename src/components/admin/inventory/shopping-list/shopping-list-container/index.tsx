@@ -4,7 +4,7 @@ import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescript
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
+import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -23,8 +23,8 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 type CartInventoryItem = InventoryItem & {
-  cost: number,
   isAddedToCart: boolean,
+  newCost: number,
   newQuantity: number
 }
 
@@ -51,7 +51,7 @@ export function ShoppingListContainer({ user }: {
       data?.map((inventoryItem) => ({
         ...inventoryItem,
         isAddedToCart: false,
-        cost: 0,
+        newCost: 0,
         newQuantity: 0
       })) ?? []
     )
@@ -192,7 +192,7 @@ function ConfirmListEntry({
       cart: addedShoppingList.map((item) => ({
         inventoryItemId: item.id,
         quantity: item.newQuantity,
-        cost: item.cost,
+        cost: item.newCost,
       })),
       userId: user?.id,
     }, {
@@ -329,7 +329,7 @@ function ShoppingListInventoryItemCard(
                   Valor unitário: {' '}
 
                   <span className="text-slate-500 flex items-center gap-1">
-                    {formatCurrency(inventoryItem.cost)}
+                    {formatCurrency(inventoryItem.newCost)}
                   </span>
                 </span>
               </li>
@@ -339,13 +339,23 @@ function ShoppingListInventoryItemCard(
                   Valor total: {' '}
 
                   <span className="text-slate-500 flex items-center gap-1">
-                    {formatCurrency(inventoryItem.newQuantity * inventoryItem.cost)}
+                    {formatCurrency(inventoryItem.newQuantity * inventoryItem.newCost)}
                   </span>
                 </span>
               </li>
             </>
           ) : (
             <>
+              <li>
+                <span className="flex gap-1">
+                  Último preço: {' '}
+
+                  <span className="text-slate-500 flex items-center gap-1">
+                    {formatCurrency(inventoryItem.cost)}
+                  </span>
+                </span>
+              </li>
+
               <li>
                 <span className="flex gap-1">
                   Quantidade em estoque: {' '}
@@ -397,6 +407,16 @@ function AddItemToCartDrawer({
           <DrawerTitle className="text-2xl">
             {item?.description}
           </DrawerTitle>
+
+          <DrawerDescription>
+            <span className="flex gap-1 text-slate-500">
+              Último preço: {' '}
+
+              <span className="flex items-center gap-1">
+                {formatCurrency(item?.cost ?? 0)}
+              </span>
+            </span>
+          </DrawerDescription>
         </DrawerHeader>
 
         <ItemForm
@@ -441,7 +461,7 @@ function ItemForm({
       Number(item?.minInventory ?? 0) - Number(item?.currentInventory ?? 0)
     )),
     defaultValues: {
-      cost: item?.cost ?? 0,
+      cost: item?.newCost ?? 0,
       newQuantity: item?.newQuantity ?? 0
     },
   })

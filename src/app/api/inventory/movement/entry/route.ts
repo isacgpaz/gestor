@@ -14,10 +14,6 @@ export async function POST(request: NextRequest) {
     companyId
   } = await request.json()
 
-  const {
-
-  } = cart
-
   const inventoryItems = await prisma.inventoryItem.findMany({
     where: {
       id: {
