@@ -22,15 +22,15 @@ import { z } from "zod";
 const movementTypeOptions = [
   {
     label: 'Todas',
-    value: '',
+    id: '',
   },
   {
     label: movementType[MovementType.ENTRY] + 's',
-    value: MovementType.ENTRY,
+    id: MovementType.ENTRY,
   },
   {
     label: movementType[MovementType.EGRESS] + 's',
-    value: MovementType.EGRESS,
+    id: MovementType.EGRESS,
   },
 ]
 
@@ -131,11 +131,11 @@ export function InventoryLastMovement(
                         >
                           {movementTypeOptions.map((option) => (
                             <FormItem
-                              key={option.value}
+                              key={option.id}
                               className="flex items-center space-x-2 space-y-0"
                             >
                               <FormControl>
-                                <RadioGroupItem value={option.value} />
+                                <RadioGroupItem value={option.id} />
                               </FormControl>
                               <FormLabel className="font-normal">
                                 {option.label}
