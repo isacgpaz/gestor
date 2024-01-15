@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { CatalogGroup } from "@prisma/client"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
@@ -16,6 +17,9 @@ export async function GET(request: NextRequest) {
         contains: search,
         mode: "insensitive"
       }
+    },
+    orderBy: {
+      order: 'asc'
     }
   })
 
@@ -63,3 +67,50 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json(catalogGroupCreated, { status: 201 })
 }
+
+export async function PATCH(request: NextRequest) {
+  const {
+    groups,
+    companyId
+  } = await request.json()
+
+  const company = await prisma.company.findUnique({
+    where: { id: companyId },
+  })
+
+  if (!company) {
+    return NextResponse.json(
+      { message: 'Empresa não encontrada.' },
+      { status: 404 }
+    )
+  }
+
+  const catalogGroups = await prisma.catalogGroup.findMany({
+    where: {
+      id: {
+        in: groups.map((item: CatalogGroup) => item.id)
+      }
+    },
+  })
+
+  if (catalogGroups.length !== groups.length) {
+    return NextResponse.json(
+      { message: 'Um ou mais grupos não foram encontrados.' },
+      { status: 404 }
+    )
+  }
+
+  for (const item of groups) {
+    await prisma.catalogGroup.update({
+      where: {
+        id: item.id
+      },
+      data: {
+        order: item.order
+      }
+    })
+  }
+
+  return NextResponse.json({ status: 204 })
+}
+
