@@ -5,7 +5,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useCatalogGroups } from "@/hooks/catalog/use-catalog-groups"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Company, User } from "@prisma/client"
 import { useDebounce } from "@uidotdev/usehooks"
 import { Filter } from "lucide-react"
 import { useForm } from "react-hook-form"
@@ -45,7 +47,9 @@ const formSchema = z.object({
 
 type FormSchema = z.infer<typeof formSchema>
 
-export function ProductsList() {
+export function ProductsList({ user }: {
+  user?: User & { company: Company }
+}) {
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -58,6 +62,10 @@ export function ProductsList() {
   const groups = form.watch('groups')
 
   const debouncedSearch = useDebounce(search, 300)
+
+  const { data: catalogGroups } = useCatalogGroups({
+    companyId: user?.company?.id
+  })
 
   return (
     <section className="mt-4 px-6">
@@ -101,7 +109,7 @@ export function ProductsList() {
                       <FormItem>
                         <FormLabel className="text-sm">Filtrar por grupo:</FormLabel>
 
-                        {items.map((item) => (
+                        {catalogGroups?.map((item) => (
                           <FormField
                             key={item.id}
                             control={form.control}
@@ -127,7 +135,7 @@ export function ProductsList() {
                                     />
                                   </FormControl>
                                   <FormLabel className="font-normal">
-                                    {item.label}
+                                    {item.name}
                                   </FormLabel>
                                 </FormItem>
                               )

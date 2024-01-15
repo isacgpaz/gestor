@@ -169,7 +169,7 @@ function GroupsForm({ user }: {
         onSubmit={form.handleSubmit(onSubmit)}
         className="w-full flex items-center justify-center"
       >
-        <div className="flex max-w-md mx-auto w-full items-end space-x-2">
+        <div className="flex max-w-sm mx-auto w-full items-end space-x-2">
           <FormField
             control={form.control}
             name="name"
@@ -252,12 +252,12 @@ function GroupsTable({
 
   if (orderedGroups?.length) {
     return (
-      <div className="max-w-md mx-auto w-full mt-6 overflow-auto max-h-[450px]">
+      <div className="max-w-sm mx-auto w-full mt-6 overflow-auto max-h-[450px]">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[40px]">Ordem</TableHead>
               <TableHead>Grupo</TableHead>
-              <TableHead className="w-[100px]">Ordem</TableHead>
 
               {!isReadonly && (
                 <TableHead className="w-[60px]">Movimentar</TableHead>
@@ -268,8 +268,8 @@ function GroupsTable({
           <TableBody>
             {orderedGroups.map((group, index) => (
               <TableRow key={group.id}>
-                <TableCell>{group.name}</TableCell>
                 <TableCell>{index + 1}</TableCell>
+                <TableCell>{group.name}</TableCell>
 
                 {!isReadonly && (
                   <TableCell className="flex gap-4">

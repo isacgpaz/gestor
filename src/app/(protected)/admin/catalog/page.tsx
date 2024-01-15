@@ -31,7 +31,7 @@ export default async function CatalogPage() {
           </li>
         </ul>
 
-        <ProductsList />
+        <ProductsList user={user} />
       </div>
     </div>
   )
