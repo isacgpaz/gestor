@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { CatalogGroup } from "@prisma/client"
+import { CatalogCategory } from "@prisma/client"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({}, { status: 400 })
   }
 
-  const catalogGroups = await prisma.catalogGroup.findMany({
+  const catalogCategories = await prisma.catalogCategory.findMany({
     where: {
       companyId,
       name: {
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     }
   })
 
-  return NextResponse.json(catalogGroups, { status: 200 })
+  return NextResponse.json(catalogCategories, { status: 200 })
 }
 
 export async function POST(request: NextRequest) {
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const catalogGroups = await prisma.catalogGroup.findMany({
+  const catalogCategories = await prisma.catalogCategory.findMany({
     where: {
       companyId
     }
@@ -51,13 +51,13 @@ export async function POST(request: NextRequest) {
 
   let lastOrder = 0;
 
-  for (const catalogGroup of catalogGroups) {
-    if (catalogGroup.order > lastOrder) {
-      lastOrder = catalogGroup.order;
+  for (const catalogCategory of catalogCategories) {
+    if (catalogCategory.order > lastOrder) {
+      lastOrder = catalogCategory.order;
     }
   }
 
-  const catalogGroupCreated = await prisma.catalogGroup.create({
+  const catalogCategoryCreated = await prisma.catalogCategory.create({
     data: {
       companyId,
       name,
@@ -65,12 +65,12 @@ export async function POST(request: NextRequest) {
     }
   })
 
-  return NextResponse.json(catalogGroupCreated, { status: 201 })
+  return NextResponse.json(catalogCategoryCreated, { status: 201 })
 }
 
 export async function PATCH(request: NextRequest) {
   const {
-    groups,
+    categories,
     companyId
   } = await request.json()
 
@@ -85,23 +85,23 @@ export async function PATCH(request: NextRequest) {
     )
   }
 
-  const catalogGroups = await prisma.catalogGroup.findMany({
+  const catalogCategories = await prisma.catalogCategory.findMany({
     where: {
       id: {
-        in: groups.map((item: CatalogGroup) => item.id)
+        in: categories.map((item: CatalogCategory) => item.id)
       }
     },
   })
 
-  if (catalogGroups.length !== groups.length) {
+  if (catalogCategories.length !== categories.length) {
     return NextResponse.json(
-      { message: 'Um ou mais grupos não foram encontrados.' },
+      { message: 'Ums ou mais categorias não foram encontradas.' },
       { status: 404 }
     )
   }
 
-  for (const item of groups) {
-    await prisma.catalogGroup.update({
+  for (const item of categories) {
+    await prisma.catalogCategory.update({
       where: {
         id: item.id
       },

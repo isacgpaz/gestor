@@ -5,40 +5,13 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { useCatalogGroups } from "@/hooks/catalog/use-catalog-groups"
+import { useCatalogCategories } from "@/hooks/catalog/use-catalog-categories"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Company, User } from "@prisma/client"
 import { useDebounce } from "@uidotdev/usehooks"
 import { Filter } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
-const items = [
-  {
-    id: "recents",
-    label: "Recents",
-  },
-  {
-    id: "home",
-    label: "Home",
-  },
-  {
-    id: "applications",
-    label: "Applications",
-  },
-  {
-    id: "desktop",
-    label: "Desktop",
-  },
-  {
-    id: "downloads",
-    label: "Downloads",
-  },
-  {
-    id: "documents",
-    label: "Documents",
-  },
-] as const
 
 const formSchema = z.object({
   search: z.string().optional(),
@@ -63,7 +36,7 @@ export function ProductsList({ user }: {
 
   const debouncedSearch = useDebounce(search, 300)
 
-  const { data: catalogGroups } = useCatalogGroups({
+  const { data: catalogCategories } = useCatalogCategories({
     companyId: user?.company?.id
   })
 
@@ -109,7 +82,7 @@ export function ProductsList({ user }: {
                       <FormItem>
                         <FormLabel className="text-sm">Filtrar por grupo:</FormLabel>
 
-                        {catalogGroups?.map((item) => (
+                        {catalogCategories?.map((item) => (
                           <FormField
                             key={item.id}
                             control={form.control}

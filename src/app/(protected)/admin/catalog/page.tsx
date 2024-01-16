@@ -1,4 +1,4 @@
-import { CatalogGroups } from "@/components/admin/catalog/groups";
+import { CatalogCategories } from "@/components/admin/catalog/categories";
 import { ProductsList } from "@/components/admin/catalog/products/products-list";
 import { NavHeader } from "@/components/common/nav-header";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ export default async function CatalogPage() {
           </li>
 
           <li>
-            <CatalogGroups user={user} />
+            <CatalogCategories user={user} />
           </li>
         </ul>
 

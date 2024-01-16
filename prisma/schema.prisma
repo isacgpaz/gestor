@@ -51,7 +51,7 @@ model Company {
   chamber          Chamber[]
   inventoryItem    InventoryItem[]
   movement         Movement[]
-  catalogGroup     CatalogGroup[]
+  catalogCategory  CatalogCategory[]
 }
 
 model Wallet {
@@ -212,7 +212,7 @@ enum MovementType {
   EGRESS
 }
 
-model CatalogGroup {
+model CatalogCategory {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
   company   Company  @relation(fields: [companyId], references: [id])
