@@ -17,6 +17,7 @@ import { queryClient } from "@/lib/query-client"
 import { cn } from "@/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Company, InventoryItem, UnitOfMeasurement, User } from "@prisma/client"
+import { useDebounce } from "@uidotdev/usehooks"
 import { Loader2, PackageOpen, PackagePlus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
@@ -44,6 +45,7 @@ export function InventoryItemsListContainer(
   })
 
   const search = form.watch('search')
+  const deboucedSearch = useDebounce(search, 300)
 
   function selectItemAndOpenDrawer(item: InventoryItem | undefined) {
     setSelectedItem(item)
@@ -92,7 +94,7 @@ export function InventoryItemsListContainer(
       </div>
 
       <InventoryItemsList
-        search={search}
+        search={deboucedSearch}
         user={user}
         selectItemAndOpenDrawer={selectItemAndOpenDrawer}
       />
@@ -200,13 +202,13 @@ function ItemCard({ item }: ItemCardProps) {
       <CardContent className="flex items-center justify-between gap-4">
         <div className="text-sm flex flex-col">
           <span className={cn(
-            "flex gap-1 text-slate-500",
+            "flex gap-1",
             item.currentInventory === item.minInventory && "text-orange-500",
             item.currentInventory < item.minInventory && "text-destructive",
           )}>
             Quantidade em estoque: {' '}
 
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1 text-slate-500">
               {item.currentInventory}
             </span>
           </span>

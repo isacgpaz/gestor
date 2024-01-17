@@ -51,7 +51,8 @@ model Company {
   chamber          Chamber[]
   inventoryItem    InventoryItem[]
   movement         Movement[]
-  catalogGroup     CatalogGroup[]
+  catalogCategory  CatalogCategory[]
+  product          Product[]
 }
 
 model Wallet {
@@ -212,12 +213,26 @@ enum MovementType {
   EGRESS
 }
 
-model CatalogGroup {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+model CatalogCategory {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
   name      String
-  company   Company  @relation(fields: [companyId], references: [id])
-  companyId String   @db.ObjectId
-  order     Int      @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  company   Company   @relation(fields: [companyId], references: [id])
+  companyId String    @db.ObjectId
+  order     Int       @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  product   Product[]
+}
+
+model Product {
+  id          String          @id @default(auto()) @map("_id") @db.ObjectId
+  company     Company         @relation(fields: [companyId], references: [id])
+  companyId   String          @db.ObjectId
+  category    CatalogCategory @relation(fields: [categoryId], references: [id])
+  categoryId  String          @db.ObjectId
+  name        String
+  description String?
+  cost        Float
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 }
