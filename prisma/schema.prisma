@@ -53,6 +53,7 @@ model Company {
   movement         Movement[]
   catalogCategory  CatalogCategory[]
   product          Product[]
+  catalogVariant   CatalogVariant[]
 }
 
 model Wallet {
@@ -224,6 +225,21 @@ model CatalogCategory {
   product   Product[]
 }
 
+model CatalogVariant {
+  id         String                   @id @default(auto()) @map("_id") @db.ObjectId
+  company    Company                  @relation(fields: [companyId], references: [id])
+  companyId  String                   @db.ObjectId
+  name       String
+  properties CatalogVariantProperty[]
+}
+
+model CatalogVariantProperty {
+  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  catalogVariant   CatalogVariant? @relation(fields: [catalogVariantId], references: [id])
+  catalogVariantId String?         @db.ObjectId
+}
+
 model Product {
   id          String          @id @default(auto()) @map("_id") @db.ObjectId
   company     Company         @relation(fields: [companyId], references: [id])
@@ -233,6 +249,17 @@ model Product {
   name        String
   description String?
   cost        Float
+  variant     ProductVariant?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+}
+
+type ProductVariant {
+  catalogVariantId String                   @db.ObjectId
+  properties       ProductVariantProperty[]
+}
+
+type ProductVariantProperty {
+  catalogVariantPropertyId String
+  value                    String
 }

@@ -240,9 +240,9 @@ function CategoriesForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="w-full flex items-center justify-center"
+        className="w-full max-w-xs mx-auto flex items-center justify-center"
       >
-        <div className="flex max-w-sm mx-auto w-full items-end space-x-2">
+        <div className="flex w-full items-end space-x-2">
           <FormField
             control={form.control}
             name="name"
@@ -350,7 +350,7 @@ function CategoriesTable({
   if (orderedCategories?.length) {
     return (
       <div className={cn(
-        "max-w-sm mx-auto w-full mt-6 overflow-auto max-h-[450px]",
+        "max-w-xs mx-auto w-full mt-6 overflow-auto max-h-[450px]",
         isCategoryUpdateEnabled && 'opacity-50'
       )}>
         <Table>
@@ -488,65 +488,6 @@ function DeleteCategory({ category }: { category: CatalogCategory }) {
           <Button
             variant='destructive'
             onClick={onDeleteCategory}
-            isLoading={isPending}
-          >
-            Sim, excluir
-          </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-
-  )
-}
-
-function UpdateCategory({ category }: { category: CatalogCategory }) {
-  const [open, onOpenChange] = useState(false)
-
-  const {
-    mutate: updateCategory,
-    isPending
-  } = useDeleteCategory()
-
-  function onUpdateCategory() {
-    updateCategory(category.id, {
-      onSuccess() {
-        onOpenChange(false)
-
-        queryClient.invalidateQueries({
-          queryKey: ['catalog-categories']
-        })
-
-        toast({
-          title: 'Categoria excluída com sucesso.',
-          variant: 'success'
-        })
-      }
-    })
-  }
-
-  return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogTrigger className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent hover:bg-accent w-full text-destructive">
-        <Trash className="mr-2 h-4 w-4" />
-        <span className="text-sm">Excluir</span>
-      </AlertDialogTrigger>
-
-      <AlertDialogContent className="max-w-xs">
-        <AlertDialogHeader>
-          <AlertDialogTitle>
-            Tem certeza que deseja excluir esta categoria?
-          </AlertDialogTitle>
-
-          <AlertDialogDescription>
-            Essa ação não poderá ser desfeita.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-
-          <Button
-            variant='destructive'
-            onClick={onUpdateCategory}
             isLoading={isPending}
           >
             Sim, excluir
