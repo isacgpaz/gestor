@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
@@ -20,6 +21,7 @@ import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { CatalogCategories } from "../../categories"
+import { CatalogSettings } from "../../settings"
 
 type ProductWithCategory = Product & { category: CatalogCategory }
 
@@ -71,6 +73,10 @@ export function ProductsListContainer({
 
         <li>
           <CatalogCategories user={user} />
+        </li>
+
+        <li>
+          <CatalogSettings user={user} />
         </li>
       </ul>
 
@@ -430,7 +436,7 @@ function ProductForm({
                   >
                     <FormControl>
                       <SelectTrigger className="disabled:opacity-100 disabled:bg-zinc-50">
-                        <SelectValue placeholder="Selecionar categoria do produto" />
+                        <SelectValue placeholder="Selecionar categoria" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -471,6 +477,48 @@ function ProductForm({
               )}
             />
           </div>
+
+          <Collapsible>
+            <CollapsibleTrigger className="text-primary text-sm">
+              Habilitar variações
+            </CollapsibleTrigger>
+
+            <CollapsibleContent className="p-4 border rounded-md mt-2">
+              <FormField
+                control={form.control}
+                disabled={isReadonly}
+                name="categoryId"
+                render={({ field }) => (
+                  <FormItem className="w-full">
+                    <FormLabel>Variante</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      disabled={isReadonly}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="disabled:opacity-100 disabled:bg-zinc-50">
+                          <SelectValue placeholder="Selecionar categoria do produto" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories?.map((category) => (
+                          <SelectItem
+                            key={category.id}
+                            value={category.id}
+                          >
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CollapsibleContent>
+          </Collapsible>
+
         </div>
 
         <DrawerFooter className="flex-row gap-3 justify-end items-end px-8 mt-6">
