@@ -260,6 +260,6 @@ type ProductVariant {
 }
 
 type ProductVariantProperty {
-  key   String
-  value String
+  catalogVariantPropertyId String
+  value                    String
 }

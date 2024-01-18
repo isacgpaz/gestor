@@ -181,7 +181,7 @@ function VariantsForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="w-full flex flex-col items-center justify-center"
+        className="w-full max-w-xs mx-auto flex flex-col items-center justify-center"
       >
         <ScrollArea className="h-[300px] w-full">
           <div className="flex flex-col max-w-sm mx-auto space-y-4">
@@ -258,7 +258,8 @@ function VariantsForm({
             </div>
           </div>
         </ScrollArea>
-        <DrawerFooter className="flex-row gap-3 justify-between items-end px-6 mt-6 w-full">
+
+        <DrawerFooter className="flex-row gap-3 justify-end items-center mt-6 px-0 w-full">
           <Button
             type='button'
             variant='outline'

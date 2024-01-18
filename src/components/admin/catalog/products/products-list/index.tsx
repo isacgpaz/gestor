@@ -2,16 +2,21 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
 import { useCatalogCategories } from "@/hooks/catalog/use-catalog-categories"
+import { useCatalogVariants } from "@/hooks/catalog/use-catalog-variants"
 import { useProducts } from "@/hooks/catalog/use-products"
 import { useUpdateProduct } from "@/hooks/catalog/use-update-product"
 import { queryClient } from "@/lib/query-client"
+import { cn } from "@/lib/utils"
+import { CatalogVariantWithProperties } from "@/types/catalog"
 import { formatCurrency } from "@/utils/format-currency"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CatalogCategory, Company, Product, User } from "@prisma/client"
@@ -59,8 +64,8 @@ export function ProductsListContainer({
   }
 
   return (
-    <section className="px-6">
-      <ul className="flex gap-3 w-full whitespace-nowrap overflow-auto scrollbar-hide">
+    <section>
+      <ul className="flex gap-3 w-full whitespace-nowrap overflow-auto scrollbar-hide px-6">
         <li>
           <Button
             size='sm'
@@ -80,7 +85,7 @@ export function ProductsListContainer({
         </li>
       </ul>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 px-6">
         <Form {...form}>
           <form className="space-y-3 mt-4 w-full">
             <FormField
@@ -164,7 +169,7 @@ export function ProductsList({
   if (products.length) {
     return (
       <>
-        <ul className="mt-4 flex flex-col gap-4">
+        <ul className="mt-4 px-6 flex flex-col gap-4">
           {products.map((product) => (
             <li
               key={product.id}
@@ -286,6 +291,8 @@ const formProductSchema = z.object({
     invalid_type_error: 'O preço deve ser maior ou igual a 0.'
   }).min(0.1, 'O preço deve ser maior ou igual a 0,1.'),
   categoryId: z.string().min(1, 'A categoria é obrigatória.'),
+  enableVariants: z.boolean(),
+  variantId: z.string().optional(),
 })
 
 type FormProductSchema = z.infer<typeof formProductSchema>
@@ -296,6 +303,7 @@ function ProductForm({
   onOpenChange
 }: ProductFormProps) {
   const [isReadonly, setIsReadonly] = useState(true)
+  const [selectedVariant, setSelectedVariant] = useState<CatalogVariantWithProperties | undefined>(undefined)
 
   const {
     data: categories
@@ -310,7 +318,17 @@ function ProductForm({
       description: product?.description ?? '',
       categoryId: product?.categoryId ?? '',
       cost: product?.cost ?? 0,
+      enableVariants: !!product?.variant
     },
+  })
+
+  const enableVariants = form.watch('enableVariants')
+  const variantId = form.watch('variantId')
+
+  const {
+    data: catalogVariants,
+  } = useCatalogVariants({
+    companyId: user?.company.id,
   })
 
   const {
@@ -379,96 +397,35 @@ function ProductForm({
     form.reset()
   }, [form, product])
 
+  useEffect(() => {
+    if (!enableVariants) {
+      form.setValue('variantId', undefined)
+    }
+  }, [enableVariants, form])
+
+  useEffect(() => {
+    setSelectedVariant(catalogVariants?.find((variant) => variant.id === variantId))
+  }, [catalogVariants, variantId])
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="px-8 space-y-3">
-          <FormField
-            control={form.control}
-            disabled={isReadonly}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nome</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="Adicionar nome do produto"
-                    className="disabled:opacity-100"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            disabled={isReadonly}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Descrição</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="Adicionar descrição do produto"
-                    className="disabled:opacity-100"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="flex gap-3 w-full">
+        <ScrollArea className={cn(
+          "w-full",
+          enableVariants ? 'h-[420px]' : 'h-[300px]'
+        )}>
+          <div className="px-8 space-y-3">
             <FormField
               control={form.control}
               disabled={isReadonly}
-              name="categoryId"
+              name="name"
               render={({ field }) => (
-                <FormItem className="w-full">
-                  <FormLabel>Categoria</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    disabled={isReadonly}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="disabled:opacity-100 disabled:bg-zinc-50">
-                        <SelectValue placeholder="Selecionar categoria" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {categories?.map((category) => (
-                        <SelectItem
-                          key={category.id}
-                          value={category.id}
-                        >
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              disabled={isReadonly}
-              name="cost"
-              render={({ field }) => (
-                <FormItem className="w-full">
-                  <FormLabel>Preço (R$)</FormLabel>
-
+                <FormItem>
+                  <FormLabel>Nome</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      onChange={(event) => field.onChange(event.target.valueAsNumber)}
-                      placeholder="Adicionar custo do produto"
-                      type='number'
+                      placeholder="Adicionar nome do produto"
                       className="disabled:opacity-100"
                     />
                   </FormControl>
@@ -476,21 +433,34 @@ function ProductForm({
                 </FormItem>
               )}
             />
-          </div>
 
-          <Collapsible>
-            <CollapsibleTrigger className="text-primary text-sm">
-              Habilitar variações
-            </CollapsibleTrigger>
+            <FormField
+              control={form.control}
+              disabled={isReadonly}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Descrição</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Adicionar descrição do produto"
+                      className="disabled:opacity-100"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            <CollapsibleContent className="p-4 border rounded-md mt-2">
+            <div className="flex gap-3 w-full">
               <FormField
                 control={form.control}
                 disabled={isReadonly}
                 name="categoryId"
                 render={({ field }) => (
                   <FormItem className="w-full">
-                    <FormLabel>Variante</FormLabel>
+                    <FormLabel>Categoria</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
@@ -498,7 +468,7 @@ function ProductForm({
                     >
                       <FormControl>
                         <SelectTrigger className="disabled:opacity-100 disabled:bg-zinc-50">
-                          <SelectValue placeholder="Selecionar categoria do produto" />
+                          <SelectValue placeholder="Selecionar categoria" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -516,10 +486,123 @@ function ProductForm({
                   </FormItem>
                 )}
               />
-            </CollapsibleContent>
-          </Collapsible>
 
-        </div>
+              {!enableVariants && (
+                <FormField
+                  control={form.control}
+                  disabled={isReadonly}
+                  name="cost"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormLabel>Preço (R$)</FormLabel>
+
+                      <FormControl>
+                        <Input
+                          {...field}
+                          onChange={(event) => field.onChange(event.target.valueAsNumber)}
+                          placeholder="Adicionar custo do produto"
+                          type='number'
+                          className="disabled:opacity-100"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
+
+            <FormField
+              control={form.control}
+              name="enableVariants"
+              disabled={isReadonly}
+              render={({ field }) => (
+                <FormItem className="flex items-start space-x-2">
+                  <FormControl className="mt-1.5">
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isReadonly}
+                    />
+                  </FormControl>
+
+                  <FormLabel>
+                    Habilitar variantes
+                  </FormLabel>
+                </FormItem>
+              )}
+            />
+
+            {enableVariants && (
+              <div className="p-4 rounded-md border space-y-2">
+                <FormField
+                  control={form.control}
+                  disabled={isReadonly}
+                  name="variantId"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormLabel>Variante</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        disabled={isReadonly}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="disabled:opacity-100 disabled:bg-zinc-50">
+                            <SelectValue placeholder="Selecionar variante" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {catalogVariants?.map((variant) => (
+                            <SelectItem
+                              key={variant.id}
+                              value={variant.id}
+                            >
+                              {variant.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {selectedVariant && (
+                  <div>
+                    <Label>Propriedades</Label>
+
+                    <div className="grid gap-2">
+                      {selectedVariant.properties.map((property) => (
+                        <FormField
+                          key={property.id}
+                          control={form.control}
+                          disabled={isReadonly}
+                          name="description"
+                          render={({ field }) => (
+                            <FormItem className="grid grid-cols-3 place-items-end items-center gap-4">
+                              <FormLabel>{property.name}</FormLabel>
+                              <FormControl className="col-span-2">
+                                <Input
+                                  {...field}
+                                  onChange={(event) => field.onChange(event.target.valueAsNumber)}
+                                  placeholder='Adicionar preço (R$)'
+                                  className="disabled:opacity-100"
+                                  type='number'
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </ScrollArea>
 
         <DrawerFooter className="flex-row gap-3 justify-end items-end px-8 mt-6">
           <Button

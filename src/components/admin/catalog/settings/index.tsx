@@ -83,7 +83,7 @@ function VariantsSection({
   setSelectedVariant
 }: VariantsSection) {
   return (
-    <div className="w-full max-w-sm mx-auto">
+    <div className="w-full max-w-xs mx-auto">
       <div className="flex justify-between items-center gap-4">
         <h3 className="font-bold">Variantes</h3>
 

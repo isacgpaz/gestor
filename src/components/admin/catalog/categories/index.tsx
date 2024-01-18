@@ -240,9 +240,9 @@ function CategoriesForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="w-full flex items-center justify-center"
+        className="w-full max-w-xs mx-auto flex items-center justify-center"
       >
-        <div className="flex max-w-sm mx-auto w-full items-end space-x-2">
+        <div className="flex w-full items-end space-x-2">
           <FormField
             control={form.control}
             name="name"
@@ -350,7 +350,7 @@ function CategoriesTable({
   if (orderedCategories?.length) {
     return (
       <div className={cn(
-        "max-w-sm mx-auto w-full mt-6 overflow-auto max-h-[450px]",
+        "max-w-xs mx-auto w-full mt-6 overflow-auto max-h-[450px]",
         isCategoryUpdateEnabled && 'opacity-50'
       )}>
         <Table>
