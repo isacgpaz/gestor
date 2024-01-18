@@ -226,15 +226,18 @@ model CatalogCategory {
 }
 
 model CatalogVariant {
-  id         String            @id @default(auto()) @map("_id") @db.ObjectId
-  company    Company           @relation(fields: [companyId], references: [id])
-  companyId  String            @db.ObjectId
+  id         String                   @id @default(auto()) @map("_id") @db.ObjectId
+  company    Company                  @relation(fields: [companyId], references: [id])
+  companyId  String                   @db.ObjectId
   name       String
-  properties VariantProperty[]
+  properties CatalogVariantProperty[]
 }
 
-type VariantProperty {
-  name String
+model CatalogVariantProperty {
+  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  catalogVariant   CatalogVariant? @relation(fields: [catalogVariantId], references: [id])
+  catalogVariantId String?         @db.ObjectId
 }
 
 model Product {

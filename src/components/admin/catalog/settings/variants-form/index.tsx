@@ -6,14 +6,20 @@ import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { toast } from "@/components/ui/use-toast"
 import { useCreateVariant } from "@/hooks/catalog/use-create-variant"
+import { useUpdateVariant } from "@/hooks/catalog/use-update-variant"
+import { queryClient } from "@/lib/query-client"
 import { cn } from "@/lib/utils"
+import { CatalogVariantWithProperties } from "@/types/catalog"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Company, User } from "@prisma/client"
 import { ChevronLeft, PlusSquare, X } from "lucide-react"
+import { Dispatch, SetStateAction } from "react"
 import { useFieldArray, useForm } from "react-hook-form"
 import { z } from "zod"
 
 type VariantsFormDrawerProps = {
+  variant?: CatalogVariantWithProperties,
+  setSelectedVariant: Dispatch<SetStateAction<CatalogVariantWithProperties | undefined>>;
   user?: User & { company: Company },
   open: boolean,
   onOpenChange: (open: boolean) => void,
@@ -21,21 +27,30 @@ type VariantsFormDrawerProps = {
 }
 
 export function VariantsFormDrawer({
+  variant,
+  setSelectedVariant,
   user,
   open,
   onOpenChange,
   onSettingsDrawerOpenChange
 }: VariantsFormDrawerProps) {
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
+    <Drawer open={open} onOpenChange={(open) => {
+      if (!open) {
+        setSelectedVariant(undefined)
+      }
+
+      onOpenChange(open)
+    }}>
       <DrawerContent className="max-h-[550px]">
         <DrawerHeader className="flex items-center justify-center">
           <DrawerTitle className="text-2xl">
-            Variantes
+            {variant ? 'Editar' : 'Criar'} variante
           </DrawerTitle>
         </DrawerHeader>
 
         <VariantsForm
+          variant={variant}
           user={user}
           onOpenChange={onOpenChange}
           onSettingsDrawerOpenChange={onSettingsDrawerOpenChange}
@@ -46,6 +61,7 @@ export function VariantsFormDrawer({
 }
 
 type VariantsFormProps = {
+  variant?: CatalogVariantWithProperties,
   user?: User & { company: Company },
   onOpenChange: (open: boolean) => void,
   onSettingsDrawerOpenChange: (open: boolean) => void
@@ -54,13 +70,15 @@ type VariantsFormProps = {
 const formSchema = z.object({
   name: z.string().min(1, 'O nome da categoria é obrigatório.'),
   properties: z.array(z.object({
-    value: z.string().min(1, 'O nome da propriedade não pode ser vazio.')
+    name: z.string().min(1, 'O nome da propriedade não pode ser vazio.'),
+    id: z.string().optional()
   }))
 })
 
 type FormSchema = z.infer<typeof formSchema>
 
 function VariantsForm({
+  variant,
   user,
   onOpenChange,
   onSettingsDrawerOpenChange
@@ -68,15 +86,18 @@ function VariantsForm({
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
-      properties: [
-        {
-          value: ''
-        },
-        {
-          value: ''
-        }
-      ]
+      name: variant?.name ?? '',
+      properties: variant?.properties.map((property) => ({
+        name: property.name,
+        id: property.id
+      })) ?? [
+          {
+            name: ''
+          },
+          {
+            name: ''
+          }
+        ]
     },
   })
 
@@ -87,33 +108,73 @@ function VariantsForm({
 
   function addPropertyField() {
     append({
-      value: ''
+      name: '',
+      id: undefined
     })
   }
 
   const {
     mutate: createVariant,
-    isPending
+    isPending: isCreateVariantPending
   } = useCreateVariant()
 
-  function onSubmit(values: FormSchema) {
-    createVariant({
-      name: values.name,
-      properties: values.properties.map(
-        (property) => property.value
-      ),
-      companyId: user?.company?.id
-    }, {
-      onSuccess() {
-        toast({
-          title: 'Variante adicionada com sucesso.',
-          variant: 'success'
-        })
+  const {
+    mutate: updateVariant,
+    isPending: isUpdateVarintPending
+  } = useUpdateVariant()
 
-        onOpenChange(false)
-        onSettingsDrawerOpenChange(true)
-      }
-    })
+  const isPending = isCreateVariantPending || isUpdateVarintPending
+
+  function onSubmit(values: FormSchema) {
+    if (variant) {
+      updateVariant({
+        name: values.name,
+        properties: values.properties.map(
+          (property) => ({
+            name: property.name,
+            id: property.id,
+          })
+        ),
+        id: variant.id,
+        companyId: user?.company?.id
+      }, {
+        onSuccess() {
+          toast({
+            title: 'Variante atualizada com sucesso.',
+            variant: 'success'
+          })
+
+          queryClient.invalidateQueries({
+            queryKey: ['catalog-variants']
+          })
+
+          onOpenChange(false)
+          onSettingsDrawerOpenChange(true)
+        }
+      })
+    } else {
+      createVariant({
+        name: values.name,
+        properties: values.properties.map(
+          (property) => property.name
+        ),
+        companyId: user?.company?.id
+      }, {
+        onSuccess() {
+          toast({
+            title: 'Variante adicionada com sucesso.',
+            variant: 'success'
+          })
+
+          queryClient.invalidateQueries({
+            queryKey: ['catalog-variants']
+          })
+
+          onOpenChange(false)
+          onSettingsDrawerOpenChange(true)
+        }
+      })
+    }
   }
 
   return (
@@ -155,7 +216,7 @@ function VariantsForm({
                 <div key={field.id} className="flex space-x-2" >
                   <FormField
                     control={form.control}
-                    name={`properties.${index}.value`}
+                    name={`properties.${index}.name`}
                     render={({ field }) => (
                       <FormItem className="w-full">
                         <FormControl>
@@ -204,6 +265,7 @@ function VariantsForm({
             onClick={() => {
               onOpenChange(false)
               onSettingsDrawerOpenChange(true)
+              form.reset()
             }}
           >
             <ChevronLeft className="h-4 w-4 mr-2" />
@@ -211,7 +273,7 @@ function VariantsForm({
           </Button>
 
           <Button type='submit' isLoading={isPending}>
-            Adicionar variante
+            {variant ? 'Atualizar' : 'Adicionar'} variante
           </Button>
         </DrawerFooter>
       </form>

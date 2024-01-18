@@ -1,6 +1,30 @@
 import { prisma } from "@/lib/prisma"
 import { NextRequest, NextResponse } from "next/server"
 
+export async function GET(request: NextRequest) {
+  const companyId = request.nextUrl.searchParams.get('companyId')
+  const search = request.nextUrl.searchParams.get('search') ?? ''
+
+  if (!companyId) {
+    return NextResponse.json({}, { status: 400 })
+  }
+
+  const catalogVariants = await prisma.catalogVariant.findMany({
+    where: {
+      companyId,
+      name: {
+        contains: search,
+        mode: "insensitive"
+      }
+    },
+    include: {
+      properties: true
+    }
+  })
+
+  return NextResponse.json(catalogVariants, { status: 200 })
+}
+
 export async function POST(request: NextRequest) {
   const {
     companyId,
@@ -23,9 +47,11 @@ export async function POST(request: NextRequest) {
     data: {
       companyId,
       name,
-      properties: properties.map((property: string) => ({
-        name: property,
-      }))
+      properties: {
+        create: properties.map((property: string) => ({
+          name: property
+        }))
+      }
     }
   })
 
