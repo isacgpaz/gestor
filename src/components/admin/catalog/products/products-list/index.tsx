@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/components/ui/use-toast"
 import { useCatalogCategories } from "@/hooks/catalog/use-catalog-categories"
 import { useCatalogVariants } from "@/hooks/catalog/use-catalog-variants"
+import { useCreateProduct } from "@/hooks/catalog/use-create-product"
 import { useProducts } from "@/hooks/catalog/use-products"
 import { useUpdateProduct } from "@/hooks/catalog/use-update-product"
 import { queryClient } from "@/lib/query-client"
@@ -233,13 +234,19 @@ function ProductCard({ product }: ProductCardProps) {
             </span>
           </li>
 
-          <li className="flex gap-1">
-            Preço: {' '}
+          {product.variant ? (
+            <li className="flex gap-1 text-primary font-medium">
+              Ver variantes
+            </li>
+          ) : (
+            <li className="flex gap-1">
+              Preço: {' '}
 
-            <span className="text-slate-500 flex items-center gap-1">
-              {formatCurrency(product.cost)}
-            </span>
-          </li>
+              <span className="text-slate-500 flex items-center gap-1">
+                {formatCurrency(product.cost)}
+              </span>
+            </li>
+          )}
         </ul>
       </CardContent>
     </Card>
@@ -289,10 +296,31 @@ const formProductSchema = z.object({
   description: z.string(),
   cost: z.number({
     invalid_type_error: 'O preço deve ser maior ou igual a 0.'
-  }).min(0.1, 'O preço deve ser maior ou igual a 0,1.'),
+  }),
   categoryId: z.string().min(1, 'A categoria é obrigatória.'),
   enableVariants: z.boolean(),
-  variantId: z.string().optional(),
+  variant: z.object({
+    catalogVariantId: z.string({ required_error: 'A variante é obrigatória.' }),
+    properties: z.array(
+      z.object({
+        catalogVariantPropertyId: z.string(),
+        value: z.number({
+          required_error: `O preço da propriedade é obrigatório.`,
+          invalid_type_error: 'O preço da propriedade deve ser maior ou igual a 0.',
+        }).min(0.1, 'O preço da propriedade deve ser maior ou igual a 0,1.'),
+      }))
+  }).optional(),
+}).superRefine(({ enableVariants }, context) => {
+  if (!enableVariants) {
+    context.addIssue({
+      path: ['cost'],
+      message: 'O preço deve ser maior ou igual a 0,1.',
+      minimum: 0.1,
+      type: 'number',
+      code: 'too_small',
+      inclusive: false
+    })
+  }
 })
 
 type FormProductSchema = z.infer<typeof formProductSchema>
@@ -303,7 +331,9 @@ function ProductForm({
   onOpenChange
 }: ProductFormProps) {
   const [isReadonly, setIsReadonly] = useState(true)
-  const [selectedVariant, setSelectedVariant] = useState<CatalogVariantWithProperties | undefined>(undefined)
+  const [selectedVariant, setSelectedVariant] = useState<
+    CatalogVariantWithProperties | undefined
+  >(undefined)
 
   const {
     data: categories
@@ -318,12 +348,19 @@ function ProductForm({
       description: product?.description ?? '',
       categoryId: product?.categoryId ?? '',
       cost: product?.cost ?? 0,
-      enableVariants: !!product?.variant
+      enableVariants: !!product?.variant ?? false,
+      variant: product?.variant ? {
+        catalogVariantId: product?.variant?.catalogVariantId,
+        properties: product?.variant?.properties.map((property) => ({
+          catalogVariantPropertyId: property.catalogVariantPropertyId,
+          value: property.value
+        }))
+      } : undefined
     },
   })
 
   const enableVariants = form.watch('enableVariants')
-  const variantId = form.watch('variantId')
+  const catalogVariantId = form.watch('variant.catalogVariantId')
 
   const {
     data: catalogVariants,
@@ -334,7 +371,7 @@ function ProductForm({
   const {
     mutate: createProduct,
     isPending: isCreateProductPending
-  } = useUpdateProduct()
+  } = useCreateProduct()
 
   const {
     mutate: updateProduct,
@@ -352,6 +389,13 @@ function ProductForm({
         cost: values.cost,
         categoryId: values.categoryId,
         companyId: user?.company.id,
+        variant: values.variant ? {
+          catalogVariantId: values.variant.catalogVariantId,
+          properties: values.variant.properties.map((property) => ({
+            catalogVariantPropertyId: property.catalogVariantPropertyId,
+            value: property.value
+          }))
+        } : undefined
       }, {
         onSuccess() {
           setIsReadonly(true)
@@ -371,6 +415,13 @@ function ProductForm({
         cost: values.cost,
         categoryId: values.categoryId,
         companyId: user?.company.id,
+        variant: values.variant ? {
+          catalogVariantId: values.variant.catalogVariantId,
+          properties: values.variant.properties.map((property) => ({
+            catalogVariantPropertyId: property.catalogVariantPropertyId,
+            value: property.value
+          }))
+        } : undefined
       }, {
         onSuccess() {
           setIsReadonly(true)
@@ -385,7 +436,6 @@ function ProductForm({
           onOpenChange(false)
         }
       })
-
     }
   }
 
@@ -397,15 +447,34 @@ function ProductForm({
     form.reset()
   }, [form, product])
 
-  useEffect(() => {
-    if (!enableVariants) {
-      form.setValue('variantId', undefined)
-    }
-  }, [enableVariants, form])
+  console.log(enableVariants)
 
   useEffect(() => {
-    setSelectedVariant(catalogVariants?.find((variant) => variant.id === variantId))
-  }, [catalogVariants, variantId])
+    if (!enableVariants) {
+      form.setValue('variant', undefined)
+    } else {
+      form.setValue(
+        'variant.properties',
+        selectedVariant?.properties.map((property) => ({
+          catalogVariantPropertyId: property.id,
+          value: product?.variant?.properties.find(
+            (productProperty) => productProperty.catalogVariantPropertyId === property.id
+          )?.value ?? 0
+        })) ?? []
+      )
+    }
+  }, [
+    product?.variant?.properties,
+    enableVariants,
+    form,
+    selectedVariant
+  ])
+
+  useEffect(() => {
+    setSelectedVariant(catalogVariants?.find(
+      (variant) => variant.id === catalogVariantId)
+    )
+  }, [catalogVariants, catalogVariantId])
 
   return (
     <Form {...form}>
@@ -538,7 +607,7 @@ function ProductForm({
                 <FormField
                   control={form.control}
                   disabled={isReadonly}
-                  name="variantId"
+                  name="variant.catalogVariantId"
                   render={({ field }) => (
                     <FormItem className="w-full">
                       <FormLabel>Variante</FormLabel>
@@ -573,25 +642,36 @@ function ProductForm({
                     <Label>Propriedades</Label>
 
                     <div className="grid gap-2">
-                      {selectedVariant.properties.map((property) => (
+                      {selectedVariant.properties.map((property, index) => (
                         <FormField
                           key={property.id}
                           control={form.control}
                           disabled={isReadonly}
-                          name="description"
+                          name={`variant.properties.${index}.value`}
                           render={({ field }) => (
                             <FormItem className="grid grid-cols-3 place-items-end items-center gap-4">
-                              <FormLabel>{property.name}</FormLabel>
-                              <FormControl className="col-span-2">
-                                <Input
-                                  {...field}
-                                  onChange={(event) => field.onChange(event.target.valueAsNumber)}
-                                  placeholder='Adicionar preço (R$)'
-                                  className="disabled:opacity-100"
-                                  type='number'
-                                />
-                              </FormControl>
-                              <FormMessage />
+                              <FormLabel>
+                                {property.name}
+                              </FormLabel>
+
+                              <div className="col-span-2 w-full">
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    onChange={(event) => {
+                                      field.onChange(event.target.valueAsNumber)
+                                      form.setValue(
+                                        `variant.properties.${index}.catalogVariantPropertyId`,
+                                        property.id
+                                      )
+                                    }}
+                                    placeholder='Adicionar preço (R$)'
+                                    className="disabled:opacity-100"
+                                    type='number'
+                                  />
+                                </FormControl>
+                                <FormMessage className="mt-2" />
+                              </div>
                             </FormItem>
                           )}
                         />
