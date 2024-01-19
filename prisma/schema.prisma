@@ -234,10 +234,10 @@ model CatalogVariant {
 }
 
 model CatalogVariantProperty {
-  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
   name             String
-  catalogVariant   CatalogVariant? @relation(fields: [catalogVariantId], references: [id])
-  catalogVariantId String?         @db.ObjectId
+  catalogVariant   CatalogVariant @relation(fields: [catalogVariantId], references: [id])
+  catalogVariantId String         @db.ObjectId
 }
 
 model Product {
@@ -261,5 +261,5 @@ type ProductVariant {
 
 type ProductVariantProperty {
   catalogVariantPropertyId String
-  value                    String
+  value                    Float
 }

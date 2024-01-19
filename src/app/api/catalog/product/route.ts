@@ -51,9 +51,62 @@ export async function GET(request: NextRequest) {
     })
   ])
 
+  // const productsWithVariant = products.filter(
+  //   (product) => !!product.variant
+  // ) ?? []
+
+  // const productsWithVariantIds = productsWithVariant.map(
+  //   (product) => product.variant!.catalogVariantId
+  // )
+
   const totalPages = Math.ceil(totalProducts / rowsPerPage)
   const hasNextPage = page !== totalPages && totalPages !== 0
   const hasPreviousPage = page !== 1
+
+  // const catalogVariants = await prisma.catalogVariant.findMany({
+  //   where: {
+  //     companyId,
+  //     id: {
+  //       in: productsWithVariantIds
+  //     }
+  //   },
+  //   include: {
+  //     properties: true
+  //   }
+  // })
+
+  // const productsWithVariantPropertiesLabels = products.map(
+  //   (product) => {
+  //     if (product.variant) {
+  //       return {
+  //         ...product,
+  //         variant: {
+  //           ...product.variant,
+  //           properties: [
+  //             ...product.variant.properties.map(
+  //               (property) => {
+  //                 const currentVariant = catalogVariants.find(
+  //                   (variant) => variant.id === product.variant?.catalogVariantId
+  //                 )
+
+  //                 const label = currentVariant?.properties.find(
+  //                   (currentProperty) => currentProperty.id === property.catalogVariantPropertyId
+  //                 )?.name
+
+  //                 return {
+  //                   ...property,
+  //                   label
+  //                 }
+  //               }
+  //             ),
+  //             ]
+  //         }
+  //       }
+  //     }
+
+  //     return product
+  //   }
+  // )
 
   return NextResponse.json({
     result: products,
@@ -73,7 +126,8 @@ export async function POST(request: NextRequest) {
     categoryId,
     name,
     description,
-    cost
+    cost,
+    variant
   } = await request.json()
 
   const company = await prisma.company.findUnique({
@@ -98,6 +152,30 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  const catalogVariant = await prisma.catalogVariant.findUnique({
+    where: { id: variant.catalogVariantId },
+  })
+
+  if (!catalogVariant) {
+    return NextResponse.json(
+      { message: 'Variante não encontrada.' },
+      { status: 404 }
+    )
+  }
+
+  for (const property of variant.properties) {
+    const catalogVariantProperty = await prisma.catalogVariantProperty.findUnique({
+      where: { id: property.catalogVariantPropertyId },
+    })
+
+    if (!catalogVariantProperty) {
+      return NextResponse.json(
+        { message: 'Propriedade de variante não encontrada.' },
+        { status: 404 }
+      )
+    }
+  }
+
   const productCreated = await prisma.product.create({
     data: {
       companyId,
@@ -105,6 +183,7 @@ export async function POST(request: NextRequest) {
       name,
       description,
       cost,
+      variant
     }
   })
 
