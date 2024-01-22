@@ -197,6 +197,9 @@ function CategoriesForm({
           queryClient.invalidateQueries({
             queryKey: ['catalog-categories']
           })
+          queryClient.invalidateQueries({
+            queryKey: ['products']
+          })
 
           setIsCategoryUpdateEnabled(false)
           setSelectedCategory(undefined)
@@ -217,6 +220,9 @@ function CategoriesForm({
         onSuccess() {
           queryClient.invalidateQueries({
             queryKey: ['catalog-categories']
+          })
+          queryClient.invalidateQueries({
+            queryKey: ['products']
           })
 
           form.reset({ name: '' })
@@ -242,7 +248,7 @@ function CategoriesForm({
         onSubmit={form.handleSubmit(onSubmit)}
         className="w-full max-w-xs mx-auto flex items-center justify-center"
       >
-        <div className="flex w-full items-end space-x-2">
+        <div className="w-full flex flex-col space-y-2 items-end">
           <FormField
             control={form.control}
             name="name"
@@ -262,29 +268,29 @@ function CategoriesForm({
             )}
           />
 
-          <Button
-            type='submit'
-            isLoading={isPending}
-            className={cn(form.formState.errors.name && "mb-7")}
-          >
-            {isCategoryUpdateEnabled ? 'Salvar' : 'Adicionar'}
-          </Button>
+          <div className="flex space-x-2">
+            {isCategoryUpdateEnabled && (
+              <Button
+                type='button'
+                variant='outline'
+                onClick={(event) => {
+                  event.preventDefault();
+                  setIsCategoryUpdateEnabled(false)
+                  setSelectedCategory(undefined)
+                  form.reset()
+                }}
+              >
+                Cancelar
+              </Button>
+            )}
 
-          {isCategoryUpdateEnabled && (
             <Button
-              type='button'
-              variant='outline'
-              className={cn(form.formState.errors.name && "mb-7")}
-              onClick={(event) => {
-                event.preventDefault();
-                setIsCategoryUpdateEnabled(false)
-                setSelectedCategory(undefined)
-                form.reset()
-              }}
+              type='submit'
+              isLoading={isPending}
             >
-              Cancelar
+              {isCategoryUpdateEnabled ? 'Salvar' : 'Adicionar'}
             </Button>
-          )}
+          </div>
         </div>
       </form>
     </Form>
