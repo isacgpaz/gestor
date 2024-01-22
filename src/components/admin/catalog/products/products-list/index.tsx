@@ -310,8 +310,8 @@ const formProductSchema = z.object({
         }).min(0.1, 'O preço da propriedade deve ser maior ou igual a 0,1.'),
       }))
   }).optional(),
-}).superRefine(({ enableVariants }, context) => {
-  if (!enableVariants) {
+}).superRefine(({ enableVariants, cost }, context) => {
+  if (!enableVariants && cost <= 0.1) {
     context.addIssue({
       path: ['cost'],
       message: 'O preço deve ser maior ou igual a 0,1.',
@@ -447,8 +447,6 @@ function ProductForm({
     form.reset()
   }, [form, product])
 
-  console.log(enableVariants)
-
   useEffect(() => {
     if (!enableVariants) {
       form.setValue('variant', undefined)
@@ -471,9 +469,11 @@ function ProductForm({
   ])
 
   useEffect(() => {
-    setSelectedVariant(catalogVariants?.find(
-      (variant) => variant.id === catalogVariantId)
-    )
+    if (catalogVariantId) {
+      setSelectedVariant(catalogVariants?.find(
+        (variant) => variant.id === catalogVariantId
+      ))
+    }
   }, [catalogVariants, catalogVariantId])
 
   return (
@@ -581,26 +581,27 @@ function ProductForm({
               )}
             </div>
 
-            <FormField
-              control={form.control}
-              name="enableVariants"
-              disabled={isReadonly}
-              render={({ field }) => (
-                <FormItem className="flex items-start space-x-2">
-                  <FormControl className="mt-1.5">
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      disabled={isReadonly}
-                    />
-                  </FormControl>
+            {!product && (
+              <FormField
+                control={form.control}
+                name="enableVariants"
+                render={({ field }) => (
+                  <FormItem className="flex items-start space-x-2">
+                    <FormControl className="mt-1.5">
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isReadonly}
+                      />
+                    </FormControl>
 
-                  <FormLabel>
-                    Habilitar variantes
-                  </FormLabel>
-                </FormItem>
-              )}
-            />
+                    <FormLabel>
+                      Habilitar variantes
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+            )}
 
             {enableVariants && (
               <div className="p-4 rounded-md border space-y-2">
@@ -639,7 +640,7 @@ function ProductForm({
 
                 {selectedVariant && (
                   <div>
-                    <Label>Propriedades</Label>
+                    <Label>Propriedades (R$)</Label>
 
                     <div className="grid gap-2">
                       {selectedVariant.properties.map((property, index) => (

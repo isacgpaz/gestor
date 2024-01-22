@@ -18,7 +18,8 @@ export async function PUT(
     categoryId,
     name,
     description,
-    cost
+    cost,
+    variant
   } = await request.json()
 
   const product = await prisma.product.findUnique({
@@ -56,6 +57,32 @@ export async function PUT(
     )
   }
 
+  if (variant) {
+    const catalogVariant = await prisma.catalogVariant.findUnique({
+      where: { id: variant.catalogVariantId },
+    })
+
+    if (!catalogVariant) {
+      return NextResponse.json(
+        { message: 'Variante não encontrada.' },
+        { status: 404 }
+      )
+    }
+
+    for (const property of variant.properties) {
+      const catalogVariantProperty = await prisma.catalogVariantProperty.findUnique({
+        where: { id: property.catalogVariantPropertyId },
+      })
+
+      if (!catalogVariantProperty) {
+        return NextResponse.json(
+          { message: 'Propriedade de variante não encontrada.' },
+          { status: 404 }
+        )
+      }
+    }
+  }
+
   const productUpdated = await prisma.product.update({
     where: {
       id: productId,
@@ -66,6 +93,7 @@ export async function PUT(
       name,
       description,
       cost,
+      variant
     }
   })
 
