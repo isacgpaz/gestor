@@ -1,5 +1,6 @@
 'use client'
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -7,6 +8,7 @@ import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from "
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
@@ -22,7 +24,7 @@ import { formatCurrency } from "@/utils/format-currency"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CatalogCategory, Company, Product, User } from "@prisma/client"
 import { useDebounce } from "@uidotdev/usehooks"
-import { Loader2, PackageOpen } from "lucide-react"
+import { Filter, Loader2, PackageOpen, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -46,6 +48,13 @@ export function ProductsListContainer({
   const [selectedProduct, setSelectedProduct] = useState<ProductWithCategory | undefined>(undefined)
   const [isOpen, onOpenChange] = useState(false)
 
+  const {
+    data: categories,
+    isFetching
+  } = useCatalogCategories({
+    companyId: user?.company.id,
+  })
+
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -55,7 +64,7 @@ export function ProductsListContainer({
   })
 
   const search = form.watch('search')
-  const categories = form.watch('categories')
+  const selectedCategories = form.watch('categories')
 
   const deboucedSearch = useDebounce(search, 300)
 
@@ -86,32 +95,105 @@ export function ProductsListContainer({
         </li>
       </ul>
 
-      <div className="flex gap-2 px-6">
-        <Form {...form}>
-          <form className="space-y-3 mt-4 w-full">
-            <FormField
-              control={form.control}
-              name="search"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Procurar produtos..."
-                      type='search'
+      <Form {...form}>
+        <form>
+          <div className="flex gap-2 px-6">
+            <div className="flex space-x-2 mt-4 w-full">
+              <FormField
+                control={form.control}
+                name="search"
+                render={({ field }) => (
+                  <FormItem className="w-full">
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Procurar produtos..."
+                        type='search'
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button size='icon' className="w-11" isLoading={isFetching}>
+                    <Filter className="w-4 h-4" />
+                  </Button>
+                </PopoverTrigger>
+
+                <PopoverContent
+                  align="end"
+                  className="flex flex-col space-y-2 w-44"
+                >
+                  {categories?.map((category) => (
+                    <FormField
+                      key={category.id}
+                      control={form.control}
+                      name="categories"
+                      render={({ field }) => {
+                        return (
+                          <FormItem
+                            key={category.id}
+                            className="flex flex-row items-start space-x-3 space-y-0"
+                          >
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value?.includes(category.id)}
+                                onCheckedChange={(checked) => {
+                                  return checked
+                                    ? field.onChange([...field.value, category.id])
+                                    : field.onChange(
+                                      field.value?.filter(
+                                        (value) => value !== category.id
+                                      )
+                                    )
+                                }}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              {category.name}
+                            </FormLabel>
+                          </FormItem>
+                        )
+                      }}
                     />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </form>
-        </Form>
-      </div>
+                  ))}
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          {selectedCategories.length ? (
+            <div className="flex items-center space-x-2 px-6 my-2">
+              <FormLabel>Filtros:</FormLabel>
+
+              {selectedCategories.map((selectedCategory) => (
+                <Badge key={selectedCategory} className="space-x-1">
+                  {categories?.find(
+                    (category) => category.id === selectedCategory
+                  )?.name}
+
+                  <button onClick={(event) => {
+                    event.preventDefault()
+
+                    form.setValue('categories', selectedCategories.filter(
+                      (category) => category !== selectedCategory
+                    ))
+                  }}>
+                    <X className="ml-1 w-4 h-4" strokeWidth={2} />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          ) : null}
+        </form>
+      </Form>
 
       <ProductsList
         user={user}
         search={deboucedSearch}
-        categories={categories}
+        categories={selectedCategories}
         selectProductAndOpenDrawer={selectProductAndOpenDrawer}
       />
 
@@ -127,7 +209,7 @@ export function ProductsListContainer({
           onOpenChange(value)
         }}
       />
-    </section>
+    </section >
   )
 }
 
