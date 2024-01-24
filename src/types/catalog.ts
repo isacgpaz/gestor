@@ -1,4 +1,4 @@
-import { CatalogVariant, CatalogVariantProperty, Product } from "@prisma/client";
+import { CatalogCategory, CatalogVariant, CatalogVariantProperty, Product } from "@prisma/client";
 
 export type CreateProduct = Omit<Product, 'id' | 'createdAt' | 'updatedAt'>
 
@@ -13,4 +13,9 @@ export type CatalogVariantWithPropertiesUpdate = CatalogVariant & {
 export type CatalogVariantPropertyUpdate = {
   id?: string,
   name: string
+}
+
+export type Catalog = {
+  category: Pick<CatalogCategory, 'id' | 'name' | 'order'>,
+  items: Product[]
 }
