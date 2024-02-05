@@ -64,7 +64,40 @@ export async function GET(request: NextRequest) {
     }
   })
 
-  const catalog = groupByCategory(products, catalogCategories)
+  const catalogVariants = await prisma.catalogVariant.findMany({
+    where: {
+      companyId,
+    },
+    include: {
+      properties: true
+    }
+  })
+
+  const productsWithVariants = products.map((product) => {
+    if (product.variant) {
+      const productVariant = catalogVariants.find(
+        (catalogVariant) => catalogVariant.id === product.variant?.catalogVariantId
+      )
+
+      return {
+        ...product,
+        variant: {
+          ...product.variant,
+          catalogVariantName: productVariant?.name,
+          properties: product.variant.properties.map((property) => ({
+            ...property,
+            catalogVariantPropertyName: productVariant?.properties.find(
+              (variantProperty) => variantProperty.id === property.catalogVariantPropertyId
+            )?.name,
+          }))
+        }
+      }
+    }
+
+    return product
+  })
+
+  const catalog = groupByCategory(productsWithVariants, catalogCategories)
   const catalogOrdered = catalog.sort(
     (a, b) => a.category.order - b.category.order
   )

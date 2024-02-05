@@ -4,27 +4,26 @@ import { Button } from "@/components/ui/button"
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
 import { Form } from "@/components/ui/form"
 import { Label } from "@/components/ui/label"
+import { toast } from "@/components/ui/use-toast"
+import { useCatalogShoppingBag } from "@/contexts/catalog-shopping-bag-context"
 import { useCatalog } from "@/hooks/catalog/use-catalog"
-import { useCatalogVariants } from "@/hooks/catalog/use-catalog-variants"
 import { cn } from "@/lib/utils"
-import { Catalog, CatalogVariantWithProperties } from "@/types/catalog"
+import { Catalog, ComposedShoppingBagItem, ProductWithVariant, ShoppingBagItemTypeEnum } from "@/types/catalog"
 import { formatCurrency } from "@/utils/format-currency"
-import { CatalogCategory, Company, Product } from "@prisma/client"
-import { Minus, Plus, ShoppingCart } from "lucide-react"
+import { CatalogCategory, Company } from "@prisma/client"
+import * as Dialog from "@radix-ui/react-dialog"
+import { CircleSlash, Minus, Plus, ShoppingBag } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { Dispatch, SetStateAction, useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
+import { v4 as uuidv4 } from "uuid"
 import { z } from "zod"
 
-type Category = Pick<CatalogCategory, 'id' | 'name' | 'order'>
-
 export function Catalog({ company }: { company: Company }) {
-  const searchParams = useSearchParams()
-
-  const selectedCategory = searchParams.get('category')
-
-  const [selectedProduct, setSelectedProduct] = useState<Product | undefined>(undefined)
-  const [open, onOpenChange] = useState(false)
+  const {
+    selectedProduct,
+    shoppingBag,
+    productComposedVisible,
+  } = useCatalogShoppingBag()
 
   const {
     data: catalog,
@@ -33,12 +32,16 @@ export function Catalog({ company }: { company: Company }) {
     companyId: company.id
   })
 
-  let catalogCategories = catalog?.map(({ category }) => category) ?? []
+  const catalogCategories = catalog?.map(({ category }) => category) ?? []
 
-  function selectProductAndOpenDrawer(product: Product) {
-    setSelectedProduct(product)
-    onOpenChange(true)
-  }
+  console.log(shoppingBag)
+
+  const catalogFilteredByComposedProduct = catalog?.filter(
+    (catalog) => catalog.category.id === selectedProduct?.categoryId
+  ).map((catalog) => ({
+    ...catalog,
+    items: catalog.items.filter((product) => product.id !== selectedProduct?.id)
+  })) ?? []
 
   if (isPending) {
     return <Loader />
@@ -46,40 +49,41 @@ export function Catalog({ company }: { company: Company }) {
 
   return (
     <div>
-      <CatalogCategoriesList
-        categories={catalogCategories}
-        selectedCategory={selectedCategory}
-      />
+      {!productComposedVisible && (
+        <CatalogCategoriesList categories={catalogCategories} />
+      )}
 
       <CatalogSectionsList
-        catalog={catalog ?? []}
-        selectProductAndOpenDrawer={selectProductAndOpenDrawer}
+        catalog={productComposedVisible
+          ? catalogFilteredByComposedProduct
+          : catalog ?? []}
       />
 
       {selectedProduct && (
-        <CatalogItemDrawer
-          product={selectedProduct}
-          open={open}
-          onOpenChange={onOpenChange}
-        />
+        <>
+          <CatalogItemDrawer />
+
+          <ComposedDialog />
+        </>
       )}
     </div>
   )
 }
 
+type Category = Pick<CatalogCategory, 'id' | 'name' | 'order'>
+
 type CatalogCategoriesListProps = {
   categories: Category[],
-  selectedCategory: string | null,
 }
 
 function CatalogCategoriesList({
   categories,
-  selectedCategory,
 }: CatalogCategoriesListProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
+  const selectedCategory = searchParams.get('category')
 
   function updateSelectedCategory(categoryId?: string) {
     const params = new URLSearchParams(searchParams.toString())
@@ -122,12 +126,10 @@ function CatalogCategoriesList({
 
 type CatalogSectionsListParams = {
   catalog: Catalog[];
-  selectProductAndOpenDrawer: (product: Product) => void
 }
 
 function CatalogSectionsList({
   catalog,
-  selectProductAndOpenDrawer
 }: CatalogSectionsListParams) {
   return (
     <div className="p-6">
@@ -135,7 +137,6 @@ function CatalogSectionsList({
         <CatalogSection
           key={catalog.category.id}
           catalog={catalog}
-          selectProductAndOpenDrawer={selectProductAndOpenDrawer}
         />
       ))}
     </div>
@@ -144,42 +145,79 @@ function CatalogSectionsList({
 
 type CatalogSectionProps = {
   catalog: Catalog
-  selectProductAndOpenDrawer: (product: Product) => void
 }
 
 function CatalogSection({
   catalog,
-  selectProductAndOpenDrawer
 }: CatalogSectionProps) {
+  const { productComposedVisible } = useCatalogShoppingBag()
+
   return (
     <section className="mb-6">
       <h2 className="font-medium text-lg">
-        {catalog.category.name}
+        {productComposedVisible ? 'Escolher segundo sabor:' : catalog.category.name}
       </h2>
 
-      <CatalogSectionList
-        items={catalog.items}
-        selectProductAndOpenDrawer={selectProductAndOpenDrawer}
-      />
+      <CatalogSectionList items={catalog.items} />
     </section>
   )
 }
 
 type CatalogSectionListProps = {
-  items: Product[];
-  selectProductAndOpenDrawer: (product: Product) => void
+  items: ProductWithVariant[];
 }
 
 function CatalogSectionList({
   items,
-  selectProductAndOpenDrawer
 }: CatalogSectionListProps) {
+  const {
+    productComposedVisible,
+    setSelectedProduct,
+    setShoppingBag,
+    onProductOpenChange,
+    onProductComposedVisibleChange
+  } = useCatalogShoppingBag()
+
+  function selectProductAndOpenDrawer(product: ProductWithVariant) {
+    setSelectedProduct(product)
+    onProductOpenChange(true)
+  }
+
+  function selectComposedProduct(product: ProductWithVariant) {
+    setShoppingBag((previousShoppingBag) => previousShoppingBag.map(
+      (bagProduct) => {
+        if (bagProduct.type === ShoppingBagItemTypeEnum.COMPOSED) {
+          return {
+            ...bagProduct,
+            secondProductId: product.id
+          }
+        }
+
+        return bagProduct
+      }
+    ))
+
+    setSelectedProduct(undefined)
+    onProductComposedVisibleChange(false)
+
+    toast({
+      title: 'Item adicionado com sucesso!',
+      variant: 'success'
+    })
+  }
+
   return (
     <ul className="mt-4 flex flex-col gap-2">
       {items.map((product) => (
         <li
           key={product.id}
-          onClick={() => selectProductAndOpenDrawer(product)}
+          onClick={() => {
+            if (productComposedVisible) {
+              selectComposedProduct(product)
+            } else {
+              selectProductAndOpenDrawer(product)
+            }
+          }}
         >
           <CatalogItem product={product} />
         </li>
@@ -188,7 +226,7 @@ function CatalogSectionList({
   )
 }
 
-function CatalogItem({ product }: { product: Product }) {
+function CatalogItem({ product }: { product: ProductWithVariant }) {
   return (
     <div className="flex items-center gap-3 p-2 rounded-md transition-colors hover:bg-slate-50">
       <div className="rounded-md bg-slate-300 h-16 w-16"></div>
@@ -201,80 +239,123 @@ function CatalogItem({ product }: { product: Product }) {
         <span className="text-sm text-slate-500">
           {product.description}
         </span>
+
+        {!!product.cost && (
+          <span className="font-medium text-sm">
+            {formatCurrency(product.cost)}
+          </span>
+        )}
+
+        {!!product.variant && (
+          <Button
+            variant='link'
+            size='sm'
+            className="w-fit p-0 mt-1 h-fit hover:no-underline"
+          >
+            Ver {product.variant.catalogVariantName.toLowerCase()}
+          </Button>
+        )}
       </div>
 
-      <div className="mr-1">
-        <span className="font-medium text-sm">
-          {formatCurrency(product.cost)}
-        </span>
-      </div>
+      <Button
+        className="mr-1 relative text-primary"
+        variant='secondary'
+        size='icon'>
+        <ShoppingBag className="w-5 h-5" />
+
+        <div className="absolute -bottom-1 -right-2 bg-primary text-primary-foreground rounded-full">
+          <Plus className="w-4 h-4" />
+        </div>
+      </Button>
     </div>
   )
 }
 
-type CatalogItemDrawerProps = {
-  product: Product;
-  open: boolean;
-  onOpenChange: Dispatch<SetStateAction<boolean>>
-}
-
 const formSchema = z.object({
   quantity: z.number(),
-  variant: z.string().optional(),
+  variantId: z.string().optional(),
 })
 
 type FormSchema = z.infer<typeof formSchema>
 
-function CatalogItemDrawer({
-  product,
-  open,
-  onOpenChange
-}: CatalogItemDrawerProps) {
-  const [selectedVariant, setSelectedVariant] = useState<
-    CatalogVariantWithProperties | undefined
-  >(undefined)
+function CatalogItemDrawer() {
+  const {
+    selectedProduct: product,
+    productOpen,
+    productComposedVisible,
+    setShoppingBag,
+    setSelectedComposedProduct,
+    onProductOpenChange,
+    onProductComposedVisibleChange,
+  } = useCatalogShoppingBag()
 
   const form = useForm<FormSchema>({
     defaultValues: {
       quantity: 1,
-      variant: undefined
+      variantId: undefined
     }
   })
 
   const quantity = form.watch('quantity')
-  const variant = form.watch('variant')
+  const variantId = form.watch('variantId')
 
-  const {
-    data: catalogVariants,
-  } = useCatalogVariants({
-    companyId: product?.companyId,
-  })
-
-  function onSubmit() {
-
-  }
-
-  useEffect(() => {
-    if (product.variant?.catalogVariantId) {
-      setSelectedVariant(catalogVariants?.find(
-        (variant) => variant.id === product.variant?.catalogVariantId
-      ))
-    }
-  }, [catalogVariants, product.variant?.catalogVariantId])
-
-  return (
-    <Drawer open={open} onOpenChange={(open) => {
-      if (!open) {
-        form.setValue('quantity', 0)
+  function onSubmit(values: FormSchema) {
+    if (product) {
+      const productData = {
+        id: uuidv4(),
+        quantity: values.quantity,
+        variantId: values.variantId,
       }
 
-      onOpenChange(open)
+      if (productComposedVisible) {
+        const composedProduct: ComposedShoppingBagItem = {
+          ...productData,
+          firstProductId: product.id,
+          secondProductId: undefined,
+          type: ShoppingBagItemTypeEnum.COMPOSED
+        }
+
+        setShoppingBag((previousShoppingBag) => [
+          ...previousShoppingBag,
+          composedProduct
+        ])
+
+        setSelectedComposedProduct(composedProduct)
+      } else {
+        setShoppingBag((previousShoppingBag) => [
+          ...previousShoppingBag,
+          {
+            ...productData,
+            productId: product.id,
+            type: ShoppingBagItemTypeEnum.UNIT
+          }
+        ])
+
+        toast({
+          title: 'Item adiciondo com sucesso!',
+          variant: 'success'
+        })
+      }
+    }
+
+    onProductOpenChange(false)
+  }
+
+  if (!product) {
+    return null
+  }
+
+  return (
+    <Drawer open={productOpen} onOpenChange={(open) => {
+      if (!open) {
+        form.reset()
+      }
+
+      onProductOpenChange(open)
     }}>
       <DrawerContent>
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="flex gap-4 p-6">
               <div className="w-32 h-32 bg-slate-300 rounded-sm flex-shrink-0"></div>
 
@@ -294,7 +375,7 @@ function CatalogItemDrawer({
                 {product.variant && (
                   <div className="max-w-xs my-4 w-full flex flex-col justify-center">
                     <Label>
-                      Selecionar {selectedVariant?.name.toLocaleLowerCase()}:
+                      Selecionar {product?.variant.catalogVariantName}:
                     </Label>
 
                     <ul className="flex flex-wrap items-center gap-4 mt-3">
@@ -304,21 +385,21 @@ function CatalogItemDrawer({
                           className="flex flex-col gap-1 items-center justify-center"
                         >
                           <Badge
-                            variant={variant === property.catalogVariantPropertyId
+                            variant={variantId === property.catalogVariantPropertyId
                               ? 'default'
                               : 'secondary'
                             }
-                            className="cursor-pointer transition-colors"
-                            onClick={() => form.setValue('variant', property.catalogVariantPropertyId)}
+                            className="cursor-pointer transition-all"
+                            onClick={() => form.setValue('variantId', property.catalogVariantPropertyId)}
                           >
-                            {selectedVariant?.properties.find(
-                              (selectedProperty) => selectedProperty.id === property.catalogVariantPropertyId
-                            )?.name}
+                            {property.catalogVariantPropertyName}
                           </Badge>
 
                           <span className={cn(
-                            "text-sm transition-colors",
-                            variant === property.catalogVariantPropertyId ? 'font-medium' : 'text-slate-500'
+                            "text-sm transition-all",
+                            variantId === property.catalogVariantPropertyId
+                              ? 'font-medium'
+                              : 'text-slate-500'
                           )}>
                             {formatCurrency(property.value)}
                           </span>
@@ -330,6 +411,7 @@ function CatalogItemDrawer({
 
                 <div className="w-fit flex items-center justify-center space-x-8">
                   <Button
+                    type='button'
                     variant="outline"
                     size="icon"
                     className="h-8 w-8 shrink-0 rounded-full"
@@ -344,6 +426,7 @@ function CatalogItemDrawer({
                   </span>
 
                   <Button
+                    type='button'
                     size="icon"
                     className="h-8 w-8 shrink-0 rounded-full"
                     onClick={() => form.setValue('quantity', quantity + 1)}
@@ -355,18 +438,102 @@ function CatalogItemDrawer({
             </div>
 
             <DrawerFooter className="flex-row justify-between gap-4">
-              <DrawerClose>
-                <Button variant='outline'>Fechar</Button>
+              <DrawerClose asChild>
+                <Button variant='outline' type='button'>Fechar</Button>
               </DrawerClose>
 
-              <Button className="w-fit">
-                <ShoppingCart className="mr-2 w-4 h-4" />
-                Adicionar ao carrinho
-              </Button>
+              <div className="flex gap-2">
+                {productComposedVisible ? (
+                  <Button className="w-fit">
+                    <CircleSlash className="mr-2 w-4 h-4" />
+                    Adicionar metade
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      className="w-fit text-primary"
+                      variant='secondary'
+                      onClick={() => {
+                        onProductComposedVisibleChange(true)
+                      }}
+                    >
+                      <CircleSlash className="mr-2 w-4 h-4 block rotate-[130deg]" />
+                      Meio a meio
+                    </Button>
+
+                    <Button className="w-fit">
+                      <ShoppingBag className="mr-2 w-4 h-4" />
+                      Adicionar à sacola
+                    </Button>
+                  </>
+                )}
+              </div>
             </DrawerFooter>
           </form>
         </Form>
       </DrawerContent>
     </Drawer>
+  )
+}
+
+function ComposedDialog() {
+  const {
+    selectedProduct: firstProduct,
+    selectedComposedProduct,
+    productComposedVisible,
+    setShoppingBag,
+    onProductComposedVisibleChange,
+    onProductOpenChange,
+  } = useCatalogShoppingBag()
+
+  function onCancelProductComposition() {
+    setShoppingBag((previousShoppingBag) => previousShoppingBag.filter(
+      (product) => product.id !== selectedComposedProduct?.id
+    ))
+
+    onProductComposedVisibleChange(false)
+  }
+
+  if (!firstProduct) {
+    return null
+  }
+
+  return (
+    <Dialog.Root open={productComposedVisible} modal={false}>
+      <Dialog.Content className="fixed px-6 w-full z-20 transition-all data-[state=open]:bottom-4 data-[state=closed]:-bottom-4 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
+        <div
+          className="bg-primary rounded-md p-4 flex items-center justify-between gap-4"
+          onClick={(e) => {
+            if ((e.target as HTMLButtonElement).tagName !== "BUTTON") {
+              onProductOpenChange(true)
+            }
+          }}
+        >
+          <div className="flex flex-col flex-1">
+            <span className="font-medium text-primary-foreground">
+              Escolher sabor 2 de 2
+            </span>
+
+            <span className="text-slate-200 text-sm">
+              <span className="font-medium">
+                Sabor 1:{' '}
+              </span>
+              {firstProduct.name}
+            </span>
+          </div>
+
+          <Dialog.DialogClose asChild>
+            <Button
+              size='sm'
+              variant='secondary'
+              className="text-primary"
+              onClick={onCancelProductComposition}
+            >
+              Cancelar
+            </Button>
+          </Dialog.DialogClose>
+        </div>
+      </Dialog.Content>
+    </Dialog.Root>
   )
 }

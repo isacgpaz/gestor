@@ -15,7 +15,45 @@ export type CatalogVariantPropertyUpdate = {
   name: string
 }
 
+type ProductVariantPropertyWithName = {
+  catalogVariantPropertyId: string,
+  value: number,
+  catalogVariantPropertyName: string
+}
+
+export type ProductWithVariant = Omit<Product, 'variant'> & {
+  variant: {
+    catalogVariantName: string,
+    catalogVariantId: string,
+    properties: ProductVariantPropertyWithName[]
+  }
+}
+
 export type Catalog = {
   category: Pick<CatalogCategory, 'id' | 'name' | 'order'>,
-  items: Product[]
+  items: ProductWithVariant[]
 }
+
+export enum ShoppingBagItemTypeEnum {
+  UNIT = 'UNIT',
+  COMPOSED = 'COMPOSED',
+}
+
+type ShoppingBagItem = {
+  id: string,
+  quantity: number,
+  variantId?: string,
+}
+
+export type UnitShoppingBagItem = ShoppingBagItem & {
+  productId: string,
+  type: ShoppingBagItemTypeEnum.UNIT
+}
+
+export type ComposedShoppingBagItem = ShoppingBagItem & {
+  firstProductId?: string,
+  secondProductId?: string,
+  type: ShoppingBagItemTypeEnum.COMPOSED
+}
+
+export type CatalogShoppingBag = Array<UnitShoppingBagItem | ComposedShoppingBagItem>
