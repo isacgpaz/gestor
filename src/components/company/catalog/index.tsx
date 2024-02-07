@@ -8,15 +8,17 @@ import { toast } from "@/components/ui/use-toast"
 import { useCatalogShoppingBag } from "@/contexts/catalog-shopping-bag-context"
 import { useCatalog } from "@/hooks/catalog/use-catalog"
 import { cn } from "@/lib/utils"
-import { Catalog, ComposedShoppingBagItem, ProductWithVariant, ShoppingBagItemTypeEnum } from "@/types/catalog"
+import { Catalog, ComposedShoppingBagItem, ShoppingBagItemTypeEnum } from "@/types/catalog"
 import { formatCurrency } from "@/utils/format-currency"
 import { CatalogCategory, Company } from "@prisma/client"
 import * as Dialog from "@radix-ui/react-dialog"
-import { CircleSlash, Minus, Plus, ShoppingBag } from "lucide-react"
+import { ChevronLeft, CircleSlash, Minus, Plus, ShoppingBag } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { v4 as uuidv4 } from "uuid"
 import { z } from "zod"
+import { CatalogSectionList } from "./catalog-section-list"
 
 export function Catalog({ company }: { company: Company }) {
   const {
@@ -33,8 +35,6 @@ export function Catalog({ company }: { company: Company }) {
   })
 
   const catalogCategories = catalog?.map(({ category }) => category) ?? []
-
-  console.log(shoppingBag)
 
   const catalogFilteredByComposedProduct = catalog?.filter(
     (catalog) => catalog.category.id === selectedProduct?.categoryId
@@ -163,114 +163,6 @@ function CatalogSection({
   )
 }
 
-type CatalogSectionListProps = {
-  items: ProductWithVariant[];
-}
-
-function CatalogSectionList({
-  items,
-}: CatalogSectionListProps) {
-  const {
-    productComposedVisible,
-    setSelectedProduct,
-    setShoppingBag,
-    onProductOpenChange,
-    onProductComposedVisibleChange
-  } = useCatalogShoppingBag()
-
-  function selectProductAndOpenDrawer(product: ProductWithVariant) {
-    setSelectedProduct(product)
-    onProductOpenChange(true)
-  }
-
-  function selectComposedProduct(product: ProductWithVariant) {
-    setShoppingBag((previousShoppingBag) => previousShoppingBag.map(
-      (bagProduct) => {
-        if (bagProduct.type === ShoppingBagItemTypeEnum.COMPOSED) {
-          return {
-            ...bagProduct,
-            secondProductId: product.id
-          }
-        }
-
-        return bagProduct
-      }
-    ))
-
-    setSelectedProduct(undefined)
-    onProductComposedVisibleChange(false)
-
-    toast({
-      title: 'Item adicionado com sucesso!',
-      variant: 'success'
-    })
-  }
-
-  return (
-    <ul className="mt-4 flex flex-col gap-2">
-      {items.map((product) => (
-        <li
-          key={product.id}
-          onClick={() => {
-            if (productComposedVisible) {
-              selectComposedProduct(product)
-            } else {
-              selectProductAndOpenDrawer(product)
-            }
-          }}
-        >
-          <CatalogItem product={product} />
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-function CatalogItem({ product }: { product: ProductWithVariant }) {
-  return (
-    <div className="flex items-center gap-3 p-2 rounded-md transition-colors hover:bg-slate-50">
-      <div className="rounded-md bg-slate-300 h-16 w-16"></div>
-
-      <div className="flex flex-col justify-center flex-1">
-        <span>
-          {product.name}
-        </span>
-
-        <span className="text-sm text-slate-500">
-          {product.description}
-        </span>
-
-        {!!product.cost && (
-          <span className="font-medium text-sm">
-            {formatCurrency(product.cost)}
-          </span>
-        )}
-
-        {!!product.variant && (
-          <Button
-            variant='link'
-            size='sm'
-            className="w-fit p-0 mt-1 h-fit hover:no-underline"
-          >
-            Ver {product.variant.catalogVariantName.toLowerCase()}
-          </Button>
-        )}
-      </div>
-
-      <Button
-        className="mr-1 relative text-primary"
-        variant='secondary'
-        size='icon'>
-        <ShoppingBag className="w-5 h-5" />
-
-        <div className="absolute -bottom-1 -right-2 bg-primary text-primary-foreground rounded-full">
-          <Plus className="w-4 h-4" />
-        </div>
-      </Button>
-    </div>
-  )
-}
-
 const formSchema = z.object({
   quantity: z.number(),
   variantId: z.string().optional(),
@@ -283,63 +175,172 @@ function CatalogItemDrawer() {
     selectedProduct: product,
     productOpen,
     productComposedVisible,
+    selectedComposedProduct,
+    isComingFromShoppingBag,
+    selectedOrderItem,
     setShoppingBag,
     setSelectedComposedProduct,
+    setSelectedOrderItem,
     onProductOpenChange,
     onProductComposedVisibleChange,
+    onShoppingBagOpenChange,
+    setIsComingFromShoppingBag
   } = useCatalogShoppingBag()
+
+  const enableWrite = product?.id !== selectedComposedProduct?.firstProduct?.id
 
   const form = useForm<FormSchema>({
     defaultValues: {
       quantity: 1,
-      variantId: undefined
+      variantId: selectedComposedProduct?.variantId ?? undefined
     }
   })
 
   const quantity = form.watch('quantity')
   const variantId = form.watch('variantId')
 
+  const orderValue = useMemo(() => {
+    const selectedVariantPrice = product?.variant?.properties.find(
+      (property) => property.catalogVariantPropertyId === variantId
+    )?.value
+
+    if (selectedVariantPrice) {
+      return selectedVariantPrice * quantity
+    }
+
+    if (product) {
+      return product?.cost * quantity
+    }
+
+    return 0
+  }, [
+    product,
+    quantity,
+    variantId
+  ])
+
   function onSubmit(values: FormSchema) {
     if (product) {
+      let cost = product.cost
+
+      if (values.variantId) {
+        const variantPropertyValue = product.variant.properties.find(
+          (property) => property.catalogVariantPropertyId === values.variantId
+        )?.value ?? 0
+
+        cost = variantPropertyValue
+      }
+
       const productData = {
         id: uuidv4(),
         quantity: values.quantity,
         variantId: values.variantId,
+        cost
       }
 
       if (productComposedVisible) {
+        productData.cost = cost / 2
+
         const composedProduct: ComposedShoppingBagItem = {
           ...productData,
-          firstProductId: product.id,
-          secondProductId: undefined,
+          firstProduct: {
+            ...product,
+            cost
+          },
+          secondProduct: undefined,
           type: ShoppingBagItemTypeEnum.COMPOSED
         }
 
-        setShoppingBag((previousShoppingBag) => [
-          ...previousShoppingBag,
-          composedProduct
-        ])
+        if (selectedOrderItem) {
+          setShoppingBag((previousShoppingBag) =>
+            previousShoppingBag.map((shoppingBagItem) => {
+              if (shoppingBagItem.id === selectedOrderItem.id) {
+                return {
+                  ...selectedOrderItem,
+                  ...composedProduct
+                }
+              }
+
+              return shoppingBagItem
+            }),
+          )
+        } else {
+          setShoppingBag((previousShoppingBag) => [
+            ...previousShoppingBag,
+            composedProduct
+          ])
+        }
 
         setSelectedComposedProduct(composedProduct)
       } else {
-        setShoppingBag((previousShoppingBag) => [
-          ...previousShoppingBag,
-          {
-            ...productData,
-            productId: product.id,
-            type: ShoppingBagItemTypeEnum.UNIT
-          }
-        ])
+        if (selectedOrderItem) {
+          setShoppingBag((previousShoppingBag) =>
+            previousShoppingBag.map((shoppingBagItem) => {
+              if (shoppingBagItem.id === selectedOrderItem.id) {
+                return {
+                  ...selectedOrderItem,
+                  ...productData,
+                  product: {
+                    ...product,
+                    cost
+                  },
+                  type: ShoppingBagItemTypeEnum.UNIT
+                }
+              }
+
+              return shoppingBagItem
+            }),
+          )
+        } else {
+          setShoppingBag((previousShoppingBag) => [
+            ...previousShoppingBag,
+            {
+              ...productData,
+              product: {
+                ...product,
+                cost
+              },
+              type: ShoppingBagItemTypeEnum.UNIT
+            }
+          ])
+        }
 
         toast({
-          title: 'Item adiciondo com sucesso!',
+          title: 'Item adicionado com sucesso!',
           variant: 'success'
         })
+
       }
+    }
+
+    if (isComingFromShoppingBag) {
+      onShoppingBagOpenChange(true)
+      setSelectedOrderItem(undefined)
     }
 
     onProductOpenChange(false)
   }
+
+  useEffect(() => {
+    form.reset({
+      quantity: selectedOrderItem?.quantity ?? 1,
+      variantId:
+        selectedOrderItem?.variantId
+        ?? product?.variant?.properties.find(
+          (property) => property.catalogVariantPropertyId === selectedOrderItem?.variantId
+        )?.catalogVariantPropertyId
+        ?? product?.variant?.properties[0].catalogVariantPropertyId
+    })
+  },
+    [
+      form,
+      product?.variant?.properties,
+      selectedComposedProduct?.quantity,
+      selectedComposedProduct?.variantId,
+      selectedOrderItem?.quantity,
+      selectedOrderItem?.variantId
+    ]
+  )
 
   if (!product) {
     return null
@@ -349,6 +350,8 @@ function CatalogItemDrawer() {
     <Drawer open={productOpen} onOpenChange={(open) => {
       if (!open) {
         form.reset()
+        setSelectedOrderItem(undefined)
+        setIsComingFromShoppingBag(false)
       }
 
       onProductOpenChange(open)
@@ -359,8 +362,8 @@ function CatalogItemDrawer() {
             <div className="flex gap-4 p-6">
               <div className="w-32 h-32 bg-slate-300 rounded-sm flex-shrink-0"></div>
 
-              <div className="flex flex-col justify-between flex-1">
-                <DrawerHeader className="justify-start text-left pl-0 pt-0">
+              <div className="flex flex-col justify-start gap-2 flex-1">
+                <DrawerHeader className="justify-start text-left p-0">
                   <DrawerTitle className="text-2xl">
                     {product?.name}
                   </DrawerTitle>
@@ -372,10 +375,16 @@ function CatalogItemDrawer() {
                   )}
                 </DrawerHeader>
 
+                {!!product.cost && (
+                  <span className="text-slate-500 text-sm mb-6">
+                    {formatCurrency(product.cost)}
+                  </span>
+                )}
+
                 {product.variant && (
                   <div className="max-w-xs my-4 w-full flex flex-col justify-center">
                     <Label>
-                      Selecionar {product?.variant.catalogVariantName}:
+                      Selecionar {product?.variant.catalogVariantName.toLowerCase()}:
                     </Label>
 
                     <ul className="flex flex-wrap items-center gap-4 mt-3">
@@ -401,7 +410,11 @@ function CatalogItemDrawer() {
                               ? 'font-medium'
                               : 'text-slate-500'
                           )}>
-                            {formatCurrency(property.value)}
+                            {formatCurrency(
+                              productComposedVisible
+                                ? property.value / 2
+                                : property.value
+                            )}
                           </span>
                         </li>
                       ))}
@@ -409,65 +422,75 @@ function CatalogItemDrawer() {
                   </div>
                 )}
 
-                <div className="w-fit flex items-center justify-center space-x-8">
-                  <Button
-                    type='button'
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 shrink-0 rounded-full"
-                    onClick={() => form.setValue('quantity', quantity - 1)}
-                    disabled={quantity === 1}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
+                {enableWrite && (
+                  <div className="w-fit flex items-center justify-center space-x-8">
+                    <Button
+                      type='button'
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 shrink-0 rounded-full"
+                      onClick={() => form.setValue('quantity', quantity - 1)}
+                      disabled={quantity === 1}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
 
-                  <span className="font-medium">
-                    {quantity}
-                  </span>
+                    <span className="font-medium">
+                      {quantity}
+                    </span>
 
-                  <Button
-                    type='button'
-                    size="icon"
-                    className="h-8 w-8 shrink-0 rounded-full"
-                    onClick={() => form.setValue('quantity', quantity + 1)}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
+                    <Button
+                      type='button'
+                      size="icon"
+                      className="h-8 w-8 shrink-0 rounded-full"
+                      onClick={() => form.setValue('quantity', quantity + 1)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
 
             <DrawerFooter className="flex-row justify-between gap-4">
               <DrawerClose asChild>
-                <Button variant='outline' type='button'>Fechar</Button>
+                <Button
+                  variant='outline'
+                  size={productComposedVisible ? 'icon' : 'default'}
+                  type='button'
+                  className={cn(productComposedVisible && 'w-12')}
+                  onClick={() => {
+                    if (isComingFromShoppingBag) {
+                      onShoppingBagOpenChange(true)
+                    }
+                  }}
+                >
+                  {/* TODO: Add conditional to validate product */}
+                  {true ? <ChevronLeft className="w-4 h-4" /> : 'Fechar'}
+                </Button>
               </DrawerClose>
 
-              <div className="flex gap-2">
-                {productComposedVisible ? (
-                  <Button className="w-fit">
-                    <CircleSlash className="mr-2 w-4 h-4" />
-                    Adicionar metade
+              {enableWrite && (
+                <div className="flex gap-2">
+                  <Button
+                    className="w-fit text-primary"
+                    variant='secondary'
+                    onClick={() => {
+                      onProductComposedVisibleChange(true)
+                      setIsComingFromShoppingBag(false)
+                    }}
+                  >
+                    <CircleSlash className="mr-2 w-4 h-4 block rotate-[130deg]" />
+                    Meio a meio
                   </Button>
-                ) : (
-                  <>
-                    <Button
-                      className="w-fit text-primary"
-                      variant='secondary'
-                      onClick={() => {
-                        onProductComposedVisibleChange(true)
-                      }}
-                    >
-                      <CircleSlash className="mr-2 w-4 h-4 block rotate-[130deg]" />
-                      Meio a meio
-                    </Button>
 
-                    <Button className="w-fit">
-                      <ShoppingBag className="mr-2 w-4 h-4" />
-                      Adicionar à sacola
-                    </Button>
-                  </>
-                )}
-              </div>
+                  <Button className="w-fit">
+                    <ShoppingBag className="mr-2 w-4 h-4" />
+                    {isComingFromShoppingBag ? 'Atualizar ' : 'Adicionar '}
+                    {formatCurrency(orderValue)}
+                  </Button>
+                </div>
+              )}
             </DrawerFooter>
           </form>
         </Form>
@@ -482,15 +505,23 @@ function ComposedDialog() {
     selectedComposedProduct,
     productComposedVisible,
     setShoppingBag,
+    setSelectedComposedProduct,
     onProductComposedVisibleChange,
     onProductOpenChange,
   } = useCatalogShoppingBag()
+
+  const firstProductVariantOriginalPrice = firstProduct?.variant?.properties.find(
+    (prop) => prop.catalogVariantPropertyId === selectedComposedProduct?.variantId
+  )?.value ?? 0
+
+  const firstProductVariantComposedPrice = firstProductVariantOriginalPrice / 2
 
   function onCancelProductComposition() {
     setShoppingBag((previousShoppingBag) => previousShoppingBag.filter(
       (product) => product.id !== selectedComposedProduct?.id
     ))
 
+    setSelectedComposedProduct(undefined)
     onProductComposedVisibleChange(false)
   }
 
@@ -519,6 +550,13 @@ function ComposedDialog() {
                 Sabor 1:{' '}
               </span>
               {firstProduct.name}
+            </span>
+
+            <span className="text-slate-200 text-sm">
+              <span className="font-medium">
+                Valor: {' '}
+              </span>
+              {formatCurrency(firstProductVariantComposedPrice)}
             </span>
           </div>
 

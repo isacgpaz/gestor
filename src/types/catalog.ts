@@ -42,17 +42,18 @@ export enum ShoppingBagItemTypeEnum {
 type ShoppingBagItem = {
   id: string,
   quantity: number,
+  cost: number,
   variantId?: string,
 }
 
 export type UnitShoppingBagItem = ShoppingBagItem & {
-  productId: string,
+  product: ProductWithVariant,
   type: ShoppingBagItemTypeEnum.UNIT
 }
 
 export type ComposedShoppingBagItem = ShoppingBagItem & {
-  firstProductId?: string,
-  secondProductId?: string,
+  firstProduct?: ProductWithVariant,
+  secondProduct?: ProductWithVariant,
   type: ShoppingBagItemTypeEnum.COMPOSED
 }
 
