@@ -12,7 +12,7 @@ import { Catalog, ComposedShoppingBagItem, ShoppingBagItemTypeEnum } from "@/typ
 import { formatCurrency } from "@/utils/format-currency"
 import { CatalogCategory, Company } from "@prisma/client"
 import * as Dialog from "@radix-ui/react-dialog"
-import { ChevronLeft, CircleSlash, Minus, Plus, ShoppingBag } from "lucide-react"
+import { CircleSlash, Minus, Plus, ShoppingBag } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useMemo } from "react"
 import { useForm } from "react-hook-form"
@@ -23,7 +23,6 @@ import { CatalogSectionList } from "./catalog-section-list"
 export function Catalog({ company }: { company: Company }) {
   const {
     selectedProduct,
-    shoppingBag,
     productComposedVisible,
   } = useCatalogShoppingBag()
 
@@ -208,7 +207,7 @@ function CatalogItemDrawer() {
       return selectedVariantPrice * quantity
     }
 
-    if (product) {
+    if (product?.cost) {
       return product?.cost * quantity
     }
 
@@ -221,7 +220,7 @@ function CatalogItemDrawer() {
 
   function onSubmit(values: FormSchema) {
     if (product) {
-      let cost = product.cost
+      let cost = product.cost ?? 0
 
       if (values.variantId) {
         const variantPropertyValue = product.variant.properties.find(
@@ -423,36 +422,52 @@ function CatalogItemDrawer() {
                 )}
 
                 {enableWrite && (
-                  <div className="w-fit flex items-center justify-center space-x-8">
-                    <Button
-                      type='button'
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 shrink-0 rounded-full"
-                      onClick={() => form.setValue('quantity', quantity - 1)}
-                      disabled={quantity === 1}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
+                  <>
+                    <div className="w-fit flex items-center justify-center space-x-8 mb-4">
+                      <Button
+                        type='button'
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 shrink-0 rounded-full"
+                        onClick={() => form.setValue('quantity', quantity - 1)}
+                        disabled={quantity === 1}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
 
-                    <span className="font-medium">
-                      {quantity}
-                    </span>
+                      <span className="font-medium">
+                        {quantity}
+                      </span>
 
-                    <Button
-                      type='button'
-                      size="icon"
-                      className="h-8 w-8 shrink-0 rounded-full"
-                      onClick={() => form.setValue('quantity', quantity + 1)}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
+                      <Button
+                        type='button'
+                        size="icon"
+                        className="h-8 w-8 shrink-0 rounded-full"
+                        onClick={() => form.setValue('quantity', quantity + 1)}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    {product.allowComposition && (
+                      <Button
+                        className="w-full text-primary hover:text-primary "
+                        variant='secondary'
+                        onClick={() => {
+                          onProductComposedVisibleChange(true)
+                          setIsComingFromShoppingBag(false)
+                        }}
+                      >
+                        <CircleSlash className="mr-2 w-4 h-4 block rotate-[130deg]" />
+                        Adicionar meio a meio
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
 
-            <DrawerFooter className="flex-row justify-between gap-4">
+            <DrawerFooter className="flex-row items-end justify-between gap-4">
               <DrawerClose asChild>
                 <Button
                   variant='outline'
@@ -465,31 +480,16 @@ function CatalogItemDrawer() {
                     }
                   }}
                 >
-                  {/* TODO: Add conditional to validate product */}
-                  {true ? <ChevronLeft className="w-4 h-4" /> : 'Fechar'}
+                  Fechar
                 </Button>
               </DrawerClose>
 
               {enableWrite && (
-                <div className="flex gap-2">
-                  <Button
-                    className="w-fit text-primary"
-                    variant='secondary'
-                    onClick={() => {
-                      onProductComposedVisibleChange(true)
-                      setIsComingFromShoppingBag(false)
-                    }}
-                  >
-                    <CircleSlash className="mr-2 w-4 h-4 block rotate-[130deg]" />
-                    Meio a meio
-                  </Button>
-
-                  <Button className="w-fit">
-                    <ShoppingBag className="mr-2 w-4 h-4" />
-                    {isComingFromShoppingBag ? 'Atualizar ' : 'Adicionar '}
-                    {formatCurrency(orderValue)}
-                  </Button>
-                </div>
+                <Button className="w-fit">
+                  <ShoppingBag className="mr-2 w-4 h-4" />
+                  {isComingFromShoppingBag ? 'Atualizar ' : 'Adicionar '}
+                  {formatCurrency(orderValue)}
+                </Button>
               )}
             </DrawerFooter>
           </form>

@@ -241,17 +241,18 @@ model CatalogVariantProperty {
 }
 
 model Product {
-  id          String          @id @default(auto()) @map("_id") @db.ObjectId
-  company     Company         @relation(fields: [companyId], references: [id])
-  companyId   String          @db.ObjectId
-  category    CatalogCategory @relation(fields: [categoryId], references: [id])
-  categoryId  String          @db.ObjectId
-  name        String
-  description String?
-  cost        Float
-  variant     ProductVariant?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  company          Company         @relation(fields: [companyId], references: [id])
+  companyId        String          @db.ObjectId
+  category         CatalogCategory @relation(fields: [categoryId], references: [id])
+  categoryId       String          @db.ObjectId
+  name             String
+  allowComposition Boolean?        @default(false)
+  cost             Float?
+  description      String?
+  variant          ProductVariant?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 }
 
 type ProductVariant {

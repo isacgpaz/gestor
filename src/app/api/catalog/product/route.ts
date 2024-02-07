@@ -127,7 +127,8 @@ export async function POST(request: NextRequest) {
     name,
     description,
     cost,
-    variant
+    variant,
+    allowComposition
   } = await request.json()
 
   const company = await prisma.company.findUnique({
@@ -185,7 +186,8 @@ export async function POST(request: NextRequest) {
       name,
       description,
       cost,
-      variant
+      variant,
+      allowComposition
     }
   })
 

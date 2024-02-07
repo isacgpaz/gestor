@@ -316,16 +316,18 @@ function ProductCard({ product }: ProductCardProps) {
             </span>
           </li>
 
-          {product.variant ? (
+          {!!product.variant && (
             <li className="flex gap-1 text-primary font-medium">
               Ver variantes
             </li>
-          ) : (
+          )}
+
+          {!!product.cost && (
             <li className="flex gap-1">
               Preço: {' '}
 
               <span className="text-slate-500 flex items-center gap-1">
-                {formatCurrency(product.cost)}
+                {formatCurrency(product?.cost)}
               </span>
             </li>
           )}
@@ -381,6 +383,7 @@ const formProductSchema = z.object({
   }),
   categoryId: z.string().min(1, 'A categoria é obrigatória.'),
   enableVariants: z.boolean(),
+  allowComposition: z.boolean(),
   variant: z.object({
     catalogVariantId: z.string({ required_error: 'A variante é obrigatória.' }),
     properties: z.array(
@@ -431,6 +434,7 @@ function ProductForm({
       categoryId: product?.categoryId ?? '',
       cost: product?.cost ?? 0,
       enableVariants: !!product?.variant ?? false,
+      allowComposition: !!product?.allowComposition ?? false,
       variant: product?.variant ? {
         catalogVariantId: product?.variant?.catalogVariantId,
         properties: product?.variant?.properties.map((property) => ({
@@ -471,6 +475,7 @@ function ProductForm({
         cost: values.cost,
         categoryId: values.categoryId,
         companyId: user?.company.id,
+        allowComposition: values.allowComposition,
         variant: values.variant ? {
           catalogVariantId: values.variant.catalogVariantId,
           properties: values.variant.properties.map((property) => ({
@@ -497,6 +502,7 @@ function ProductForm({
         cost: values.cost,
         categoryId: values.categoryId,
         companyId: user?.company.id,
+        allowComposition: values.allowComposition,
         variant: values.variant ? {
           catalogVariantId: values.variant.catalogVariantId,
           properties: values.variant.properties.map((property) => ({
@@ -764,6 +770,26 @@ function ProductForm({
                 )}
               </div>
             )}
+
+            <FormField
+              control={form.control}
+              name="allowComposition"
+              render={({ field }) => (
+                <FormItem className="flex items-start space-x-2">
+                  <FormControl className="mt-1.5">
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isReadonly}
+                    />
+                  </FormControl>
+
+                  <FormLabel>
+                    Habilitar composição
+                  </FormLabel>
+                </FormItem>
+              )}
+            />
           </div>
         </ScrollArea>
 

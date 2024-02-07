@@ -27,7 +27,7 @@ export function CatalogSectionList({
   function selectComposedProduct(product: ProductWithVariant) {
     setShoppingBag((previousShoppingBag) => previousShoppingBag.map(
       (bagProduct) => {
-        let cost = product.cost
+        let cost = product.cost ?? 0
 
         if (bagProduct.variantId) {
           const variantPropertyValue = product.variant.properties.find(

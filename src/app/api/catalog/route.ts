@@ -1,13 +1,18 @@
 import { prisma } from "@/lib/prisma";
-import { Catalog } from "@/types/catalog";
+import { Catalog, ProductWithVariant } from "@/types/catalog";
 import { CatalogCategory, Product } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
-function groupByCategory(products: Product[], categories: CatalogCategory[]) {
+function groupByCategory(
+  products: Array<Product | ProductWithVariant>,
+  categories: CatalogCategory[]
+) {
   const catalog: Catalog[] = [];
 
   categories.forEach(category => {
-    const productsByCatalog = products.filter(product => product.categoryId === category.id);
+    const productsByCatalog: Array<Product | ProductWithVariant> = products.filter(
+      (product) => product.categoryId === category.id
+    );
 
     if (productsByCatalog.length > 0) {
       catalog.push({
@@ -16,7 +21,7 @@ function groupByCategory(products: Product[], categories: CatalogCategory[]) {
           name: category.name,
           order: category.order
         },
-        items: productsByCatalog,
+        items: productsByCatalog as ProductWithVariant[],
       });
     }
   });
@@ -73,7 +78,7 @@ export async function GET(request: NextRequest) {
     }
   })
 
-  const productsWithVariants = products.map((product) => {
+  const productsWithVariants: Array<Product | ProductWithVariant> = products.map((product) => {
     if (product.variant) {
       const productVariant = catalogVariants.find(
         (catalogVariant) => catalogVariant.id === product.variant?.catalogVariantId

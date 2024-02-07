@@ -19,7 +19,8 @@ export async function PUT(
     name,
     description,
     cost,
-    variant
+    variant,
+    allowComposition
   } = await request.json()
 
   const product = await prisma.product.findUnique({
@@ -93,7 +94,8 @@ export async function PUT(
       name,
       description,
       cost,
-      variant
+      variant,
+      allowComposition
     }
   })
 
