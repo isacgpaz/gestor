@@ -3,6 +3,8 @@
 import { CompanyHeader } from "@/components/common/company-header"
 import { NavHeader } from "@/components/common/nav-header"
 import { Catalog } from "@/components/company/catalog"
+import { ShoppingBag } from "@/components/company/shopping-bag"
+import { CatalogShoppingBagProvider } from "@/contexts/catalog-shopping-bag-context"
 import { CompanyProvider, useCompany } from "@/contexts/company-context"
 import { useCompanyBySlug } from "@/hooks/company/use-company-by-slug"
 import { Loader2 } from "lucide-react"
@@ -33,7 +35,10 @@ function Company() {
 
       {/* <Wallet /> */}
 
-      <Catalog company={company} />
+      <CatalogShoppingBagProvider>
+        <Catalog company={company} />
+        <ShoppingBag />
+      </CatalogShoppingBagProvider>
     </div>
   )
 }
