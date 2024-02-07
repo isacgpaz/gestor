@@ -7,13 +7,13 @@ import { Label } from "@/components/ui/label"
 import { toast } from "@/components/ui/use-toast"
 import { useCatalogShoppingBag } from "@/contexts/catalog-shopping-bag-context"
 import { useCatalog } from "@/hooks/catalog/use-catalog"
+import { useHash } from "@/hooks/use-hash"
 import { cn } from "@/lib/utils"
 import { Catalog, ComposedShoppingBagItem, ShoppingBagItemTypeEnum } from "@/types/catalog"
 import { formatCurrency } from "@/utils/format-currency"
 import { CatalogCategory, Company } from "@prisma/client"
 import * as Dialog from "@radix-ui/react-dialog"
 import { CircleSlash, Minus, Plus, ShoppingBag } from "lucide-react"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { v4 as uuidv4 } from "uuid"
@@ -75,47 +75,36 @@ type CatalogCategoriesListProps = {
   categories: Category[],
 }
 
+
 function CatalogCategoriesList({
   categories,
 }: CatalogCategoriesListProps) {
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-
-  const selectedCategory = searchParams.get('category')
-
-  function updateSelectedCategory(categoryId?: string) {
-    const params = new URLSearchParams(searchParams.toString())
-
-    if (categoryId) {
-      params.set('category', categoryId)
-    } else {
-      params.delete('category')
-    }
-
-    router.push(pathname + '?' + params.toString(), { scroll: false })
-  }
+  const hash = useHash()
 
   return (
-    <ul className="flex gap-3 px-6">
+    <ul className="flex gap-3 px-6 whitespace-nowrap overflow-auto scrollbar-hide">
       <li>
         <Button
-          variant={!selectedCategory ? 'default' : 'secondary'}
-          className={cn(selectedCategory && "text-primary")}
-          onClick={() => updateSelectedCategory(undefined)}
+          asChild
+          variant={hash === 'all' ? 'default' : 'secondary'}
+          className={cn(hash !== 'all' && "text-primary")}
         >
-          Todos
+          <a href="#all">
+            Todos
+          </a>
         </Button>
       </li>
 
       {categories.map((category) => (
         <li key={category.id}>
           <Button
-            variant={category.id === selectedCategory ? 'default' : 'secondary'}
-            className={cn(category.id !== selectedCategory && "text-primary")}
-            onClick={() => updateSelectedCategory(category.id)}
+            asChild
+            variant={category.id === hash ? 'default' : 'secondary'}
+            className={cn(category.id !== hash && "text-primary")}
           >
-            {category.name}
+            <a href={`#${category.id}`}>
+              {category.name}
+            </a>
           </Button>
         </li>
       ))}
@@ -152,7 +141,7 @@ function CatalogSection({
   const { productComposedVisible } = useCatalogShoppingBag()
 
   return (
-    <section className="mb-6">
+    <section className="mb-6" id={catalog.category.id}>
       <h2 className="font-medium text-lg">
         {productComposedVisible ? 'Escolher segundo sabor:' : catalog.category.name}
       </h2>
