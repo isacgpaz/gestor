@@ -74,6 +74,7 @@ type CatalogCategoriesListProps = {
   categories: Category[],
 }
 
+
 function CatalogCategoriesList({
   categories,
 }: CatalogCategoriesListProps) {
