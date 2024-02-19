@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { toast } from "@/components/ui/use-toast"
 import { useCatalogCategories } from "@/hooks/catalog/use-catalog-categories"
 import { useCatalogVariants } from "@/hooks/catalog/use-catalog-variants"
@@ -24,7 +25,7 @@ import { formatCurrency } from "@/utils/format-currency"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CatalogCategory, Company, Product, User } from "@prisma/client"
 import { useDebounce } from "@uidotdev/usehooks"
-import { Filter, Loader2, PackageOpen, X } from "lucide-react"
+import { Filter, Info, Loader2, PackageOpen, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -784,9 +785,34 @@ function ProductForm({
                     />
                   </FormControl>
 
-                  <FormLabel>
-                    Habilitar composição
-                  </FormLabel>
+                  <div className="flex items-center gap-2">
+                    <FormLabel>
+                      Habilitar composição
+                    </FormLabel>
+
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger type='button'>
+                          <Info className="w-4 h-4" />
+                        </TooltipTrigger>
+
+                        <TooltipContent className="max-w-[280px]">
+                          <p>
+                            Ao marcar esta opção este item fica disponível para ser
+                            combinado com outro item de mesma categoria.
+                          </p>
+
+                          <p className="mt-4 text-slate-500">
+                            Ex.: Pizza <br />
+
+                            <span>
+                              1/2 Calabresa e 1/2 Portuguesa
+                            </span>
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                 </FormItem>
               )}
             />
