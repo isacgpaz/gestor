@@ -30,6 +30,8 @@ model User {
   updatedAt DateTime   @updatedAt
   wallets   Wallet[]
   movements Movement[]
+  customer  Order[]    @relation("customer")
+  attendant Order[]    @relation("attendant")
 }
 
 model Company {
@@ -54,6 +56,7 @@ model Company {
   catalogCategory  CatalogCategory[]
   product          Product[]
   catalogVariant   CatalogVariant[]
+  order            Order[]
 }
 
 model Wallet {
@@ -238,21 +241,26 @@ model CatalogVariantProperty {
   name             String
   catalogVariant   CatalogVariant @relation(fields: [catalogVariantId], references: [id])
   catalogVariantId String         @db.ObjectId
+  orderItem        OrderItem[]
 }
 
 model Product {
-  id               String          @id @default(auto()) @map("_id") @db.ObjectId
-  company          Company         @relation(fields: [companyId], references: [id])
-  companyId        String          @db.ObjectId
-  category         CatalogCategory @relation(fields: [categoryId], references: [id])
-  categoryId       String          @db.ObjectId
-  name             String
-  allowComposition Boolean?        @default(false)
-  cost             Float?
-  description      String?
-  variant          ProductVariant?
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  id                  String          @id @default(auto()) @map("_id") @db.ObjectId
+  company             Company         @relation(fields: [companyId], references: [id])
+  companyId           String          @db.ObjectId
+  category            CatalogCategory @relation(fields: [categoryId], references: [id])
+  categoryId          String          @db.ObjectId
+  name                String
+  allowComposition    Boolean?        @default(false)
+  cost                Float?
+  description         String?
+  variant             ProductVariant?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  composedProductsIds String[]        @db.ObjectId
+  composedProducts    OrderItem[]     @relation("composedProducts", fields: [composedProductsIds], references: [id])
+  uniformProduct      OrderItem?      @relation("uniformProduct", fields: [uniformProductId], references: [id])
+  uniformProductId    String?         @unique @db.ObjectId
 }
 
 type ProductVariant {
@@ -263,4 +271,43 @@ type ProductVariant {
 type ProductVariantProperty {
   catalogVariantPropertyId String
   value                    Float
+}
+
+model Order {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  company         Company     @relation(fields: [companyId], references: [id])
+  companyId       String      @db.ObjectId
+  items           OrderItem[]
+  type            OrderType
+  totalValue      Int
+  customer        User?       @relation("customer", fields: [customerId], references: [id])
+  customerId      String?     @db.ObjectId
+  deliveryAddress Address?
+  attendant       User?       @relation("attendant", fields: [attendantId], references: [id])
+  attendantId     String?     @db.ObjectId
+  table           Int?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+enum OrderType {
+  LOCAL
+  DELIVERY
+  PICK_UP
+}
+
+model OrderItem {
+  id                       String                  @id @default(auto()) @map("_id") @db.ObjectId
+  order                    Order                   @relation(fields: [orderId], references: [id])
+  orderId                  String                  @db.ObjectId
+  quantity                 Int
+  price                    Int
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  uniformProduct           Product?                @relation("uniformProduct")
+  uniformProductId         String?                 @unique @db.ObjectId
+  composedProducts         Product[]               @relation("composedProducts", fields: [composedProductsIds], references: [id])
+  composedProductsIds      String[]                @db.ObjectId
+  catalogVariantProperty   CatalogVariantProperty? @relation(fields: [catalogVariantPropertyId], references: [id])
+  catalogVariantPropertyId String?                 @db.ObjectId
 }
