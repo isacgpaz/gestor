@@ -277,6 +277,7 @@ model Order {
   id              String      @id @default(auto()) @map("_id") @db.ObjectId
   company         Company     @relation(fields: [companyId], references: [id])
   companyId       String      @db.ObjectId
+  status          OrderStatus @default(PENDING)
   items           OrderItem[]
   type            OrderType
   totalValue      Int
@@ -288,6 +289,13 @@ model Order {
   table           Int?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  IN_ROUTE
+  FINISHED
 }
 
 enum OrderType {
