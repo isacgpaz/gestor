@@ -1,76 +1,61 @@
+import { useCompanyBySlug } from "@/hooks/company/use-company-by-slug";
+import { useWallet } from "@/hooks/wallet/use-wallet";
 import { serverSession } from "@/lib/auth/server";
-import { findWalletByUserAndCompany } from "@/services/wallet/find-by-user-and-company";
-import { Company, Wallet } from "@prisma/client";
+import { Wallet } from "@/types/wallet";
+import { Company, User } from "@prisma/client";
 import { PropsWithChildren, createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 type CompanyContextProp = {
   company: Company | undefined,
   wallet: Wallet | undefined,
-  setWallet: (wallet: Wallet | undefined) => void,
-  isLoading: boolean,
-  setIsLoading: (open: boolean) => void,
+  isPending: boolean,
 }
 
 export const CompanyContext = createContext<CompanyContextProp>({} as CompanyContextProp)
 
 export function CompanyProvider({
   children,
-  company
-}: PropsWithChildren & { company?: Company }) {
-  const [wallet, setWallet] = useState<Wallet | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(true);
+  slug
+}: PropsWithChildren & { slug: string }) {
+  const [customer, setCustomer] = useState<User | undefined>(undefined)
 
-  async function getCustomerId() {
+  const {
+    data: company,
+    isPending: isCompanyPending
+  } = useCompanyBySlug(slug)
+
+  const {
+    data: wallet,
+    isPending: isWalletPending
+  } = useWallet({
+    companyId: company?.id,
+    customerId: customer?.id
+  })
+
+  const isPending = isCompanyPending && isWalletPending
+
+  const getCustomer = useCallback(async () => {
     const session = await serverSession()
 
     const user = session?.user
 
     if (user) {
-      return user.id
+      setCustomer(user)
     }
-
-    return ''
-  }
-
-  const getCompanyWallet = useCallback(async () => {
-    if (company) {
-      setIsLoading(true)
-
-      const customerId = await getCustomerId()
-
-      await findWalletByUserAndCompany({
-        companyId: company.id,
-        customerId
-      }).then(async (response) => {
-        if (response.ok) {
-          const wallet = await response.json() as Wallet
-
-          setWallet(wallet)
-        }
-      }).catch((e) => {
-        console.error(e)
-      }).finally(() => {
-        setIsLoading(false)
-      })
-    }
-  }, [company])
+  }, [])
 
   useEffect(() => {
-    getCompanyWallet()
-  }, [getCompanyWallet])
+    getCustomer()
+  }, [getCustomer])
 
   const value: CompanyContextProp = useMemo(() => ({
     company,
-    isLoading,
-    setIsLoading,
+    isPending,
     wallet,
-    setWallet
   }), [
     company,
-    isLoading,
-    setIsLoading,
+    isPending,
     wallet,
-    setWallet
   ])
 
   return (

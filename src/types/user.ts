@@ -7,6 +7,6 @@ export type User = {
   name: string;
   role: $Enums.UserRole;
   company: Company,
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
