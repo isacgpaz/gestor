@@ -219,6 +219,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: error.message }, { status: 400 })
     }
 
-    return error
+    return NextResponse.json({ status: 500 })
   }
 }
