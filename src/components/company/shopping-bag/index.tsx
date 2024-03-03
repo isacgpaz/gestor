@@ -1,25 +1,36 @@
 import { Button } from "@/components/ui/button";
-import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { useCatalogShoppingBag } from "@/contexts/catalog-shopping-bag-context";
+import { useCompany } from "@/contexts/company-context";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/utils/format-currency";
 import { ShoppingBag as ShoppingBagIcon } from 'lucide-react';
-import { ShoppingBagList } from "./shopping-bag-list";
+import { OrderCustomerStep } from "./steps/order-customer-step";
+import { OrderInfoStep } from "./steps/order-info-step";
+import { OrderItemsStep } from "./steps/order-items-step";
 
 export function ShoppingBag() {
   const {
-    shoppingBag,
     shoppingBagItemsQuantity,
     shoppingBagValue,
     productComposedVisible,
     shoppingBagOpen,
-    onShoppingBagOpenChange
+    step,
+    onShoppingBagOpenChange,
   } = useCatalogShoppingBag()
+
+  const { customer } = useCompany()
+
+  const shoppingBagSteps = [
+    <OrderItemsStep key='items' />,
+    <OrderInfoStep key='info' />,
+    <OrderCustomerStep key='customer' />
+  ]
 
   return (
     <div className={cn("fixed right-6 transition-all",
       shoppingBagItemsQuantity > 0
-        ? productComposedVisible ? "bottom-[7.5rem]" : "bottom-[4.5rem]"
+        ? productComposedVisible ? "bottom-[7.5rem]" : customer ? "bottom-[4.5rem]" : "bottom-[1.5rem]"
         : "-bottom-full"
     )}>
       <Drawer open={shoppingBagOpen} onOpenChange={onShoppingBagOpenChange}>
@@ -42,45 +53,7 @@ export function ShoppingBag() {
         </DrawerTrigger>
 
         <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>
-              Sacola de compras
-            </DrawerTitle>
-          </DrawerHeader>
-
-          <div className="px-4 flex flex-col gap-3">
-            <ShoppingBagList items={shoppingBag} />
-
-            {shoppingBag.length > 0 && (
-              <div className="mx-2 mt-4 flex items-center justify-between gap-4 font-medium">
-                <span>
-                  Total
-                </span>
-
-                <span>
-                  {formatCurrency(shoppingBagValue)}
-                </span>
-              </div>
-            )}
-          </div>
-
-          <DrawerFooter>
-            {shoppingBag.length ? (
-              <Button>
-                Finalizar pedido
-              </Button>
-            ) : (
-              <Button onClick={() => onShoppingBagOpenChange(false)}>
-                Começar a adicionar itens
-              </Button>
-            )}
-
-            <DrawerClose asChild>
-              <Button variant='outline'>
-                Voltar
-              </Button>
-            </DrawerClose>
-          </DrawerFooter>
+          {shoppingBagSteps[step]}
         </DrawerContent>
       </Drawer>
     </div>

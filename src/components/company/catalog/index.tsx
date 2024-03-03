@@ -6,11 +6,12 @@ import { Form } from "@/components/ui/form"
 import { Label } from "@/components/ui/label"
 import { toast } from "@/components/ui/use-toast"
 import { useCatalogShoppingBag } from "@/contexts/catalog-shopping-bag-context"
+import { useCompany } from "@/contexts/company-context"
 import { useCatalog } from "@/hooks/catalog/use-catalog"
 import { cn } from "@/lib/utils"
 import { Catalog, ComposedShoppingBagItem, ShoppingBagItemTypeEnum } from "@/types/catalog"
 import { formatCurrency } from "@/utils/format-currency"
-import { CatalogCategory, Company } from "@prisma/client"
+import { CatalogCategory } from "@prisma/client"
 import * as Dialog from "@radix-ui/react-dialog"
 import { CircleSlash, Minus, Plus, ShoppingBag } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
@@ -19,7 +20,9 @@ import { v4 as uuidv4 } from "uuid"
 import { z } from "zod"
 import { CatalogSectionList } from "./catalog-section-list"
 
-export function Catalog({ company }: { company: Company }) {
+export function Catalog() {
+  const { company } = useCompany()
+
   const {
     selectedProduct,
     productComposedVisible,
@@ -29,7 +32,7 @@ export function Catalog({ company }: { company: Company }) {
     data: catalog,
     isPending,
   } = useCatalog({
-    companyId: company.id
+    companyId: company?.id
   })
 
   const catalogCategories = catalog?.map(({ category }) => category) ?? []
@@ -141,13 +144,17 @@ function CatalogSection({
 }: CatalogSectionProps) {
   const { productComposedVisible } = useCatalogShoppingBag()
 
+  const items = productComposedVisible
+    ? catalog.items.filter((item) => item.allowComposition)
+    : catalog.items
+
   return (
     <section className="mb-6" id={catalog.category.id}>
       <h2 className="font-medium text-lg">
         {productComposedVisible ? 'Escolher segundo sabor:' : catalog.category.name}
       </h2>
 
-      <CatalogSectionList items={catalog.items} />
+      <CatalogSectionList items={items} />
     </section>
   )
 }
