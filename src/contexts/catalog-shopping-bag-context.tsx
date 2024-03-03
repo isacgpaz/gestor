@@ -1,9 +1,13 @@
 import { CatalogShoppingBag, ComposedShoppingBagItem, ProductWithVariant, ShoppingBagItemTypeEnum, UnitShoppingBagItem } from "@/types/catalog";
-import { Dispatch, PropsWithChildren, SetStateAction, createContext, useContext, useMemo, useState } from "react";
+import { CreateOrder } from "@/types/order";
+import { OrderType } from "@prisma/client";
+import { Dispatch, PropsWithChildren, SetStateAction, createContext, useCallback, useContext, useMemo, useState } from "react";
 
 type CatalogShoppingBagContextProp = {
   shoppingBag: CatalogShoppingBag,
   setShoppingBag: Dispatch<SetStateAction<CatalogShoppingBag>>,
+  order: Partial<CreateOrder>,
+  setOrder: Dispatch<SetStateAction<Partial<CreateOrder>>>,
   selectedProduct: ProductWithVariant | undefined,
   setSelectedProduct: Dispatch<SetStateAction<ProductWithVariant | undefined>>,
   selectedComposedProduct: ComposedShoppingBagItem | undefined,
@@ -20,6 +24,9 @@ type CatalogShoppingBagContextProp = {
   shoppingBagValue: number,
   selectedOrderItem: UnitShoppingBagItem | ComposedShoppingBagItem | undefined,
   setSelectedOrderItem: Dispatch<SetStateAction<UnitShoppingBagItem | ComposedShoppingBagItem | undefined>>,
+  resetShoppingBag: () => void,
+  step: number,
+  setStep: Dispatch<SetStateAction<number>>
 }
 
 export const CatalogShoppingBagContext = createContext<CatalogShoppingBagContextProp>({} as CatalogShoppingBagContextProp)
@@ -28,6 +35,9 @@ export function CatalogShoppingBagProvider({
   children,
 }: PropsWithChildren) {
   const [shoppingBag, setShoppingBag] = useState<CatalogShoppingBag>([]);
+  const [order, setOrder] = useState<Partial<CreateOrder>>({
+    type: OrderType.DELIVERY
+  });
 
   const [selectedProduct, setSelectedProduct] = useState<ProductWithVariant | undefined>(undefined)
   const [selectedComposedProduct, setSelectedComposedProduct] = useState<ComposedShoppingBagItem | undefined>(undefined)
@@ -36,6 +46,9 @@ export function CatalogShoppingBagProvider({
   const [productOpen, onProductOpenChange] = useState(false)
   const [productComposedVisible, onProductComposedVisibleChange] = useState(false);
   const [shoppingBagOpen, onShoppingBagOpenChange] = useState(false)
+
+  const [step, setStep] = useState(0)
+
   const [isComingFromShoppingBag, setIsComingFromShoppingBag] = useState(false)
 
   const shoppingBagItemsQuantity = useMemo(() => {
@@ -75,9 +88,20 @@ export function CatalogShoppingBagProvider({
   }, [shoppingBag]
   )
 
+  const resetShoppingBag = useCallback(() => {
+    setShoppingBag([])
+    setSelectedProduct(undefined)
+    setSelectedComposedProduct(undefined)
+    setSelectedOrderItem(undefined)
+    setOrder({ type: OrderType.DELIVERY })
+    setStep(0)
+  }, [])
+
   const value: CatalogShoppingBagContextProp = useMemo(() => ({
     shoppingBag,
     setShoppingBag,
+    order,
+    setOrder,
     selectedProduct,
     setSelectedProduct,
     productOpen,
@@ -93,10 +117,15 @@ export function CatalogShoppingBagProvider({
     isComingFromShoppingBag,
     setIsComingFromShoppingBag,
     selectedOrderItem,
-    setSelectedOrderItem
+    setSelectedOrderItem,
+    resetShoppingBag,
+    step,
+    setStep
   }), [
     shoppingBag,
     setShoppingBag,
+    order,
+    setOrder,
     selectedProduct,
     setSelectedProduct,
     productOpen,
@@ -112,7 +141,10 @@ export function CatalogShoppingBagProvider({
     isComingFromShoppingBag,
     setIsComingFromShoppingBag,
     selectedOrderItem,
-    setSelectedOrderItem
+    setSelectedOrderItem,
+    resetShoppingBag,
+    step,
+    setStep
   ])
 
   return (

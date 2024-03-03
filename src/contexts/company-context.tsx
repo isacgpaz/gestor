@@ -8,6 +8,7 @@ import { PropsWithChildren, createContext, useCallback, useContext, useEffect, u
 type CompanyContextProp = {
   company: Company | undefined,
   wallet: Wallet | undefined,
+  customer: User | undefined,
   isPending: boolean,
 }
 
@@ -52,10 +53,12 @@ export function CompanyProvider({
     company,
     isPending,
     wallet,
+    customer,
   }), [
     company,
     isPending,
     wallet,
+    customer
   ])
 
   return (

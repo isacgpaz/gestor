@@ -50,7 +50,8 @@ export async function GET(request: NextRequest) {
           select: {
             street: true,
           }
-        }
+        },
+        createdAt: true,
       }
     }),
     prisma.order.count({

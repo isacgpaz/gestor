@@ -45,6 +45,7 @@ export async function POST(req: Request) {
     type,
     companyId,
     customerId,
+    singleCustomer,
     deliveryAddress,
   } = await req.json();
 
@@ -54,10 +55,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: 'Empresa não encontrada.' }, { status: 404 })
   }
 
-  const customer = await prisma.user.findUnique({ where: { id: customerId } })
+  if (customerId && singleCustomer) {
+    return NextResponse.json({ message: 'Cliente inválido.' }, { status: 400 })
+  }
 
-  if (!customer) {
-    return NextResponse.json({ message: 'Cliente não encontrado.' }, { status: 404 })
+  if (customerId) {
+    const customer = await prisma.user.findUnique({ where: { id: customerId } })
+
+    if (!customer) {
+      return NextResponse.json({ message: 'Cliente não encontrado.' }, { status: 404 })
+    }
   }
 
   const itemsProductsIds: string[] = []
@@ -191,6 +198,7 @@ export async function POST(req: Request) {
         type,
         companyId,
         customerId,
+        singleCustomer,
         deliveryAddress,
         totalValue,
         items: {

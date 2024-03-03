@@ -9,6 +9,7 @@ export function useCatalog(params: CatalogProps) {
   const query = useQuery({
     queryKey: ['catalog', params],
     queryFn: () => findCatalog(params),
+    enabled: Boolean(params.companyId)
   })
 
   return query
