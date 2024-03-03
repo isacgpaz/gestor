@@ -102,7 +102,8 @@ export function OrderCustomerStep() {
     </>
   )
 }
-export function CustomerNameAnfPhoneForm({ form }: { form: UseFormReturn<FormSchema> }) {
+
+function CustomerNameAnfPhoneForm({ form }: { form: UseFormReturn<FormSchema> }) {
   const phoneRef = useMaskito({ options: phoneMask })
 
   return (

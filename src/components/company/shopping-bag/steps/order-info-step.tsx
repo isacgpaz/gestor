@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
@@ -10,35 +11,42 @@ import { useCatalogShoppingBag } from "@/contexts/catalog-shopping-bag-context";
 import { useCompany } from "@/contexts/company-context";
 import { useCreateOrder } from "@/hooks/order/user-create-order";
 import { ShoppingBagItemTypeEnum } from "@/types/catalog";
-import { CreateOrderItem } from "@/types/order";
+import { CreateOrder, CreateOrderItem } from "@/types/order";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OrderType } from "@prisma/client";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ExternalLink, MapPinned } from "lucide-react";
 import { useEffect } from "react";
 import { UseFormReturn, useForm } from "react-hook-form";
 import { z } from "zod";
 import { ShoppingBagTotalValue } from "../shopping-bag-total-value";
 
 const formSchema = z.object({
-  street: z.string({
-    required_error: 'O endereço é obrigatório.'
-  }),
-  number: z.number({
-    required_error: 'O número é obrigatório.'
-  })
-    .int('O número deve ser inteiro')
-    .positive('O número deve ser positivo.'),
-  area: z.string({
-    required_error: 'O bairro é obrigatório.'
-  }),
-  complement: z.string().optional(),
-  city: z.string({
-    required_error: 'A cidade é obrigatória.'
-  }),
-  state: z.string({
-    required_error: 'O estado é obrigatório.'
-  }),
-})
+  deliveryAddress: z.object({
+    street: z.string({
+      required_error: 'O endereço é obrigatório.'
+    }),
+    number: z.coerce
+      .number({
+        required_error: "O número é obrigatório.",
+        invalid_type_error: "O número deve ser um número.",
+      })
+      .int("O número deve ser inteiro.")
+      .positive("O número deve ser positivo.")
+      .min(1, { message: "O número deve ser maior que 0." }),
+    area: z.string({
+      required_error: 'O bairro é obrigatório.'
+    }),
+    complement: z.string().optional(),
+    city: z.string({
+      required_error: 'A cidade é obrigatória.'
+    }),
+    state: z.string({
+      required_error: 'O estado é obrigatório.'
+    }),
+  }).optional(),
+  type: z.enum([OrderType.DELIVERY, OrderType.PICK_UP])
+    .default(OrderType.DELIVERY),
+});
 
 type FormSchema = z.infer<typeof formSchema>
 
@@ -56,31 +64,28 @@ export function OrderInfoStep() {
 
   const form = useForm<FormSchema>({
     defaultValues: {
-      city: company?.address?.city,
-      state: company?.address?.state,
-      area: order?.deliveryAddress?.area ?? undefined,
-      complement: order?.deliveryAddress?.complement ?? undefined,
-      street: order?.deliveryAddress?.street,
-      number: Number(order?.deliveryAddress?.number),
+      deliveryAddress: {
+        city: order?.deliveryAddress?.city,
+        state: order?.deliveryAddress?.state,
+        area: order?.deliveryAddress?.area ?? undefined,
+        complement: order?.deliveryAddress?.complement ?? undefined,
+        street: order?.deliveryAddress?.street,
+        number: Number(order?.deliveryAddress?.number),
+      },
+      type: OrderType.DELIVERY
     },
     resolver: zodResolver(formSchema),
   })
 
+  const type = form.watch('type')
+
   const { mutate: createOrder, isPending } = useCreateOrder()
 
   function onSubmit(values: FormSchema) {
-    const customerId = customer?.id
-
-    setOrder({
-      type: OrderType.DELIVERY,
+    const orderToCreate: Partial<CreateOrder> = {
+      type: values.type,
       companyId: company?.id,
-      customerId,
-      deliveryAddress: {
-        ...values,
-        number: String(values.number),
-        complement: values.complement || null,
-        zip: null,
-      },
+      customerId: customer?.id,
       items: shoppingBag.map((shoppingBagItem) => {
         const item: Omit<Partial<CreateOrderItem>, 'price'> = {}
 
@@ -101,10 +106,21 @@ export function OrderInfoStep() {
           ...item
         }
       })
-    })
+    }
 
-    if (customerId) {
-      createOrder(order, {
+    if (values.deliveryAddress && values.type === OrderType.DELIVERY) {
+      orderToCreate.deliveryAddress = {
+        ...values.deliveryAddress,
+        number: String(values.deliveryAddress?.number),
+        complement: values.deliveryAddress?.complement || null,
+        zip: null,
+      }
+    }
+
+    setOrder(orderToCreate)
+
+    if (orderToCreate.customerId) {
+      createOrder(orderToCreate, {
         onSuccess() {
           toast({
             title: 'Pedido enviado com sucesso!',
@@ -127,15 +143,37 @@ export function OrderInfoStep() {
   }
 
   useEffect(() => {
-    form.reset({
-      city: company?.address?.city,
-      state: company?.address?.state,
-    })
+    if (type === OrderType.PICK_UP) {
+      form.reset({
+        deliveryAddress: undefined,
+        type: OrderType.PICK_UP
+      })
+    }
+  }, [form, type])
+
+  useEffect(() => {
+    if (type === OrderType.DELIVERY && company?.address) {
+      console.log(company.address.state)
+      form.reset({
+        deliveryAddress: {
+          city: company.address.city,
+          state: company.address.state,
+          area: undefined,
+          number: undefined,
+          street: undefined,
+        },
+        type: OrderType.DELIVERY
+      })
+    }
   }, [
-    company?.address?.city,
-    company?.address?.state,
+    company,
     form,
+    type
   ])
+
+  useEffect(() => {
+    form.clearErrors("deliveryAddress")
+  }, [type, form])
 
   return (
     <>
@@ -147,11 +185,13 @@ export function OrderInfoStep() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="px-4 flex flex-col gap-3">
-            <OrderTypeSection form={form} />
+          <ScrollArea className="w-full h-[420px]">
+            <div className="px-4 flex flex-col gap-3">
+              <OrderTypeSection form={form} />
 
-            <ShoppingBagTotalValue />
-          </div>
+              <ShoppingBagTotalValue />
+            </div>
+          </ScrollArea>
 
           <DrawerFooter>
             <Button type='submit' isLoading={isPending}>
@@ -171,37 +211,38 @@ export function OrderInfoStep() {
 }
 
 function OrderTypeSection({ form }: { form: UseFormReturn<FormSchema> }) {
-  const { company } = useCompany()
-
   return (
-    <Tabs defaultValue="a">
+    <Tabs
+      value={form.watch('type')}
+      onValueChange={(type) => form.setValue('type', type as "DELIVERY" | "PICK_UP")}
+    >
       <TabsList>
-        <TabsTrigger value="a">
+        <TabsTrigger value={OrderType.DELIVERY} type='button'>
           Entrega
         </TabsTrigger>
-        {/* <TabsTrigger value="b">
+
+        <TabsTrigger value={OrderType.PICK_UP} type='button'>
           Retirada
-        </TabsTrigger> */}
+        </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="a">
+      <TabsContent value={OrderType.DELIVERY}>
         <CustomerAddressForm form={form} />
       </TabsContent>
 
-      {/* <TabsContent value="b">
-        {company?.address?.street}
-      </TabsContent> */}
+      <TabsContent value={OrderType.PICK_UP}>
+        <CompanyAddress />
+      </TabsContent>
     </Tabs>
   )
 }
 
-
-export function CustomerAddressForm({ form }: { form: UseFormReturn<FormSchema> }) {
+function CustomerAddressForm({ form }: { form: UseFormReturn<FormSchema> }) {
   return (
     <div className="space-y-1">
       <FormField
         control={form.control}
-        name="street"
+        name="deliveryAddress.street"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Endereço</FormLabel>
@@ -216,7 +257,7 @@ export function CustomerAddressForm({ form }: { form: UseFormReturn<FormSchema> 
       <div className="flex items-center gap-4">
         <FormField
           control={form.control}
-          name="number"
+          name="deliveryAddress.number"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Nº</FormLabel>
@@ -234,7 +275,7 @@ export function CustomerAddressForm({ form }: { form: UseFormReturn<FormSchema> 
 
         <FormField
           control={form.control}
-          name="area"
+          name="deliveryAddress.area"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Bairro</FormLabel>
@@ -249,7 +290,7 @@ export function CustomerAddressForm({ form }: { form: UseFormReturn<FormSchema> 
 
       <FormField
         control={form.control}
-        name="complement"
+        name="deliveryAddress.complement"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Complemento (opcional)</FormLabel>
@@ -264,8 +305,7 @@ export function CustomerAddressForm({ form }: { form: UseFormReturn<FormSchema> 
       <div className="flex items-center gap-4">
         <FormField
           control={form.control}
-          name="city"
-          disabled
+          name="deliveryAddress.city"
           render={({ field }) => (
             <FormItem className="w-[70%]">
               <FormLabel>Cidade</FormLabel>
@@ -279,8 +319,7 @@ export function CustomerAddressForm({ form }: { form: UseFormReturn<FormSchema> 
 
         <FormField
           control={form.control}
-          name="state"
-          disabled
+          name="deliveryAddress.state"
           render={({ field }) => (
             <FormItem className="w-[30%]">
               <FormLabel>Estado</FormLabel>
@@ -289,7 +328,7 @@ export function CustomerAddressForm({ form }: { form: UseFormReturn<FormSchema> 
                 defaultValue={field.value}
               >
                 <FormControl>
-                  <SelectTrigger disabled>
+                  <SelectTrigger>
                     <SelectValue placeholder="Selecionar estado" />
                   </SelectTrigger>
                 </FormControl>
@@ -311,4 +350,46 @@ export function CustomerAddressForm({ form }: { form: UseFormReturn<FormSchema> 
       </div>
     </div>
   )
+}
+
+function CompanyAddress() {
+  const { company } = useCompany()
+
+  return (
+    <div className="flex gap-3 my-4 px-1">
+      <div className="bg-secondary text-primary rounded w-12 h-12 flex items-center justify-center flex-shrink-0">
+        <MapPinned className="w-5 h-5" />
+      </div>
+
+      <div>
+        <span className="block">
+          {company?.address?.street}, {' '}
+          {company?.address?.number} - {' '}
+          {company?.address?.area}
+        </span>
+
+        <Button asChild variant='link' className="p-0 h-min" size='sm'>
+          <a
+            href={redirectToGoogleMapsLocation(`${company?.address?.street}, ${company?.address?.number} - ${company?.address?.area}`)}
+            target="_blank"
+            className="flex items-center"
+          >
+            Ver no mapa
+
+            <ExternalLink className="ml-2 h-4 w-4" />
+          </a>
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function redirectToGoogleMapsLocation(location: string) {
+  const locationFormatted = location.replace(/\s+/g, '+');
+
+  const urlGoogleMaps = 'https://www.google.com/maps/search/?api=1&query=';
+
+  const redirectUrl = urlGoogleMaps + locationFormatted;
+
+  return redirectUrl
 }
