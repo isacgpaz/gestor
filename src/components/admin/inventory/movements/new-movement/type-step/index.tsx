@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCreateInventoryMovementContext } from "@/contexts/create-inventory-movement-context"
 import { MovementType } from "@prisma/client"
-import { Check, ChevronLeft, PackageMinus, PackagePlus } from "lucide-react"
+import { Check, ChevronLeft, PackagePlus } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export function TypeStep() {
@@ -39,7 +39,7 @@ export function TypeStep() {
             <Check className="h-4 w-4 ml-2" />
           )}
         </Button>
-
+        {/* 
         <Button
           className="w-full"
           onClick={() => updateMovementType(MovementType.EGRESS)}
@@ -51,7 +51,7 @@ export function TypeStep() {
           {movement?.type === MovementType.EGRESS && (
             <Check className="h-4 w-4 ml-2" />
           )}
-        </Button>
+        </Button> */}
       </CardContent>
 
       <CardFooter className="pt-0 justify-between">
