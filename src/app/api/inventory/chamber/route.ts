@@ -50,7 +50,6 @@ export async function GET(request: NextRequest) {
   }, { status: 200 })
 }
 
-
 export async function POST(request: NextRequest) {
   const {
     companyId,

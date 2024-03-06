@@ -1,10 +1,14 @@
 
 export const routes = {
-  public: ["/", "/signin", "/signup", "/schedule/"],
+  public: [
+    "/",
+    "/signin",
+    "/signup",
+    "/schedule/",
+    "/company/"
+  ],
   protecteds: {
-    both: [
-      "/company/"
-    ],
+    both: [],
     admin: [
       "/admin/dashboard",
       "/admin/settings",
