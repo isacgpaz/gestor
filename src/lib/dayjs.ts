@@ -15,6 +15,7 @@ dayjsInstance.extend(utc)
 dayjsInstance.extend(timezone)
 
 dayjsInstance.locale('pt-br')
+dayjsInstance.tz.setDefault('America/Sao_Paulo')
 
 export const dayjs = dayjsInstance;
 
