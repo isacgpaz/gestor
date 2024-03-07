@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { ptBR } from "date-fns/locale"
+import { useState } from "react"
 
 type DatePickerProps = {
   date: Date | undefined,
@@ -25,8 +26,10 @@ export function DatePicker({
   setDate,
   ...props
 }: DatePickerProps) {
+  const [open, onOpenChange] = useState(false)
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
         <Button
           variant={"outline"}
@@ -40,11 +43,15 @@ export function DatePicker({
           {date ? format(date, "dd/MM/yyyy", { locale: ptBR }) : <span>{label}</span>}
         </Button>
       </PopoverTrigger>
+
       <PopoverContent className="w-auto p-0">
         <Calendar
           mode="single"
           selected={date}
-          onSelect={setDate}
+          onSelect={(date) => {
+            setDate(date)
+            onOpenChange(false)
+          }}
           initialFocus
           {...props}
         />
