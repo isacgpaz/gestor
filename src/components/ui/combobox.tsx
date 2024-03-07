@@ -29,12 +29,12 @@ type ComboboxProps = {
 
 export function Combobox({
   selected,
-  setSelected,
   searchQuery,
-  setSearchQuery,
   data,
   isLoading,
   isError,
+  setSelected,
+  setSearchQuery,
   comboboxPlaceholder = 'Selecionar item',
   inputPlaceholder = 'Pesquisar item...',
 }: ComboboxProps) {
@@ -42,9 +42,7 @@ export function Combobox({
 
   const handleSetActive = React.useCallback((item: any) => {
     setSelected(item);
-
-    // OPTIONAL: close the combobox upon selection
-    // setOpen(false);
+    setOpen(false);
   }, [setSelected]);
 
   const displayName = selected ? selected.description : comboboxPlaceholder;

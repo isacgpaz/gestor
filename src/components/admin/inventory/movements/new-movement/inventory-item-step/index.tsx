@@ -25,14 +25,14 @@ function getFormSchema(
   item?: InventoryItemWithChamber,
   type?: MovementType
 ) {
-  let quantityProps = z.number()
+  let quantityProps = z.coerce.number()
     .int('A quantidade a ser movimentada deve ser um número inteiro.')
     .positive('A quantidade a ser movimentada deve ser um número positivo.')
 
-  if (type == MovementType.EGRESS) {
+  if (type == MovementType.EGRESS && item?.currentInventory) {
     quantityProps = quantityProps.max(
-      item?.currentInventory ?? 0,
-      `A quantidade máxima para saída deve ser ${item?.currentInventory ?? 0}.`
+      item.currentInventory,
+      `A quantidade máxima para saída deve ser ${item.currentInventory}.`
     )
   }
 
@@ -71,7 +71,6 @@ export function InventoryItemStep({ user }: {
     defaultValues: {
       search: '',
       inventoryItem: movement?.inventoryItem ?? undefined,
-      currentInventory: 0
     },
   })
 
@@ -135,7 +134,6 @@ export function InventoryItemStep({ user }: {
                 <FormField
                   control={form.control}
                   name="currentInventory"
-                  defaultValue={0}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
@@ -144,7 +142,6 @@ export function InventoryItemStep({ user }: {
                       <FormControl>
                         <Input
                           {...field}
-                          onChange={(event) => field.onChange(event.target.valueAsNumber)}
                           type='number'
                           placeholder="Quantidade a ser movimentada"
                         />
@@ -186,15 +183,15 @@ export function InventoryItemStep({ user }: {
 
 function InventoryItemsSearch({
   search,
-  setSearch,
   user,
   inventoryItemSelected,
+  setSearch,
   setInventoryItemSelected
 }: {
   search: string,
-  setSearch: (search: string) => void,
   user?: User & { company: Company },
   inventoryItemSelected: InventoryItemWithChamber | undefined,
+  setSearch: (search: string) => void,
   setInventoryItemSelected: (inventoryItemSelected: InventoryItemWithChamber | undefined) => void
 }) {
   const debouncedSearch = useDebounce(search, 300)
