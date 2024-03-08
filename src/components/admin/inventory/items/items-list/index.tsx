@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
 import { translatedUnitsOfMeasurement } from "@/constants/units-of-measurement"
@@ -282,20 +283,20 @@ type ItemFormProps = {
 
 const formItemSchema = z.object({
   description: z.string().min(1, 'A descrição é obrigatória.'),
-  cost: z.number({
+  cost: z.coerce.number({
     invalid_type_error: 'O custo deve ser maior ou igual a 0.'
   }).min(0, 'O custo deve ser maior ou igual a 0.')
     .optional(),
-  minInventory: z.number({
+  minInventory: z.coerce.number({
     invalid_type_error: 'O estoque mínimo é obrigatório.'
   })
     .int('O estoque mínimo deve ser um número inteiro.')
     .min(0, 'O estoque mínimo deve ser maior ou igual a 0.'),
-  currentInventory: z.number({
-    invalid_type_error: 'A estoque mínimo é obrigatório.'
+  currentInventory: z.coerce.number({
+    invalid_type_error: 'A estoque inicial é obrigatório.'
   })
-    .int('O estoque mínimo deve ser um número inteiro.')
-    .min(0, 'O estoque mínimo deve ser maior ou igual a 0.'),
+    .int('O estoque inicial deve ser um número inteiro.')
+    .min(0, 'O estoque inicial deve ser maior ou igual a 0.'),
   chamberId: z.string().min(1, 'A câmara é obrigatória.'),
   unitOfMeasurement: z.nativeEnum(UnitOfMeasurement),
   gtin: z.string().min(1, 'O código de barras é obrigatória.')
@@ -331,9 +332,9 @@ function ItemForm({
     resolver: zodResolver(formItemSchema),
     defaultValues: {
       description: item?.description ?? '',
-      cost: item?.cost ?? 0,
-      minInventory: item?.minInventory ?? 0,
-      currentInventory: item?.currentInventory ?? 0,
+      cost: item?.cost,
+      minInventory: item?.minInventory,
+      currentInventory: item?.currentInventory,
       chamberId: item?.chamberId ?? '',
       gtin: item?.gtin ?? '',
       unitOfMeasurement: item?.unitOfMeasurement ?? UnitOfMeasurement.UNIT,
@@ -398,7 +399,6 @@ function ItemForm({
           onOpenChange(false)
         }
       })
-
     }
   }
 
@@ -413,71 +413,171 @@ function ItemForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="px-8 space-y-3">
-          <FormField
-            control={form.control}
-            disabled={isReadonly}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Descrição</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="Adicionar descrição do item"
-                    className="disabled:opacity-100"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <ScrollArea className="h-[400px]">
+          <div className="px-8 space-y-3 pb-6">
+            <FormField
+              control={form.control}
+              disabled={isReadonly}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Descrição</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Adicionar descrição do item"
+                      className="disabled:opacity-100"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            disabled={!!item}
-            name="gtin"
-            render={({ field }) => (
-              <FormItem className="w-full">
-                <FormLabel>Cód. de barras</FormLabel>
-
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="Adicionar código de barras do item"
-                    className="disabled:opacity-100"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="flex gap-3 w-full">
             <FormField
               control={form.control}
               disabled={!!item}
-              name="unitOfMeasurement"
+              name="gtin"
               render={({ field }) => (
                 <FormItem className="w-full">
-                  <FormLabel>Unidade de medida</FormLabel>
+                  <FormLabel>Cód. de barras</FormLabel>
+
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Adicionar código de barras do item"
+                      className="disabled:opacity-100"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex gap-3 w-full">
+              <FormField
+                control={form.control}
+                disabled={!!item}
+                name="unitOfMeasurement"
+                render={({ field }) => (
+                  <FormItem className="w-full">
+                    <FormLabel>Unidade de medida</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      disabled={!!item}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="disabled:opacity-100 disabled:bg-zinc-50">
+                          <SelectValue placeholder="Selecionar unidade" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {unitOfMeasurementOptions.map((unit) => (
+                          <SelectItem
+                            key={unit}
+                            value={unit}
+                          >
+                            {translatedUnitsOfMeasurement[unit]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                disabled={isReadonly}
+                name="cost"
+                render={({ field }) => (
+                  <FormItem className="w-full">
+                    <FormLabel>Custo unitário (R$)</FormLabel>
+
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Adicionar custo do item"
+                        type='number'
+                        className="disabled:opacity-100"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {!item && (
+              <FormField
+                control={form.control}
+                disabled={isReadonly}
+                name="currentInventory"
+                render={({ field }) => (
+                  <FormItem className="w-full">
+                    <FormLabel>Estoque inicial</FormLabel>
+
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Adicionar estoque inicial do item"
+                        type='number'
+                        className="disabled:opacity-100"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            <FormField
+              control={form.control}
+              disabled={isReadonly}
+              name="minInventory"
+              render={({ field }) => (
+                <FormItem className="w-full">
+                  <FormLabel>Estoque mínimo</FormLabel>
+
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Adicionar estoque mínimo para o item"
+                      type='number'
+                      className="disabled:opacity-100"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              disabled={isReadonly}
+              name="chamberId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Câmara</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
-                    disabled={!!item}
+                    disabled={isReadonly}
                   >
                     <FormControl>
                       <SelectTrigger className="disabled:opacity-100 disabled:bg-zinc-50">
-                        <SelectValue placeholder="Selecionar unidade" />
+                        <SelectValue placeholder="Selecionar câmara" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {unitOfMeasurementOptions.map((unit) => (
+                      {chambers.map((chamber) => (
                         <SelectItem
-                          key={unit}
-                          value={unit}
+                          key={chamber.id}
+                          value={chamber.id}
                         >
-                          {translatedUnitsOfMeasurement[unit]}
+                          {chamber.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -486,111 +586,10 @@ function ItemForm({
                 </FormItem>
               )}
             />
-
-            <FormField
-              control={form.control}
-              disabled={isReadonly}
-              name="cost"
-              render={({ field }) => (
-                <FormItem className="w-full">
-                  <FormLabel>Custo unitário (R$)</FormLabel>
-
-                  <FormControl>
-                    <Input
-                      {...field}
-                      onChange={(event) => field.onChange(event.target.valueAsNumber)}
-                      placeholder="Adicionar custo do item"
-                      type='number'
-                      className="disabled:opacity-100"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </div>
+        </ScrollArea>
 
-          {!item && (
-            <FormField
-              control={form.control}
-              disabled={isReadonly}
-              name="currentInventory"
-              render={({ field }) => (
-                <FormItem className="w-full">
-                  <FormLabel>Estoque inicial</FormLabel>
-
-                  <FormControl>
-                    <Input
-                      {...field}
-                      onChange={(event) => field.onChange(event.target.valueAsNumber)}
-                      placeholder="Adicionar estoque inicial do item"
-                      type='number'
-                      className="disabled:opacity-100"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
-
-          <FormField
-            control={form.control}
-            disabled={isReadonly}
-            name="minInventory"
-            render={({ field }) => (
-              <FormItem className="w-full">
-                <FormLabel>Estoque mínimo</FormLabel>
-
-                <FormControl>
-                  <Input
-                    {...field}
-                    onChange={(event) => field.onChange(event.target.valueAsNumber)}
-                    placeholder="Adicionar estoque mínimo para o item"
-                    type='number'
-                    className="disabled:opacity-100"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            disabled={isReadonly}
-            name="chamberId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Câmara</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  disabled={isReadonly}
-                >
-                  <FormControl>
-                    <SelectTrigger className="disabled:opacity-100 disabled:bg-zinc-50">
-                      <SelectValue placeholder="Selecionar câmara" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {chambers.map((chamber) => (
-                      <SelectItem
-                        key={chamber.id}
-                        value={chamber.id}
-                      >
-                        {chamber.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <DrawerFooter className="flex-row gap-3 justify-end items-end px-8 mt-6">
+        <DrawerFooter className="flex-row gap-3 justify-end items-end px-8">
           <Button
             type='button'
             variant='outline'

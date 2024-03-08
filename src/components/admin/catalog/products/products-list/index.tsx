@@ -566,13 +566,14 @@ function ProductForm({
   }, [catalogVariants, catalogVariantId])
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <ScrollArea className={cn(
-          "w-full",
-          enableVariants ? 'h-[420px]' : 'h-[300px]'
-        )}>
+    <ScrollArea className={cn(
+      "w-full",
+      enableVariants ? 'h-[500px]' : ''
+    )}>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="px-8 space-y-3">
+            {String(enableVariants)}
             <FormField
               control={form.control}
               disabled={isReadonly}
@@ -817,44 +818,45 @@ function ProductForm({
               )}
             />
           </div>
-        </ScrollArea>
 
-        <DrawerFooter className="flex-row gap-3 justify-end items-end px-8 mt-6">
-          <Button
-            type='button'
-            variant='outline'
-            onClick={(event) => {
-              if (!product || isReadonly) {
-                onOpenChange(false)
-              }
-
-              event.preventDefault()
-              setIsReadonly(true)
-              form.reset()
-            }}
-          >
-            {isReadonly ? 'Fechar' : 'Cancelar'}
-          </Button>
-
-          {isReadonly ? (
+          <DrawerFooter className="flex-row gap-3 justify-end items-end px-8 mt-6">
             <Button
               type='button'
               variant='outline'
-              className="text-primary hover:text-primary"
               onClick={(event) => {
+                if (!product || isReadonly) {
+                  onOpenChange(false)
+                }
+
                 event.preventDefault()
-                setIsReadonly(false)
+                setIsReadonly(true)
+                form.reset()
               }}
             >
-              Editar produto
+              {isReadonly ? 'Fechar' : 'Cancelar'}
             </Button>
-          ) : (
-            <Button type='submit' isLoading={isPending}>
-              Salvar alterações
-            </Button>
-          )}
-        </DrawerFooter>
-      </form>
-    </Form>
+
+            {isReadonly ? (
+              <Button
+                type='button'
+                variant='outline'
+                className="text-primary hover:text-primary"
+                onClick={(event) => {
+                  event.preventDefault()
+                  setIsReadonly(false)
+                }}
+              >
+                Editar produto
+              </Button>
+            ) : (
+              <Button type='submit' isLoading={isPending}>
+                Salvar alterações
+              </Button>
+            )}
+          </DrawerFooter>
+        </form>
+      </Form>
+    </ScrollArea>
+
   )
 }
