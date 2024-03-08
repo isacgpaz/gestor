@@ -14,7 +14,7 @@ export function CreateInventoryMovementSteps({ user }: {
   const { step, movement } = useCreateInventoryMovementContext()
 
   const movementSteps = [
-    <TypeStep key='type' />,
+    <TypeStep key='type' user={user} />,
     <InventoryItemStep key='inventory-item' user={user} />,
   ]
 
