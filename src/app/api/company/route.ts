@@ -2,13 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  const { name, slug, managerId, address, phone, slogan } = await req.json();
-
-  const manager = await prisma.user.findUnique({ where: { id: managerId } })
-
-  if (!manager) {
-    return NextResponse.json({ message: 'Gerente não encontrado.' }, { status: 400 })
-  }
+  const { name, slug, address, phone, slogan } = await req.json();
 
   const company = await prisma.company.findUnique({ where: { slug } })
 
@@ -20,7 +14,6 @@ export async function POST(req: Request) {
     data: {
       name,
       slug,
-      managerId,
       address,
       phone,
       slogan
