@@ -42,7 +42,7 @@ export function TypeStep({ user }: {
           )}
         </Button>
 
-        {process.env.USERS_TO_HIDE_FUNCTIONS === user?.id && (
+        {process.env.NEXT_PUBLIC_USERS_TO_HIDE_FUNCTIONS !== user?.id && (
           <Button
             className="w-full"
             onClick={() => updateMovementType(MovementType.EGRESS)}
