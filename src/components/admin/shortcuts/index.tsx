@@ -7,7 +7,7 @@ import { ScanUser } from "../scan-user";
 
 const shortcuts = [
   <ScanUser key='scan-user' />,
-  <Link href='/admin/agenda' key='calendar'>
+  <Link href='/admin/agenda' key='calendar' >
     <ShortcutItem icon={CalendarCheck} />
   </Link>,
   <Link href='/admin/inventory' key='inventory'>

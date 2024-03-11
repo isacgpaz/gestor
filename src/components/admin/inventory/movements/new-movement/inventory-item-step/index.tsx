@@ -12,6 +12,7 @@ import { useCreateInventoryMovementContext } from "@/contexts/create-inventory-m
 import { useCreateMovement } from "@/hooks/inventory/use-create-movement";
 import { useInventoryItems } from "@/hooks/inventory/use-inventory-items";
 import { InventoryItemWithChamber } from "@/types/inventory";
+import { formatDecimal } from "@/utils/format-decimal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Company, MovementType, User } from "@prisma/client";
 import { useDebounce } from "@uidotdev/usehooks";
@@ -235,7 +236,7 @@ function InventoryItemInfo({
             Quantidade em estoque: {' '}
 
             <span className="text-slate-500 flex items-center gap-1">
-              {inventoryItemSelected.currentInventory}
+              {formatDecimal(inventoryItemSelected.currentInventory)}
             </span>
           </span>
         </li>

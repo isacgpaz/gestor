@@ -10,10 +10,19 @@ export const unitsOfMeasurement = {
 }
 
 export const translatedUnitsOfMeasurement = {
-  UNIT: 'Unidade (unid)',
-  GRAM: 'Grama (g)',
-  MILLIGRAM: 'Miligrama (mg)',
-  KILOGRAM: 'Quilograma (kg)',
-  MILLILITER: 'Mililitro (ml)',
-  LITER: 'Litro (l)',
+  UNIT: 'Unidade',
+  GRAM: 'Grama',
+  MILLIGRAM: 'Miligrama',
+  KILOGRAM: 'Quilograma',
+  MILLILITER: 'Mililitro',
+  LITER: 'Litro',
+}
+
+export const translatedShortUnitsOfMeasurement = {
+  UNIT: 'unid',
+  GRAM: 'g',
+  MILLIGRAM: 'mg',
+  KILOGRAM: 'kg',
+  MILLILITER: 'ml',
+  LITER: 'l',
 }

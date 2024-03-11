@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
-import { translatedUnitsOfMeasurement } from "@/constants/units-of-measurement"
+import { translatedShortUnitsOfMeasurement, translatedUnitsOfMeasurement } from "@/constants/units-of-measurement"
 import { useCreateItem } from "@/hooks/inventory/use-create-item"
 import { useInventoryChambers } from "@/hooks/inventory/use-inventory-chambers"
 import { useInventoryItems } from "@/hooks/inventory/use-inventory-items"
@@ -16,6 +16,7 @@ import { useUpdateItem } from "@/hooks/inventory/use-update-item"
 import { dayjs } from "@/lib/dayjs"
 import { queryClient } from "@/lib/query-client"
 import { cn } from "@/lib/utils"
+import { formatDecimal } from "@/utils/format-decimal"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Company, InventoryItem, UnitOfMeasurement, User } from "@prisma/client"
 import { useDebounce } from "@uidotdev/usehooks"
@@ -210,7 +211,7 @@ function ItemCard({ item }: ItemCardProps) {
             Quantidade em estoque: {' '}
 
             <span className="flex items-center gap-1 text-slate-500">
-              {item.currentInventory}
+              {formatDecimal(item.currentInventory)} {translatedShortUnitsOfMeasurement[item.unitOfMeasurement]}
             </span>
           </span>
 
@@ -290,16 +291,14 @@ const formItemSchema = z.object({
   minInventory: z.coerce.number({
     invalid_type_error: 'O estoque mínimo é obrigatório.'
   })
-    .int('O estoque mínimo deve ser um número inteiro.')
     .min(0, 'O estoque mínimo deve ser maior ou igual a 0.'),
   currentInventory: z.coerce.number({
     invalid_type_error: 'A estoque inicial é obrigatório.'
   })
-    .int('O estoque inicial deve ser um número inteiro.')
     .min(0, 'O estoque inicial deve ser maior ou igual a 0.'),
   chamberId: z.string().min(1, 'A câmara é obrigatória.'),
   unitOfMeasurement: z.nativeEnum(UnitOfMeasurement),
-  gtin: z.string().min(1, 'O código de barras é obrigatória.')
+  gtin: z.string().min(1, 'O código de barras é obrigatório.')
 })
 
 type FormItemSchema = z.infer<typeof formItemSchema>
@@ -340,6 +339,8 @@ function ItemForm({
       unitOfMeasurement: item?.unitOfMeasurement ?? UnitOfMeasurement.UNIT,
     },
   })
+
+  const unitOfMeasurement = form.watch('unitOfMeasurement')
 
   const {
     mutate: createItem,
@@ -479,6 +480,8 @@ function ItemForm({
                             value={unit}
                           >
                             {translatedUnitsOfMeasurement[unit]}
+                            {' '}
+                            ({translatedShortUnitsOfMeasurement[unit]})
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -517,12 +520,21 @@ function ItemForm({
                 name="currentInventory"
                 render={({ field }) => (
                   <FormItem className="w-full">
-                    <FormLabel>Estoque inicial</FormLabel>
+                    <FormLabel>
+                      Estoque inicial
+                      {' '}
+                      {unitOfMeasurement !== UnitOfMeasurement.UNIT
+                        && (
+                          <>
+                            ({translatedShortUnitsOfMeasurement[unitOfMeasurement]})
+                          </>
+                        )}
+                    </FormLabel>
 
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder="Adicionar estoque inicial do item"
+                        placeholder={`Adicionar quantidade para entrada${unitOfMeasurement !== UnitOfMeasurement.UNIT ? ` em ${translatedUnitsOfMeasurement[unitOfMeasurement].toLowerCase()}s` : ''}`}
                         type='number'
                         className="disabled:opacity-100"
                       />
@@ -539,12 +551,21 @@ function ItemForm({
               name="minInventory"
               render={({ field }) => (
                 <FormItem className="w-full">
-                  <FormLabel>Estoque mínimo</FormLabel>
+                  <FormLabel>
+                    Estoque mínimo
+                    {' '}
+                    {unitOfMeasurement !== UnitOfMeasurement.UNIT
+                      && (
+                        <>
+                          ({translatedShortUnitsOfMeasurement[unitOfMeasurement]})
+                        </>
+                      )}
+                  </FormLabel>
 
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="Adicionar estoque mínimo para o item"
+                      placeholder={`Adicionar estoque mínimo${unitOfMeasurement !== UnitOfMeasurement.UNIT ? ` em ${translatedUnitsOfMeasurement[unitOfMeasurement].toLowerCase()}s` : ''}`}
                       type='number'
                       className="disabled:opacity-100"
                     />
