@@ -219,7 +219,7 @@ function ItemCard({ item }: ItemCardProps) {
             Atualizado em: {' '}
 
             <span className="text-slate-500 flex items-center gap-1">
-              {dayjs.tz(item.updatedAt).format('DD/MM/YYYY [às] HH:mm:ss')}
+              {dayjs(item.updatedAt).format('DD/MM/YYYY [às] HH:mm:ss')}
             </span>
           </span>
         </div>
