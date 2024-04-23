@@ -264,7 +264,7 @@ function MovementCard({ movement }: MovementCardProps) {
             Data: {' '}
 
             <span className="text-slate-500 flex items-center gap-1">
-              {dayjs.tz(movement.createdAt).format('DD/MM/YYYY')}
+              {dayjs(movement.createdAt).format('DD/MM/YYYY')}
             </span>
           </span>
 
@@ -272,7 +272,7 @@ function MovementCard({ movement }: MovementCardProps) {
             Hora: {' '}
 
             <span className="text-slate-500 flex items-center gap-1">
-              {dayjs.tz(movement.createdAt).format('HH:mm:ss')}
+              {dayjs(movement.createdAt).format('HH:mm:ss')}
             </span>
           </span>
         </div>
