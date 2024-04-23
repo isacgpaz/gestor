@@ -3,10 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Combobox } from "@/components/ui/combobox";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Form, FormMessage } from "@/components/ui/form";
 import { toast } from "@/components/ui/use-toast";
-import { movementType } from "@/constants/inventory";
 import { translatedUnitsOfMeasurement } from "@/constants/units-of-measurement";
 import { useCreateInventoryMovementContext } from "@/contexts/create-inventory-movement-context";
 import { useCreateMovement } from "@/hooks/inventory/use-create-movement";
@@ -16,7 +14,7 @@ import { formatDecimal } from "@/utils/format-decimal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Company, MovementType, User } from "@prisma/client";
 import { useDebounce } from "@uidotdev/usehooks";
-import { Boxes, ChevronLeft, ChevronRight, Package2, Ruler } from "lucide-react";
+import { Boxes, ChevronLeft, ChevronRight, Minus, Package2, Plus, Ruler } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -72,11 +70,13 @@ export function InventoryItemStep({ user }: {
     defaultValues: {
       search: '',
       inventoryItem: movement?.inventoryItem ?? undefined,
+      currentInventory: 1
     },
   })
 
   const search = form.watch('search')
   const inventoryItem = form.watch('inventoryItem')
+  const currentInventory = form.watch('currentInventory')
 
   function onSubmit(values: FormSchema) {
     if (movement && user) {
@@ -132,25 +132,35 @@ export function InventoryItemStep({ user }: {
               <>
                 <hr className="my-3" />
 
-                <FormField
-                  control={form.control}
-                  name="currentInventory"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Quantidade para {movementType[movement?.type!].toLowerCase()}
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type='number'
-                          placeholder="Quantidade a ser movimentada"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="flex gap-4 items-center justify-center mt-4">
+                  <Button
+                    type='button'
+                    variant='outline'
+                    className="rounded-full p-0 w-8 h-8"
+                    disabled={currentInventory === 1}
+                    onClick={() => form.setValue('currentInventory', currentInventory - 1)}
+                  >
+                    <Minus />
+                  </Button>
+
+                  <span className="font-medium">
+                    {currentInventory}
+                  </span>
+
+                  <Button
+                    type='button'
+                    className="rounded-full p-0 w-8 h-8"
+                    onClick={() => form.setValue('currentInventory', currentInventory + 1)}
+                  >
+                    <Plus />
+                  </Button>
+                </div>
+
+                {form.formState.errors.currentInventory && (
+                  <FormMessage>
+                    {form.formState.errors.currentInventory.message}
+                  </FormMessage>
+                )}
               </>
             )}
           </CardContent>
