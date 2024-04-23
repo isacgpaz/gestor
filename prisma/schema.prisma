@@ -211,7 +211,7 @@ model Movement {
   inventoryItemId      String        @unique @db.ObjectId
   company              Company       @relation(fields: [companyId], references: [id])
   companyId            String        @db.ObjectId
-  quantity             Int
+  quantity             Float
   originChamber        Chamber?      @relation("originMovements", fields: [originChamberId], references: [id])
   originChamberId      String?       @db.ObjectId
   destinationChamber   Chamber?      @relation("destinationMovements", fields: [destinationChamberId], references: [id])

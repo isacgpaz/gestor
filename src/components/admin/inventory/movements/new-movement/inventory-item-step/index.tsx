@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Combobox } from "@/components/ui/combobox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
+import { movementType } from "@/constants/inventory";
 import { translatedUnitsOfMeasurement } from "@/constants/units-of-measurement";
 import { useCreateInventoryMovementContext } from "@/contexts/create-inventory-movement-context";
 import { useCreateMovement } from "@/hooks/inventory/use-create-movement";
@@ -14,7 +16,7 @@ import { useInventoryItems } from "@/hooks/inventory/use-inventory-items";
 import { InventoryItemWithChamber } from "@/types/inventory";
 import { formatDecimal } from "@/utils/format-decimal";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Company, MovementType, User } from "@prisma/client";
+import { Company, MovementType, UnitOfMeasurement, User } from "@prisma/client";
 import { useDebounce } from "@uidotdev/usehooks";
 import { Boxes, ChevronLeft, ChevronRight, Minus, Package2, Plus, Ruler } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -27,10 +29,12 @@ function getFormSchema(
   type?: MovementType
 ) {
   let quantityProps = z.coerce.number()
-    .int('A quantidade a ser movimentada deve ser um número inteiro.')
+    // .int('A quantidade a ser movimentada deve ser um número inteiro.')
     .positive('A quantidade a ser movimentada deve ser um número positivo.')
 
-  let destinationChamberId = z.string()
+  let destinationChamberId: any = z.string({
+    invalid_type_error: 'A câmara de destino é obrigatória.'
+  }).min(1, 'A câmara de destino é obrigatória.')
 
   if (type == MovementType.EGRESS && item?.currentInventory) {
     quantityProps = quantityProps.max(
@@ -39,8 +43,8 @@ function getFormSchema(
     )
   }
 
-  if (type === MovementType.TRANSFER) {
-    destinationChamberId = destinationChamberId.min(1, 'A câmara de destino é obrigatória.')
+  if (type !== MovementType.TRANSFER) {
+    destinationChamberId = z.string().optional()
   }
 
   return z.object({
@@ -78,6 +82,9 @@ export function InventoryItemStep({ user }: {
   })
 
   const chambers = chambersResponse?.pages.map((page) => page.result).flat() ?? []
+  const chambersWithoutInventoryItemChamber = chambers.filter(
+    (chamber) => chamber.id !== movement?.inventoryItem?.chamberId
+  )
 
   const form = useForm<FormSchema>({
     resolver: zodResolver(getFormSchema(
@@ -157,39 +164,60 @@ export function InventoryItemStep({ user }: {
               <>
                 <hr className="my-3" />
 
-                <FormItem>
-                  <FormLabel>Quantidade para movimentação</FormLabel>
 
-                  <div className="flex gap-4 items-center justify-center mt-4">
-                    <Button
-                      type='button'
-                      variant='outline'
-                      className="rounded-full p-0 w-8 h-8"
-                      disabled={currentInventory === 1}
-                      onClick={() => form.setValue('currentInventory', currentInventory - 1)}
-                    >
-                      <Minus />
-                    </Button>
+                {movement?.inventoryItem?.unitOfMeasurement === UnitOfMeasurement.UNIT ? (
+                  <FormItem>
+                    <FormLabel>Quantidade para movimentação</FormLabel>
+                    <div className="flex gap-4 items-center justify-center mt-4">
+                      <Button
+                        type='button'
+                        variant='outline'
+                        className="rounded-full p-0 w-8 h-8"
+                        disabled={currentInventory === 1}
+                        onClick={() => form.setValue('currentInventory', currentInventory - 1)}
+                      >
+                        <Minus />
+                      </Button>
 
-                    <span className="font-medium">
-                      {currentInventory}
-                    </span>
+                      <span className="font-medium">
+                        {currentInventory}
+                      </span>
 
-                    <Button
-                      type='button'
-                      className="rounded-full p-0 w-8 h-8"
-                      onClick={() => form.setValue('currentInventory', currentInventory + 1)}
-                    >
-                      <Plus />
-                    </Button>
-                  </div>
-
-                  {form.formState.errors.currentInventory && (
-                    <FormMessage>
-                      {form.formState.errors.currentInventory.message}
-                    </FormMessage>
-                  )}
-                </FormItem>
+                      <Button
+                        type='button'
+                        className="rounded-full p-0 w-8 h-8"
+                        onClick={() => form.setValue('currentInventory', currentInventory + 1)}
+                      >
+                        <Plus />
+                      </Button>
+                    </div>
+                    {form.formState.errors.currentInventory && (
+                      <FormMessage>
+                        {form.formState.errors.currentInventory.message}
+                      </FormMessage>
+                    )}
+                  </FormItem>
+                ) : (
+                  <FormField
+                    control={form.control}
+                    name="currentInventory"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Quantidade para {movementType[movement?.type!].toLowerCase()}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type='number'
+                            placeholder="Quantidade a ser movimentada"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 {movement?.type === MovementType.TRANSFER && (
                   <FormField
@@ -208,7 +236,7 @@ export function InventoryItemStep({ user }: {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {chambers.map((chamber) => (
+                            {chambersWithoutInventoryItemChamber.map((chamber) => (
                               <SelectItem
                                 key={chamber.id}
                                 value={chamber.id}
