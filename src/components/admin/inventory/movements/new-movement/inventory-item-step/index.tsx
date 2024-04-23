@@ -82,6 +82,9 @@ export function InventoryItemStep({ user }: {
   })
 
   const chambers = chambersResponse?.pages.map((page) => page.result).flat() ?? []
+  const chambersWithoutInventoryItemChamber = chambers.filter(
+    (chamber) => chamber.id !== movement?.inventoryItem?.chamberId
+  )
 
   const form = useForm<FormSchema>({
     resolver: zodResolver(getFormSchema(
@@ -233,7 +236,7 @@ export function InventoryItemStep({ user }: {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {chambers.map((chamber) => (
+                            {chambersWithoutInventoryItemChamber.map((chamber) => (
                               <SelectItem
                                 key={chamber.id}
                                 value={chamber.id}
