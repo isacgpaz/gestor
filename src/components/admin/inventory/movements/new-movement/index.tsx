@@ -27,6 +27,7 @@ export function CreateInventoryMovementSteps({ user }: {
             "font-medium",
             movement.type === MovementType.ENTRY && 'text-primary',
             movement.type === MovementType.EGRESS && 'text-destructive',
+            movement.type === MovementType.TRANSFER && 'text-blue-800',
           )}>
             {movementType[movement?.type]}
           </span>

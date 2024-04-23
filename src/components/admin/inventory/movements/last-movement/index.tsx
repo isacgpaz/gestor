@@ -248,6 +248,7 @@ function MovementCard({ movement }: MovementCardProps) {
           <CardTitle className={cn(
             movement.type === MovementType.ENTRY && 'text-primary',
             movement.type === MovementType.EGRESS && 'text-destructive',
+            movement.type === MovementType.TRANSFER && 'text-blue-800',
           )}>
             {movementType[movement.type]}
           </CardTitle>
@@ -292,6 +293,30 @@ function MovementCard({ movement }: MovementCardProps) {
             </span>
           </li>
 
+          {movement.type === MovementType.TRANSFER && (
+            <>
+              <li>
+                <span className="flex gap-1">
+                  Câmara de origem: {' '}
+
+                  <span className="text-slate-500 flex items-center gap-1">
+                    {movement.originChamber.name}
+                  </span>
+                </span>
+              </li>
+
+              <li>
+                <span className="flex gap-1">
+                  Câmara de destino: {' '}
+
+                  <span className="text-slate-500 flex items-center gap-1">
+                    {movement.destinationChamber.name}
+                  </span>
+                </span>
+              </li>
+            </>
+          )}
+
           <li>
             <span className="flex gap-1">
               Quantidade movimentada: {' '}
@@ -300,8 +325,9 @@ function MovementCard({ movement }: MovementCardProps) {
                 "flex items-center gap-1 font-medium",
                 movement.type === MovementType.ENTRY && 'text-primary',
                 movement.type === MovementType.EGRESS && 'text-destructive',
+                movement.type === MovementType.TRANSFER && 'text-blue-800',
               )}>
-                {movement.type === MovementType.ENTRY ? '+' : '-'}
+                {movement.type === MovementType.TRANSFER ? '' : movement.type === MovementType.ENTRY ? '+' : '-'}
                 {movement.quantity}
               </span>
             </span>

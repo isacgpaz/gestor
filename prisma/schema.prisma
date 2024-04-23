@@ -191,32 +191,39 @@ enum UnitOfMeasurement {
 }
 
 model Chamber {
-  id            String          @id @default(auto()) @map("_id") @db.ObjectId
-  name          String
-  company       Company         @relation(fields: [companyId], references: [id])
-  companyId     String          @db.ObjectId
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  inventoryItem InventoryItem[]
+  id                   String          @id @default(auto()) @map("_id") @db.ObjectId
+  name                 String
+  company              Company         @relation(fields: [companyId], references: [id])
+  companyId            String          @db.ObjectId
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  inventoryItem        InventoryItem[]
+  originMovements      Movement[]      @relation("originMovements")
+  destinationMovements Movement[]      @relation("destinationMovements")
 }
 
 model Movement {
-  id              String        @id @default(auto()) @map("_id") @db.ObjectId
-  type            MovementType
-  user            User          @relation(fields: [userId], references: [id])
-  userId          String        @unique @db.ObjectId
-  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
-  inventoryItemId String        @unique @db.ObjectId
-  company         Company       @relation(fields: [companyId], references: [id])
-  companyId       String        @db.ObjectId
-  quantity        Int
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id                   String        @id @default(auto()) @map("_id") @db.ObjectId
+  type                 MovementType
+  user                 User          @relation(fields: [userId], references: [id])
+  userId               String        @unique @db.ObjectId
+  inventoryItem        InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  inventoryItemId      String        @unique @db.ObjectId
+  company              Company       @relation(fields: [companyId], references: [id])
+  companyId            String        @db.ObjectId
+  quantity             Int
+  originChamber        Chamber?      @relation("originMovements", fields: [originChamberId], references: [id])
+  originChamberId      String?       @db.ObjectId
+  destinationChamber   Chamber?      @relation("destinationMovements", fields: [destinationChamberId], references: [id])
+  destinationChamberId String?       @db.ObjectId
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
 }
 
 enum MovementType {
   ENTRY
   EGRESS
+  TRANSFER
 }
 
 model CatalogCategory {

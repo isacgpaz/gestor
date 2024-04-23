@@ -37,9 +37,11 @@ export async function GET(request: NextRequest) {
       },
       include: {
         user: true,
+        destinationChamber: true,
+        originChamber: true,
         inventoryItem: {
           include: {
-            chamber: true
+            chamber: true,
           }
         },
       },
@@ -89,7 +91,8 @@ export async function POST(request: NextRequest) {
     inventoryItemId,
     currentInventory,
     userId,
-    companyId
+    companyId,
+    destinationChamberId
   } = await request.json()
 
   const inventoryItem = await prisma.inventoryItem.findUnique({
@@ -118,6 +121,21 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  if (destinationChamberId) {
+    const chamber = await prisma.chamber.findUnique({
+      where: {
+        id: destinationChamberId
+      },
+    })
+
+    if (!chamber) {
+      return NextResponse.json(
+        { message: 'Câmara de destino não encontrada.' },
+        { status: 404 }
+      )
+    }
+  }
+
   const user = await prisma.user.findUnique({
     where: {
       id: userId
@@ -137,13 +155,14 @@ export async function POST(request: NextRequest) {
       inventoryItemId,
       quantity: currentInventory,
       userId,
-      companyId
+      companyId,
+      destinationChamberId,
+      originChamberId: inventoryItem.chamberId
     }
   })
 
-  const data = {
-    currentInventory: {}
-  }
+  // TODO: change this type
+  const data: any = {}
 
   if (type === MovementType.ENTRY) {
     data.currentInventory = {
@@ -155,6 +174,10 @@ export async function POST(request: NextRequest) {
     data.currentInventory = {
       decrement: currentInventory
     }
+  }
+
+  if (type === MovementType.TRANSFER) {
+    data.chamberId = destinationChamberId
   }
 
   await prisma.inventoryItem.update({

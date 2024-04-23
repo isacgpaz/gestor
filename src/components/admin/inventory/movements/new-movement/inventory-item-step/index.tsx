@@ -3,11 +3,13 @@
 import { Button } from "@/components/ui/button";
 import { CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Combobox } from "@/components/ui/combobox";
-import { Form, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import { translatedUnitsOfMeasurement } from "@/constants/units-of-measurement";
 import { useCreateInventoryMovementContext } from "@/contexts/create-inventory-movement-context";
 import { useCreateMovement } from "@/hooks/inventory/use-create-movement";
+import { useInventoryChambers } from "@/hooks/inventory/use-inventory-chambers";
 import { useInventoryItems } from "@/hooks/inventory/use-inventory-items";
 import { InventoryItemWithChamber } from "@/types/inventory";
 import { formatDecimal } from "@/utils/format-decimal";
@@ -28,6 +30,8 @@ function getFormSchema(
     .int('A quantidade a ser movimentada deve ser um número inteiro.')
     .positive('A quantidade a ser movimentada deve ser um número positivo.')
 
+  let destinationChamberId = z.string()
+
   if (type == MovementType.EGRESS && item?.currentInventory) {
     quantityProps = quantityProps.max(
       item.currentInventory,
@@ -35,10 +39,15 @@ function getFormSchema(
     )
   }
 
+  if (type === MovementType.TRANSFER) {
+    destinationChamberId = destinationChamberId.min(1, 'A câmara de destino é obrigatória.')
+  }
+
   return z.object({
     search: z.string(),
     inventoryItem: z.any(),
-    currentInventory: quantityProps
+    currentInventory: quantityProps,
+    destinationChamberId
   })
 }
 
@@ -61,6 +70,14 @@ export function InventoryItemStep({ user }: {
     mutate: createMovement,
     isPending
   } = useCreateMovement()
+
+  const {
+    data: chambersResponse,
+  } = useInventoryChambers({
+    companyId: user?.company.id,
+  })
+
+  const chambers = chambersResponse?.pages.map((page) => page.result).flat() ?? []
 
   const form = useForm<FormSchema>({
     resolver: zodResolver(getFormSchema(
@@ -85,13 +102,21 @@ export function InventoryItemStep({ user }: {
         currentInventory: values.currentInventory,
         type: movement.type!,
         userId: user.id!,
-        companyId: user.company.id!
+        companyId: user.company.id!,
+        destinationChamberId: values.destinationChamberId
       }, {
         onSuccess() {
-          toast({
-            title: `${movement.type === MovementType.ENTRY ? 'Entrada em' : 'Saída de'} estoque realizada com sucesso!`,
-            variant: 'success'
-          })
+          if (movement?.type === MovementType.TRANSFER) {
+            toast({
+              title: 'Transfêrencia de câmara realizada com sucesso!',
+              variant: 'success'
+            })
+          } else {
+            toast({
+              title: `${movement.type === MovementType.ENTRY ? 'Entrada em' : 'Saída de'} estoque realizada com sucesso!`,
+              variant: 'success'
+            })
+          }
 
           router.push('/admin/inventory')
         }
@@ -132,34 +157,71 @@ export function InventoryItemStep({ user }: {
               <>
                 <hr className="my-3" />
 
-                <div className="flex gap-4 items-center justify-center mt-4">
-                  <Button
-                    type='button'
-                    variant='outline'
-                    className="rounded-full p-0 w-8 h-8"
-                    disabled={currentInventory === 1}
-                    onClick={() => form.setValue('currentInventory', currentInventory - 1)}
-                  >
-                    <Minus />
-                  </Button>
+                <FormItem>
+                  <FormLabel>Quantidade para movimentação</FormLabel>
 
-                  <span className="font-medium">
-                    {currentInventory}
-                  </span>
+                  <div className="flex gap-4 items-center justify-center mt-4">
+                    <Button
+                      type='button'
+                      variant='outline'
+                      className="rounded-full p-0 w-8 h-8"
+                      disabled={currentInventory === 1}
+                      onClick={() => form.setValue('currentInventory', currentInventory - 1)}
+                    >
+                      <Minus />
+                    </Button>
 
-                  <Button
-                    type='button'
-                    className="rounded-full p-0 w-8 h-8"
-                    onClick={() => form.setValue('currentInventory', currentInventory + 1)}
-                  >
-                    <Plus />
-                  </Button>
-                </div>
+                    <span className="font-medium">
+                      {currentInventory}
+                    </span>
 
-                {form.formState.errors.currentInventory && (
-                  <FormMessage>
-                    {form.formState.errors.currentInventory.message}
-                  </FormMessage>
+                    <Button
+                      type='button'
+                      className="rounded-full p-0 w-8 h-8"
+                      onClick={() => form.setValue('currentInventory', currentInventory + 1)}
+                    >
+                      <Plus />
+                    </Button>
+                  </div>
+
+                  {form.formState.errors.currentInventory && (
+                    <FormMessage>
+                      {form.formState.errors.currentInventory.message}
+                    </FormMessage>
+                  )}
+                </FormItem>
+
+                {movement?.type === MovementType.TRANSFER && (
+                  <FormField
+                    control={form.control}
+                    name="destinationChamberId"
+                    render={({ field }) => (
+                      <FormItem className="w-full">
+                        <FormLabel>Câmara de destino</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="disabled:opacity-100 disabled:bg-zinc-50">
+                              <SelectValue placeholder="Selecionar câmara" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {chambers.map((chamber) => (
+                              <SelectItem
+                                key={chamber.id}
+                                value={chamber.id}
+                              >
+                                {chamber.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
               </>
             )}
@@ -265,7 +327,7 @@ function InventoryItemInfo({
         <li>
           <span className="flex gap-1">
             <Package2 className="h-4 w-4 mr-1" />
-            Câmara: {' '}
+            Câmara de origem: {' '}
 
             <span className="text-slate-500 flex items-center gap-1">
               {inventoryItemSelected.chamber.name}

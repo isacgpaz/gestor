@@ -10,7 +10,9 @@ export type CreateInventoryMovement = {
 
 export type MovementWithItemAndUser = Movement & {
   inventoryItem: InventoryItemWithChamber;
-  user: User
+  user: User,
+  originChamber: Chamber,
+  destinationChamber: Chamber
 }
 
 export type CreateInventoryItem = Omit<
