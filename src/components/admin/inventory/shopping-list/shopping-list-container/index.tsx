@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/components/ui/use-toast"
@@ -297,9 +297,9 @@ type ShoppingListInventoryItemCardProps = {
   inventoryItem: CartInventoryItem
 }
 
-function ShoppingListInventoryItemCard(
-  { inventoryItem }: ShoppingListInventoryItemCardProps
-) {
+function ShoppingListInventoryItemCard({
+  inventoryItem
+}: ShoppingListInventoryItemCardProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row gap-4 justify-between items-start pb-3">
@@ -326,7 +326,7 @@ function ShoppingListInventoryItemCard(
 
               <li>
                 <span className="flex gap-1">
-                  Valor unitário: {' '}
+                  Valor unitário hoje: {' '}
 
                   <span className="text-slate-500 flex items-center gap-1">
                     {formatCurrency(inventoryItem.newCost)}
@@ -375,6 +375,16 @@ function ShoppingListInventoryItemCard(
 
                   <span className="flex items-center gap-1 font-medium">
                     {inventoryItem.minInventory}
+                  </span>
+                </span>
+              </li>
+
+              <li>
+                <span className="flex gap-1">
+                  Quantidade sugerida para adicionar: {' '}
+
+                  <span className="text-slate-500 flex items-center gap-1">
+                    {inventoryItem.minInventory - inventoryItem.currentInventory}
                   </span>
                 </span>
               </li>
@@ -439,7 +449,8 @@ function getFormSchema(minQuantity?: number) {
   return z.object({
     newQuantity: z.number({
       invalid_type_error: `A quantidade deve ser maior ou igual a ${minQuantity ?? 1}.`
-    }).min(minQuantity ?? 1, `A quantidade deve ser maior ou igual a ${minQuantity ?? 1}.`)
+    })
+      .min(minQuantity ?? 1, `A quantidade deve ser maior ou igual a ${minQuantity ?? 1}.`)
       .positive('A quantidade deve ser um número positivo.'),
     cost: z.number({
       invalid_type_error: 'O custo deve ser maior que 0.'
@@ -458,7 +469,7 @@ function ItemForm({
 }: ItemFormProps) {
   const form = useForm<FormSchema>({
     resolver: zodResolver(getFormSchema(
-      Number(item?.minInventory ?? 0) - Number(item?.currentInventory ?? 0)
+      // Number(item?.minInventory ?? 0) - Number(item?.currentInventory ?? 0)
     )),
     defaultValues: {
       cost: item?.newCost ?? 0,
@@ -488,7 +499,7 @@ function ItemForm({
       toogleToCart({
         ...item,
         isAddedToCart: !item.isAddedToCart,
-        cost: item.isAddedToCart ? 0 : values.cost,
+        newCost: item.isAddedToCart ? 0 : values.cost,
         newQuantity: item.isAddedToCart ? 0 : values.newQuantity,
       })
 
@@ -508,86 +519,91 @@ function ItemForm({
     }
   }
 
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="flex px-8 space-x-3">
-          <FormField
-            control={form.control}
-            name="newQuantity"
-            render={({ field }) => (
-              <FormItem className="w-full">
-                <FormLabel>Quantidade</FormLabel>
+  if (item) {
+    return (
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="flex flex-col px-8 space-y-3">
+            <FormField
+              control={form.control}
+              name="newQuantity"
+              render={({ field }) => (
+                <FormItem className="w-full">
+                  <FormLabel>Quantidade</FormLabel>
 
-                <FormControl>
-                  <Input
-                    {...field}
-                    onChange={(event) => field.onChange(event.target.valueAsNumber)}
-                    placeholder="Adicionar quantidade"
-                    type='number'
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="cost"
-            render={({ field }) => (
-              <FormItem className="w-full">
-                <FormLabel>Valor unitário (R$)</FormLabel>
-
-                <FormControl>
-                  <Input
-                    {...field}
-                    onChange={(event) => field.onChange(event.target.valueAsNumber)}
-                    placeholder="Valor unitário"
-                    type='number'
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="px-8 mt-2 flex justify-end text-slate-500">
-          <span className="flex gap-1 text-sm">
-            Valor total: {' '}
-
-            <span className="flex items-center">
-              {formatCurrency(
-                isNaN(totalValue) ? 0 : totalValue
+                  <FormControl>
+                    <Input
+                      {...field}
+                      onChange={(event) => field.onChange(event.target.valueAsNumber)}
+                      placeholder="Adicionar quantidade"
+                      type='number'
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    {(newQuantity <= item?.minInventory - item?.currentInventory) && (
+                      `Quantidade sugerida para adicionar: ${item?.minInventory - item?.currentInventory}`
+                    )}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
               )}
-            </span>
-          </span>
-        </div>
+            />
 
-        <DrawerFooter className="flex-row gap-3 justify-end items-end px-8 mt-6">
-          <Button
-            type='button'
-            variant='outline'
-            onClick={(event) => {
-              event.preventDefault()
-              form.reset()
-              onOpenChange(false)
-            }}
-          >
-            Fechar
-          </Button>
+            <FormField
+              control={form.control}
+              name="cost"
+              render={({ field }) => (
+                <FormItem className="w-full">
+                  <FormLabel>Valor unitário (R$)</FormLabel>
 
-          <Button
-            type='submit'
-            variant={item?.isAddedToCart ? 'destructive' : 'default'}
-          >
-            <ShoppingCart className="w-4 h-4 mr-2" />
-            {item?.isAddedToCart ? 'Remover do carrinho' : 'Marcar como adicionado'
-            }
-          </Button>
-        </DrawerFooter>
-      </form>
-    </Form>
-  )
+                  <FormControl>
+                    <Input
+                      {...field}
+                      onChange={(event) => field.onChange(event.target.valueAsNumber)}
+                      placeholder="Valor unitário"
+                      type='number'
+                    />
+                  </FormControl>
+                  <FormMessage />
+                  <FormDescription>
+                    Valor total: {' '}
+
+                    <span>
+                      {formatCurrency(
+                        isNaN(totalValue) ? 0 : totalValue
+                      )}
+                    </span>
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <DrawerFooter className="flex-row gap-3 justify-end items-end px-8 mt-6">
+            <Button
+              type='button'
+              variant='outline'
+              onClick={(event) => {
+                event.preventDefault()
+                form.reset()
+                onOpenChange(false)
+              }}
+            >
+              Fechar
+            </Button>
+
+            <Button
+              type='submit'
+              variant={item?.isAddedToCart ? 'destructive' : 'default'}
+            >
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              {item?.isAddedToCart ? 'Remover do carrinho' : 'Adicionar ao carrinho'}
+            </Button>
+          </DrawerFooter>
+        </form>
+      </Form>
+    )
+  }
+
+  return null
 }

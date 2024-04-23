@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCreateInventoryMovementContext } from "@/contexts/create-inventory-movement-context"
 import { Company, MovementType, User } from "@prisma/client"
-import { Check, ChevronLeft, PackageMinus, PackagePlus } from "lucide-react"
+import { ArrowRightLeft, Check, ChevronLeft, PackageMinus, PackagePlus } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export function TypeStep({ user }: {
@@ -29,7 +29,7 @@ export function TypeStep({ user }: {
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="flex gap-3">
+      <CardContent className="flex flex-col space-y-3">
         <Button
           className="w-full"
           onClick={() => updateMovementType(MovementType.ENTRY)}
@@ -56,6 +56,17 @@ export function TypeStep({ user }: {
             )}
           </Button>
         )}
+        <Button
+          className="w-full bg-blue-800 hover:bg-blue-900"
+          onClick={() => updateMovementType(MovementType.TRANSFER)}
+        >
+          <ArrowRightLeft className="h-4 w-4 mr-2" />
+          Transferência de câmara
+
+          {movement?.type === MovementType.TRANSFER && (
+            <Check className="h-4 w-4 ml-2" />
+          )}
+        </Button>
       </CardContent>
 
       <CardFooter className="pt-0 justify-between">

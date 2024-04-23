@@ -1,24 +1,23 @@
 'use client'
 
 import { Button, ButtonProps } from "@/components/ui/button";
-import { CalendarCheck, LucideIcon, MenuSquare, Package, Settings } from "lucide-react";
+import { CalendarCheck, LucideIcon, Package } from "lucide-react";
 import Link from "next/link";
-import { ScanUser } from "../scan-user";
 
 const shortcuts = [
-  <ScanUser key='scan-user' />,
+  // <ScanUser key='scan-user' />,
+  <Link href='/admin/inventory' key='inventory' >
+    <ShortcutItem icon={Package} label='Estoque' variant='default' />
+  </Link>,
   <Link href='/admin/agenda' key='calendar' >
-    <ShortcutItem icon={CalendarCheck} />
+    <ShortcutItem icon={CalendarCheck} label='Agenda' variant='secondary' />
   </Link>,
-  <Link href='/admin/inventory' key='inventory'>
-    <ShortcutItem icon={Package} />
-  </Link>,
-  <Link href='/admin/catalog' key='menu' >
-    <ShortcutItem icon={MenuSquare} />
-  </Link>,
-  <Link href='/admin/settings' key='settings'>
-    <ShortcutItem icon={Settings} />
-  </Link>
+  // <Link href='/admin/catalog' key='menu' >
+  //   <ShortcutItem icon={MenuSquare} />
+  // </Link>,
+  // <Link href='/admin/settings' key='settings'>
+  //   <ShortcutItem icon={Settings} />
+  // </Link>
 ]
 
 function ShortcutsList() {
@@ -35,18 +34,18 @@ function ShortcutsList() {
 
 type ShortcutItemProps = {
   icon: LucideIcon,
+  label: string,
   primary?: boolean,
 } & ButtonProps
 
-export function ShortcutItem({ icon: Icon, primary = false, ...props }: ShortcutItemProps) {
+export function ShortcutItem({ label, icon: Icon, primary = false, ...props }: ShortcutItemProps) {
   return (
     <Button
-      size='lg'
-      variant={primary ? 'default' : 'secondary'}
       className="flex-shrink-0 px-0 w-full h-12"
       {...props}
     >
-      <Icon />
+      <Icon className="w-4 h-4 mr-2" />
+      {label}
     </Button>
   )
 }

@@ -1,5 +1,5 @@
 import { BottomBarItem } from "@/components/common/bottom-bar";
-import { LayoutDashboard, Settings } from "lucide-react";
+import { Home, LayoutDashboard, Settings } from "lucide-react";
 
 export const customerBottomBar = [
   <BottomBarItem
@@ -17,7 +17,7 @@ export const customerBottomBar = [
 export const adminBottomBar = [
   <BottomBarItem
     path="/admin/dashboard"
-    icon={LayoutDashboard}
+    icon={Home}
     key='dashboard'
   />,
   <BottomBarItem

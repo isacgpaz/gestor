@@ -7,6 +7,7 @@ type CreateMovementParams = {
   userId: string,
   companyId: string,
   currentInventory: number,
+  destinationChamberId: string,
 }
 
 export const createMovement = (params: CreateMovementParams) =>
