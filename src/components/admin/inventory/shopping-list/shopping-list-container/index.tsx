@@ -1,50 +1,77 @@
-'use client'
+"use client";
 
-import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { toast } from "@/components/ui/use-toast"
-import { useEntryInventory } from "@/hooks/inventory/use-entry-movement"
-import { useShoppingList } from "@/hooks/inventory/use-shopping-list"
-import { queryClient } from "@/lib/query-client"
-import { cn } from "@/lib/utils"
-import { ShoppingListStatus } from "@/types/inventory"
-import { formatCurrency } from "@/utils/format-currency"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Company, InventoryItem, User } from "@prisma/client"
-import { Check, Loader2, PackageOpen, ShoppingCart } from "lucide-react"
-import { Dispatch, SetStateAction, useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "@/components/ui/use-toast";
+import { useEntryInventory } from "@/hooks/inventory/use-entry-movement";
+import { useShoppingList } from "@/hooks/inventory/use-shopping-list";
+import { queryClient } from "@/lib/query-client";
+import { cn } from "@/lib/utils";
+import { ShoppingListStatus } from "@/types/inventory";
+import { formatCurrency } from "@/utils/format-currency";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Company, InventoryItem, User } from "@prisma/client";
+import { Check, Loader2, PackageOpen, ShoppingCart } from "lucide-react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 type CartInventoryItem = InventoryItem & {
-  isAddedToCart: boolean,
-  newCost: number,
-  newQuantity: number
-}
+  isAddedToCart: boolean;
+  newCost: number;
+  newQuantity: number;
+};
 
-export function ShoppingListContainer({ user }: {
-  user?: User & { company: Company }
+export function ShoppingListContainer({
+  user,
+}: {
+  user?: User & { company: Company };
 }) {
-  const [isOpen, onOpenChange] = useState(false)
-  const [selectedItem, setSelectedItem] = useState<CartInventoryItem | undefined>(undefined)
+  const [isOpen, onOpenChange] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<
+    CartInventoryItem | undefined
+  >(undefined);
 
-  const {
-    data,
-    isLoading
-  } = useShoppingList({
-    companyId: user?.company.id
-  })
+  const { data, isLoading } = useShoppingList({
+    companyId: user?.company.id,
+  });
 
-  const [shoppingList, setShoppingList] = useState<CartInventoryItem[]>([])
+  const [shoppingList, setShoppingList] = useState<CartInventoryItem[]>([]);
 
-  const pendingShoppingList = shoppingList.filter((item) => !item.isAddedToCart)
-  const addedShoppingList = shoppingList.filter((item) => item.isAddedToCart)
+  const pendingShoppingList = shoppingList.filter(
+    (item) => !item.isAddedToCart
+  );
+  const addedShoppingList = shoppingList.filter((item) => item.isAddedToCart);
 
   useEffect(() => {
     setShoppingList(
@@ -52,14 +79,14 @@ export function ShoppingListContainer({ user }: {
         ...inventoryItem,
         isAddedToCart: false,
         newCost: 0,
-        newQuantity: 0
+        newQuantity: 0,
       })) ?? []
-    )
-  }, [data])
+    );
+  }, [data]);
 
   function selectItemAndOpenDrawer(item: CartInventoryItem | undefined) {
-    setSelectedItem(item)
-    onOpenChange(true)
+    setSelectedItem(item);
+    onOpenChange(true);
   }
 
   return (
@@ -88,30 +115,30 @@ export function ShoppingListContainer({ user }: {
         setShoppingList={setShoppingList}
         onOpenChange={(value) => {
           if (!value) {
-            setSelectedItem(undefined)
+            setSelectedItem(undefined);
           }
 
-          onOpenChange(value)
+          onOpenChange(value);
         }}
       />
     </section>
-  )
+  );
 }
 
 type ShoppingListTabsProps = {
-  user?: User & { company: Company }
-  addedShoppingList: CartInventoryItem[],
-  pendingShoppingList: CartInventoryItem[],
-  isLoading: boolean,
-  selectItemAndOpenDrawer: (item: CartInventoryItem | undefined) => void
-}
+  user?: User & { company: Company };
+  addedShoppingList: CartInventoryItem[];
+  pendingShoppingList: CartInventoryItem[];
+  isLoading: boolean;
+  selectItemAndOpenDrawer: (item: CartInventoryItem | undefined) => void;
+};
 
 function ShoppingListTabs({
   user,
   pendingShoppingList,
   addedShoppingList,
   isLoading,
-  selectItemAndOpenDrawer
+  selectItemAndOpenDrawer,
 }: ShoppingListTabsProps) {
   return (
     <Tabs
@@ -119,30 +146,34 @@ function ShoppingListTabs({
       className="w-full flex flex-col flex-1"
     >
       <TabsList className="w-full flex gap-1">
-        <TabsTrigger value={ShoppingListStatus.PENDING} className="text-xs px-1">
+        <TabsTrigger
+          value={ShoppingListStatus.PENDING}
+          className="text-xs px-1"
+        >
           Pendentes
-
           <Badge
-            variant='secondary'
+            variant="secondary"
             className="ml-2 flex items-center justify-center h-5 w-5 text-xs"
           >
-            {String(pendingShoppingList.length).padStart(2, '0')}
+            {String(pendingShoppingList.length).padStart(2, "0")}
           </Badge>
         </TabsTrigger>
 
         <TabsTrigger value={ShoppingListStatus.ADDED} className="text-xs px-1">
           Adicionados
-
           <Badge
-            variant='secondary'
+            variant="secondary"
             className="ml-2 flex items-center justify-center h-5 w-5 text-xs"
           >
-            {String(addedShoppingList.length).padStart(2, '0')}
+            {String(addedShoppingList.length).padStart(2, "0")}
           </Badge>
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value={ShoppingListStatus.PENDING} className="flex flex-col flex-1">
+      <TabsContent
+        value={ShoppingListStatus.PENDING}
+        className="flex flex-col flex-1"
+      >
         <ShoppingList
           type={ShoppingListStatus.PENDING}
           shoppingList={pendingShoppingList}
@@ -151,12 +182,12 @@ function ShoppingListTabs({
         />
       </TabsContent>
 
-      <TabsContent value={ShoppingListStatus.ADDED} className="flex flex-col flex-1">
+      <TabsContent
+        value={ShoppingListStatus.ADDED}
+        className="flex flex-col flex-1"
+      >
         {addedShoppingList.length ? (
-          <ConfirmListEntry
-            user={user}
-            addedShoppingList={addedShoppingList}
-          />
+          <ConfirmListEntry user={user} addedShoppingList={addedShoppingList} />
         ) : null}
 
         <ShoppingList
@@ -167,48 +198,45 @@ function ShoppingListTabs({
         />
       </TabsContent>
     </Tabs>
-  )
+  );
 }
 
 type ConfirmListEntryProps = {
-  user?: User & { company: Company },
-  addedShoppingList: CartInventoryItem[],
-}
+  user?: User & { company: Company };
+  addedShoppingList: CartInventoryItem[];
+};
 
-function ConfirmListEntry({
-  user,
-  addedShoppingList
-}: ConfirmListEntryProps) {
-  const [isOpen, onOpenChange] = useState(false)
+function ConfirmListEntry({ user, addedShoppingList }: ConfirmListEntryProps) {
+  const [isOpen, onOpenChange] = useState(false);
 
-  const {
-    mutate: entryInventory,
-    isPending,
-  } = useEntryInventory()
+  const { mutate: entryInventory, isPending } = useEntryInventory();
 
   function onConfirmEntry() {
-    entryInventory({
-      companyId: user?.company.id,
-      cart: addedShoppingList.map((item) => ({
-        inventoryItemId: item.id,
-        quantity: item.newQuantity,
-        cost: item.newCost,
-      })),
-      userId: user?.id,
-    }, {
-      onSuccess() {
-        queryClient.invalidateQueries({
-          queryKey: ['shopping-list']
-        })
+    entryInventory(
+      {
+        companyId: user?.company.id,
+        cart: addedShoppingList.map((item) => ({
+          inventoryItemId: item.id,
+          quantity: item.newQuantity,
+          cost: item.newCost,
+        })),
+        userId: user?.id,
+      },
+      {
+        onSuccess() {
+          queryClient.invalidateQueries({
+            queryKey: ["shopping-list"],
+          });
 
-        toast({
-          title: 'Entrada de estoque realizada com sucesso.',
-          variant: 'success'
-        })
+          toast({
+            title: "Entrada de estoque realizada com sucesso.",
+            variant: "success",
+          });
 
-        onOpenChange(false)
+          onOpenChange(false);
+        },
       }
-    })
+    );
   }
 
   return (
@@ -230,24 +258,21 @@ function ConfirmListEntry({
 
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <Button
-            onClick={onConfirmEntry}
-            isLoading={isPending}
-          >
+          <Button onClick={onConfirmEntry} isLoading={isPending}>
             Confirmar
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }
 
 type ShoppingListProps = {
-  shoppingList: CartInventoryItem[],
-  isLoading: boolean,
-  type: ShoppingListStatus,
-  selectItemAndOpenDrawer: (item: CartInventoryItem | undefined) => void
-}
+  shoppingList: CartInventoryItem[];
+  isLoading: boolean;
+  type: ShoppingListStatus;
+  selectItemAndOpenDrawer: (item: CartInventoryItem | undefined) => void;
+};
 
 function ShoppingList({
   selectItemAndOpenDrawer,
@@ -261,7 +286,7 @@ function ShoppingList({
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         <span>Carregando lista de compras...</span>
       </div>
-    )
+    );
   }
 
   if (shoppingList?.length) {
@@ -272,40 +297,36 @@ function ShoppingList({
             key={inventoryItem.id}
             onClick={() => selectItemAndOpenDrawer(inventoryItem)}
           >
-            <ShoppingListInventoryItemCard
-              inventoryItem={inventoryItem}
-            />
+            <ShoppingListInventoryItemCard inventoryItem={inventoryItem} />
           </li>
         ))}
       </ul>
-    )
+    );
   }
 
   return (
     <div className="mt-6 flex flex-col items-center justify-center gap-2 text-slate-500">
       <PackageOpen />
       <span className="text-sm">
-        {type === ShoppingListStatus.PENDING ? (
-          'Lista de itens pendentes vazia.'
-        ) : 'Nenhum item adicionado à lista de compras.'}
+        {type === ShoppingListStatus.PENDING
+          ? "Lista de itens pendentes vazia."
+          : "Nenhum item adicionado à lista de compras."}
       </span>
     </div>
-  )
+  );
 }
 
 type ShoppingListInventoryItemCardProps = {
-  inventoryItem: CartInventoryItem
-}
+  inventoryItem: CartInventoryItem;
+};
 
 function ShoppingListInventoryItemCard({
-  inventoryItem
+  inventoryItem,
 }: ShoppingListInventoryItemCardProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row gap-4 justify-between items-start pb-3">
-        <CardTitle>
-          {inventoryItem.description}
-        </CardTitle>
+        <CardTitle>{inventoryItem.description}</CardTitle>
       </CardHeader>
 
       <hr className="mx-6" />
@@ -316,8 +337,7 @@ function ShoppingListInventoryItemCard({
             <>
               <li>
                 <span className="flex gap-1">
-                  Quantidade adicionada: {' '}
-
+                  Quantidade adicionada:{" "}
                   <span className="text-primary flex items-center gap-1 font-medium">
                     +{inventoryItem.newQuantity}
                   </span>
@@ -326,8 +346,7 @@ function ShoppingListInventoryItemCard({
 
               <li>
                 <span className="flex gap-1">
-                  Valor unitário hoje: {' '}
-
+                  Valor unitário hoje:{" "}
                   <span className="text-slate-500 flex items-center gap-1">
                     {formatCurrency(inventoryItem.newCost)}
                   </span>
@@ -336,10 +355,11 @@ function ShoppingListInventoryItemCard({
 
               <li>
                 <span className="flex gap-1">
-                  Valor total: {' '}
-
+                  Valor total:{" "}
                   <span className="text-slate-500 flex items-center gap-1">
-                    {formatCurrency(inventoryItem.newQuantity * inventoryItem.newCost)}
+                    {formatCurrency(
+                      inventoryItem.newQuantity * inventoryItem.newCost
+                    )}
                   </span>
                 </span>
               </li>
@@ -348,8 +368,7 @@ function ShoppingListInventoryItemCard({
             <>
               <li>
                 <span className="flex gap-1">
-                  Último preço: {' '}
-
+                  Último preço:{" "}
                   <span className="text-slate-500 flex items-center gap-1">
                     {formatCurrency(inventoryItem.cost)}
                   </span>
@@ -358,70 +377,69 @@ function ShoppingListInventoryItemCard({
 
               <li>
                 <span className="flex gap-1">
-                  Quantidade em estoque: {' '}
-
+                  Quantidade em estoque:{" "}
                   <span className="text-slate-500 flex items-center gap-1">
                     {inventoryItem.currentInventory}
                   </span>
                 </span>
               </li>
 
-              <li className={cn(
-                inventoryItem.currentInventory === inventoryItem.minInventory && "text-orange-500",
-                inventoryItem.currentInventory < inventoryItem.minInventory && "text-destructive",
-              )}>
+              <li
+                className={cn(
+                  inventoryItem.currentInventory ===
+                    inventoryItem.minInventory && "text-orange-500",
+                  inventoryItem.currentInventory < inventoryItem.minInventory &&
+                    "text-destructive"
+                )}
+              >
                 <span className="flex gap-1">
-                  Quantidade mínima: {' '}
-
+                  Quantidade mínima:{" "}
                   <span className="flex items-center gap-1 font-medium">
                     {inventoryItem.minInventory}
                   </span>
                 </span>
               </li>
 
-              <li>
+              {/* <li>
                 <span className="flex gap-1">
-                  Quantidade sugerida para adicionar: {' '}
-
+                  Quantidade sugerida para adicionar:{" "}
                   <span className="text-slate-500 flex items-center gap-1">
-                    {inventoryItem.minInventory - inventoryItem.currentInventory}
+                    {inventoryItem.minInventory -
+                      inventoryItem.currentInventory}
                   </span>
                 </span>
-              </li>
+              </li> */}
             </>
           )}
         </ul>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 type AddItemToCartDrawerProps = {
-  user?: User & { company: Company },
-  item?: CartInventoryItem,
-  isOpen: boolean,
-  setShoppingList: Dispatch<SetStateAction<CartInventoryItem[]>>,
-  onOpenChange: (isOpen: boolean) => void
-}
+  user?: User & { company: Company };
+  item?: CartInventoryItem;
+  isOpen: boolean;
+  setShoppingList: Dispatch<SetStateAction<CartInventoryItem[]>>;
+  onOpenChange: (isOpen: boolean) => void;
+};
 
 function AddItemToCartDrawer({
   item,
   isOpen,
   setShoppingList,
-  onOpenChange
+  onOpenChange,
 }: AddItemToCartDrawerProps) {
   return (
     <Drawer open={isOpen} onOpenChange={onOpenChange}>
       <DrawerContent>
         <DrawerHeader className="flex flex-col items-center">
-          <DrawerTitle className="text-2xl">
-            {item?.description}
-          </DrawerTitle>
+          <DrawerTitle className="text-2xl">{item?.description}</DrawerTitle>
 
           <DrawerDescription>
             <span className="flex gap-1 text-slate-500">
-              Último preço: {' '}
-
+              Último preço:{" "}
               <span className="flex items-center gap-1">
                 {formatCurrency(item?.cost ?? 0)}
               </span>
@@ -436,62 +454,67 @@ function AddItemToCartDrawer({
         />
       </DrawerContent>
     </Drawer>
-  )
+  );
 }
 
 type ItemFormProps = {
-  item?: CartInventoryItem,
-  setShoppingList: Dispatch<SetStateAction<CartInventoryItem[]>>,
-  onOpenChange: (isOpen: boolean) => void
-}
+  item?: CartInventoryItem;
+  setShoppingList: Dispatch<SetStateAction<CartInventoryItem[]>>;
+  onOpenChange: (isOpen: boolean) => void;
+};
 
 function getFormSchema(minQuantity?: number) {
   return z.object({
-    newQuantity: z.number({
-      invalid_type_error: `A quantidade deve ser maior ou igual a ${minQuantity ?? 1}.`
-    })
-      .min(minQuantity ?? 1, `A quantidade deve ser maior ou igual a ${minQuantity ?? 1}.`)
-      .positive('A quantidade deve ser um número positivo.'),
-    cost: z.number({
-      invalid_type_error: 'O custo deve ser maior que 0.'
-    }).positive('O custo deve ser um número positivo.'),
-  })
+    newQuantity: z
+      .number({
+        invalid_type_error: `A quantidade deve ser maior ou igual a ${
+          minQuantity ?? 1
+        }.`,
+      })
+      .min(
+        minQuantity ?? 1,
+        `A quantidade deve ser maior ou igual a ${minQuantity ?? 1}.`
+      )
+      .positive("A quantidade deve ser um número positivo."),
+    cost: z
+      .number({
+        invalid_type_error: "O custo deve ser maior que 0.",
+      })
+      .positive("O custo deve ser um número positivo."),
+  });
 }
 
-const formSchema = getFormSchema()
+const formSchema = getFormSchema();
 
-type FormSchema = z.infer<typeof formSchema>
+type FormSchema = z.infer<typeof formSchema>;
 
-function ItemForm({
-  item,
-  setShoppingList,
-  onOpenChange
-}: ItemFormProps) {
+function ItemForm({ item, setShoppingList, onOpenChange }: ItemFormProps) {
   const form = useForm<FormSchema>({
-    resolver: zodResolver(getFormSchema(
+    resolver: zodResolver(
+      getFormSchema()
       // Number(item?.minInventory ?? 0) - Number(item?.currentInventory ?? 0)
-    )),
+    ),
     defaultValues: {
       cost: item?.newCost ?? 0,
-      newQuantity: item?.newQuantity ?? 0
+      newQuantity: item?.newQuantity ?? 0,
     },
-  })
+  });
 
-  const newQuantity = form.watch('newQuantity')
-  const cost = form.watch('cost')
+  const newQuantity = form.watch("newQuantity");
+  const cost = form.watch("cost");
 
-  const totalValue = newQuantity * cost
+  const totalValue = newQuantity * cost;
 
   function toogleToCart(cartInventoryItem: CartInventoryItem) {
-    setShoppingList(previousShoppingList => previousShoppingList.map(
-      (inventoryItem) => {
+    setShoppingList((previousShoppingList) =>
+      previousShoppingList.map((inventoryItem) => {
         if (inventoryItem.id === cartInventoryItem.id) {
-          return cartInventoryItem
+          return cartInventoryItem;
         }
 
-        return inventoryItem
+        return inventoryItem;
       })
-    )
+    );
   }
 
   function onSubmit(values: FormSchema) {
@@ -501,20 +524,20 @@ function ItemForm({
         isAddedToCart: !item.isAddedToCart,
         newCost: item.isAddedToCart ? 0 : values.cost,
         newQuantity: item.isAddedToCart ? 0 : values.newQuantity,
-      })
+      });
 
-      onOpenChange(false)
+      onOpenChange(false);
 
       if (item.isAddedToCart) {
         toast({
-          title: 'Item removido do carrinho.',
-          variant: 'success'
-        })
+          title: "Item removido do carrinho.",
+          variant: "success",
+        });
       } else {
         toast({
-          title: 'Item adicionado ao carrinho.',
-          variant: 'success'
-        })
+          title: "Item adicionado ao carrinho.",
+          variant: "success",
+        });
       }
     }
   }
@@ -534,16 +557,20 @@ function ItemForm({
                   <FormControl>
                     <Input
                       {...field}
-                      onChange={(event) => field.onChange(event.target.valueAsNumber)}
+                      onChange={(event) =>
+                        field.onChange(event.target.valueAsNumber)
+                      }
                       placeholder="Adicionar quantidade"
-                      type='number'
+                      type="number"
                     />
                   </FormControl>
-                  <FormDescription>
-                    {(newQuantity <= item?.minInventory - item?.currentInventory) && (
-                      `Quantidade sugerida para adicionar: ${item?.minInventory - item?.currentInventory}`
-                    )}
-                  </FormDescription>
+                  {/* <FormDescription>
+                    {newQuantity <=
+                      item?.minInventory - item?.currentInventory &&
+                      `Quantidade sugerida para adicionar: ${
+                        item?.minInventory - item?.currentInventory
+                      }`}
+                  </FormDescription> */}
                   <FormMessage />
                 </FormItem>
               )}
@@ -559,19 +586,18 @@ function ItemForm({
                   <FormControl>
                     <Input
                       {...field}
-                      onChange={(event) => field.onChange(event.target.valueAsNumber)}
+                      onChange={(event) =>
+                        field.onChange(event.target.valueAsNumber)
+                      }
                       placeholder="Valor unitário"
-                      type='number'
+                      type="number"
                     />
                   </FormControl>
                   <FormMessage />
                   <FormDescription>
-                    Valor total: {' '}
-
+                    Valor total:{" "}
                     <span>
-                      {formatCurrency(
-                        isNaN(totalValue) ? 0 : totalValue
-                      )}
+                      {formatCurrency(isNaN(totalValue) ? 0 : totalValue)}
                     </span>
                   </FormDescription>
                 </FormItem>
@@ -581,29 +607,31 @@ function ItemForm({
 
           <DrawerFooter className="flex-row gap-3 justify-end items-end px-8 mt-6">
             <Button
-              type='button'
-              variant='outline'
+              type="button"
+              variant="outline"
               onClick={(event) => {
-                event.preventDefault()
-                form.reset()
-                onOpenChange(false)
+                event.preventDefault();
+                form.reset();
+                onOpenChange(false);
               }}
             >
               Fechar
             </Button>
 
             <Button
-              type='submit'
-              variant={item?.isAddedToCart ? 'destructive' : 'default'}
+              type="submit"
+              variant={item?.isAddedToCart ? "destructive" : "default"}
             >
               <ShoppingCart className="w-4 h-4 mr-2" />
-              {item?.isAddedToCart ? 'Remover do carrinho' : 'Adicionar ao carrinho'}
+              {item?.isAddedToCart
+                ? "Remover do carrinho"
+                : "Adicionar ao carrinho"}
             </Button>
           </DrawerFooter>
         </form>
       </Form>
-    )
+    );
   }
 
-  return null
+  return null;
 }
