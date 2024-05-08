@@ -216,6 +216,7 @@ model Movement {
   originChamberId      String?       @db.ObjectId
   destinationChamber   Chamber?      @relation("destinationMovements", fields: [destinationChamberId], references: [id])
   destinationChamberId String?       @db.ObjectId
+  reason               String?
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 }

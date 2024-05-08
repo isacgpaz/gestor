@@ -1,10 +1,26 @@
-'use client'
+"use client";
 
 import { DatePicker } from "@/components/common/date-picker";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { movementType } from "@/constants/inventory";
@@ -21,45 +37,46 @@ import { z } from "zod";
 
 const movementTypeOptions = [
   {
-    label: 'Todas',
-    id: '',
+    label: "Todas",
+    id: "",
   },
   {
-    label: movementType[MovementType.ENTRY] + 's',
+    label: movementType[MovementType.ENTRY] + "s",
     id: MovementType.ENTRY,
   },
   {
-    label: movementType[MovementType.EGRESS] + 's',
+    label: movementType[MovementType.EGRESS] + "s",
     id: MovementType.EGRESS,
   },
-]
+];
 
 const formSchema = z.object({
   search: z.string(),
   date: z.date(),
-  type: z.enum(['', MovementType.ENTRY, MovementType.EGRESS]),
-})
+  type: z.enum(["", MovementType.ENTRY, MovementType.EGRESS]),
+});
 
-type FormSchema = z.infer<typeof formSchema>
+type FormSchema = z.infer<typeof formSchema>;
 
-export function InventoryLastMovement(
-  { user }: {
-    user?: User & { company: Company }
-  }) {
+export function InventoryLastMovement({
+  user,
+}: {
+  user?: User & { company: Company };
+}) {
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      search: '',
+      search: "",
       date: undefined,
-      type: '',
+      type: "",
     },
-  })
+  });
 
-  const search = form.watch('search')
-  const date = form.watch('date')
-  const type = form.watch('type')
+  const search = form.watch("search");
+  const date = form.watch("date");
+  const type = form.watch("type");
 
-  const debouncedSearch = useDebounce(search, 300)
+  const debouncedSearch = useDebounce(search, 300);
 
   return (
     <section className="mt-4 px-6">
@@ -83,7 +100,7 @@ export function InventoryLastMovement(
                     <Input
                       {...field}
                       placeholder="Procurar itens..."
-                      type='search'
+                      type="search"
                     />
                   </FormControl>
                 </FormItem>
@@ -106,9 +123,9 @@ export function InventoryLastMovement(
                         <FormControl>
                           <DatePicker
                             date={value}
-                            label='Selecionar data'
+                            label="Selecionar data"
                             setDate={(date) => {
-                              onChange(date)
+                              onChange(date);
                             }}
                           />
                         </FormControl>
@@ -149,7 +166,6 @@ export function InventoryLastMovement(
                 />
               </CollapsibleContent>
             </Collapsible>
-
           </form>
         </Form>
       </div>
@@ -157,40 +173,36 @@ export function InventoryLastMovement(
       <LastMovementList
         search={debouncedSearch}
         date={date}
-        type={type === '' ? undefined : type}
+        type={type === "" ? undefined : type}
         user={user}
       />
     </section>
-  )
+  );
 }
 
 type LastMovementList = {
-  search?: string,
-  date?: Date,
-  user?: User & { company: Company },
-  type?: MovementType
-}
+  search?: string;
+  date?: Date;
+  user?: User & { company: Company };
+  type?: MovementType;
+};
 
-function LastMovementList({
-  search,
-  date,
-  user,
-  type
-}: LastMovementList) {
+function LastMovementList({ search, date, user, type }: LastMovementList) {
   const {
     data: movementsResponse,
     isLoading: isMovementsLoading,
     fetchNextPage,
     hasNextPage,
-    isFetchingNextPage
+    isFetchingNextPage,
   } = useMovements({
     type,
-    date: date ? dayjs(date).format('YYYY-MM-DD') : undefined,
+    date: date ? dayjs(date).format("YYYY-MM-DD") : undefined,
     companyId: user?.company.id,
-    search
-  })
+    search,
+  });
 
-  const movements = movementsResponse?.pages.map((page) => page.result).flat() ?? []
+  const movements =
+    movementsResponse?.pages.map((page) => page.result).flat() ?? [];
 
   if (isMovementsLoading) {
     return (
@@ -198,7 +210,7 @@ function LastMovementList({
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         <span>Buscando movimentações de estoque...</span>
       </div>
-    )
+    );
   }
 
   if (movements.length) {
@@ -216,7 +228,7 @@ function LastMovementList({
           <div className="w-full flex items-center justify-center">
             <Button
               className="mt-4 w-fit text-primary"
-              variant='ghost'
+              variant="ghost"
               onClick={() => fetchNextPage()}
               isLoading={isFetchingNextPage}
             >
@@ -225,7 +237,7 @@ function LastMovementList({
           </div>
         )}
       </>
-    )
+    );
   }
 
   return (
@@ -233,47 +245,46 @@ function LastMovementList({
       <PackageOpen />
       <span className="text-sm">Nenhuma movimentação registrada.</span>
     </div>
-  )
+  );
 }
 
 type MovementCardProps = {
-  movement: MovementWithItemAndUser
-}
+  movement: MovementWithItemAndUser;
+};
 
 function MovementCard({ movement }: MovementCardProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row gap-4 justify-between items-start pb-3">
         <div>
-          <CardTitle className={cn(
-            movement.type === MovementType.ENTRY && 'text-primary',
-            movement.type === MovementType.EGRESS && 'text-destructive',
-            movement.type === MovementType.TRANSFER && 'text-blue-800',
-          )}>
+          <CardTitle
+            className={cn(
+              movement.type === MovementType.ENTRY && "text-primary",
+              movement.type === MovementType.EGRESS && "text-destructive",
+              movement.type === MovementType.TRANSFER && "text-blue-800"
+            )}
+          >
             {movementType[movement.type]}
           </CardTitle>
 
           <CardDescription className="mt-1">
-            <span className="text-black">
-              Realizada por:
-            </span> {movement.user.name}
+            <span className="text-black">Realizada por:</span>{" "}
+            {movement.user.name}
           </CardDescription>
         </div>
 
         <div className="text-sm flex flex-col items-end">
           <span className="flex gap-1">
-            Data: {' '}
-
+            Data:{" "}
             <span className="text-slate-500 flex items-center gap-1">
-              {dayjs(movement.createdAt).format('DD/MM/YYYY')}
+              {dayjs(movement.createdAt).format("DD/MM/YYYY")}
             </span>
           </span>
 
           <span className="flex gap-1">
-            Hora: {' '}
-
+            Hora:{" "}
             <span className="text-slate-500 flex items-center gap-1">
-              {dayjs(movement.createdAt).format('HH:mm:ss')}
+              {dayjs(movement.createdAt).format("HH:mm:ss")}
             </span>
           </span>
         </div>
@@ -285,8 +296,7 @@ function MovementCard({ movement }: MovementCardProps) {
         <ul className="text-sm mt-2">
           <li>
             <span className="flex gap-1">
-              Item: {' '}
-
+              Item:{" "}
               <span className="text-slate-500 flex items-center gap-1">
                 {movement.inventoryItem.description}
               </span>
@@ -297,8 +307,7 @@ function MovementCard({ movement }: MovementCardProps) {
             <>
               <li>
                 <span className="flex gap-1">
-                  Câmara de origem: {' '}
-
+                  Câmara de origem:{" "}
                   <span className="text-slate-500 flex items-center gap-1">
                     {movement.originChamber.name}
                   </span>
@@ -307,8 +316,7 @@ function MovementCard({ movement }: MovementCardProps) {
 
               <li>
                 <span className="flex gap-1">
-                  Câmara de destino: {' '}
-
+                  Câmara de destino:{" "}
                   <span className="text-slate-500 flex items-center gap-1">
                     {movement.destinationChamber.name}
                   </span>
@@ -319,21 +327,37 @@ function MovementCard({ movement }: MovementCardProps) {
 
           <li>
             <span className="flex gap-1">
-              Quantidade movimentada: {' '}
-
-              <span className={cn(
-                "flex items-center gap-1 font-medium",
-                movement.type === MovementType.ENTRY && 'text-primary',
-                movement.type === MovementType.EGRESS && 'text-destructive',
-                movement.type === MovementType.TRANSFER && 'text-blue-800',
-              )}>
-                {movement.type === MovementType.TRANSFER ? '' : movement.type === MovementType.ENTRY ? '+' : '-'}
+              Quantidade movimentada:{" "}
+              <span
+                className={cn(
+                  "flex items-center gap-1 font-medium",
+                  movement.type === MovementType.ENTRY && "text-primary",
+                  movement.type === MovementType.EGRESS && "text-destructive",
+                  movement.type === MovementType.TRANSFER && "text-blue-800"
+                )}
+              >
+                {movement.type === MovementType.TRANSFER
+                  ? ""
+                  : movement.type === MovementType.ENTRY
+                  ? "+"
+                  : "-"}
                 {movement.quantity}
               </span>
             </span>
           </li>
+
+          {movement.type !== MovementType.ENTRY && (
+            <li>
+              <span className="flex gap-1">
+                Motivo:{" "}
+                <span className="text-slate-500 flex items-center gap-1">
+                  {movement.reason}
+                </span>
+              </span>
+            </li>
+          )}
         </ul>
       </CardContent>
     </Card>
-  )
+  );
 }

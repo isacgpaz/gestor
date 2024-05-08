@@ -1,11 +1,30 @@
-'use client'
+"use client";
 
 import { Button } from "@/components/ui/button";
-import { CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Combobox } from "@/components/ui/combobox";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { movementType } from "@/constants/inventory";
 import { translatedUnitsOfMeasurement } from "@/constants/units-of-measurement";
@@ -18,131 +37,153 @@ import { formatDecimal } from "@/utils/format-decimal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Company, MovementType, UnitOfMeasurement, User } from "@prisma/client";
 import { useDebounce } from "@uidotdev/usehooks";
-import { Boxes, ChevronLeft, ChevronRight, Minus, Package2, Plus, Ruler } from "lucide-react";
+import {
+  Boxes,
+  ChevronLeft,
+  ChevronRight,
+  Minus,
+  Package2,
+  Plus,
+  Ruler,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-function getFormSchema(
-  item?: InventoryItemWithChamber,
-  type?: MovementType
-) {
-  let quantityProps = z.coerce.number()
+function getFormSchema(item?: InventoryItemWithChamber, type?: MovementType) {
+  let quantityProps = z.coerce
+    .number()
     // .int('A quantidade a ser movimentada deve ser um número inteiro.')
-    .positive('A quantidade a ser movimentada deve ser um número positivo.')
+    .positive("A quantidade a ser movimentada deve ser um número positivo.");
 
-  let destinationChamberId: any = z.string({
-    invalid_type_error: 'A câmara de destino é obrigatória.'
-  }).min(1, 'A câmara de destino é obrigatória.')
+  let reason: any = z
+    .string({
+      required_error: "A câmara de destino é obrigatória.",
+      invalid_type_error: "O motivo da movimentação é obrigatório.",
+    })
+    .min(1, "O motivo da movimentação é obrigatório.");
+
+  let destinationChamberId: any = z
+    .string({
+      required_error: "A câmara de destino é obrigatória.",
+      invalid_type_error: "A câmara de destino é obrigatória.",
+    })
+    .min(1, "A câmara de destino é obrigatória.");
 
   if (type == MovementType.EGRESS && item?.currentInventory) {
     quantityProps = quantityProps.max(
       item.currentInventory,
       `A quantidade máxima para saída deve ser ${item.currentInventory}.`
-    )
+    );
   }
 
   if (type !== MovementType.TRANSFER) {
-    destinationChamberId = z.string().optional()
+    destinationChamberId = z.string().optional();
+  }
+
+  if (type === MovementType.ENTRY) {
+    reason = z.string().optional();
   }
 
   return z.object({
     search: z.string(),
+    reason,
     inventoryItem: z.any(),
     currentInventory: quantityProps,
-    destinationChamberId
-  })
+    destinationChamberId,
+  });
 }
 
-const formSchema = getFormSchema()
+const formSchema = getFormSchema();
 
-type FormSchema = z.infer<typeof formSchema>
+type FormSchema = z.infer<typeof formSchema>;
 
-export function InventoryItemStep({ user }: {
-  user?: User & { company: Company }
+export function InventoryItemStep({
+  user,
+}: {
+  user?: User & { company: Company };
 }) {
-  const router = useRouter()
+  const router = useRouter();
 
-  const {
-    movement,
-    goToPreviousStep,
-    updateMovement
-  } = useCreateInventoryMovementContext()
+  const { movement, goToPreviousStep, updateMovement } =
+    useCreateInventoryMovementContext();
 
-  const {
-    mutate: createMovement,
-    isPending
-  } = useCreateMovement()
+  const { mutate: createMovement, isPending } = useCreateMovement();
 
-  const {
-    data: chambersResponse,
-  } = useInventoryChambers({
+  const { data: chambersResponse } = useInventoryChambers({
     companyId: user?.company.id,
-  })
+  });
 
-  const chambers = chambersResponse?.pages.map((page) => page.result).flat() ?? []
+  const chambers =
+    chambersResponse?.pages.map((page) => page.result).flat() ?? [];
   const chambersWithoutInventoryItemChamber = chambers.filter(
     (chamber) => chamber.id !== movement?.inventoryItem?.chamberId
-  )
+  );
 
   const form = useForm<FormSchema>({
-    resolver: zodResolver(getFormSchema(
-      movement?.inventoryItem,
-      movement?.type
-    )),
+    resolver: zodResolver(
+      getFormSchema(movement?.inventoryItem, movement?.type)
+    ),
     defaultValues: {
-      search: '',
+      search: "",
       inventoryItem: movement?.inventoryItem ?? undefined,
-      currentInventory: 1
+      currentInventory: 1,
+      reason: "",
     },
-  })
+  });
 
-  const search = form.watch('search')
-  const inventoryItem = form.watch('inventoryItem')
-  const currentInventory = form.watch('currentInventory')
+  const search = form.watch("search");
+  const inventoryItem = form.watch("inventoryItem");
+  const currentInventory = form.watch("currentInventory");
 
   function onSubmit(values: FormSchema) {
     if (movement && user) {
-      createMovement({
-        inventoryItemId: values.inventoryItem.id,
-        currentInventory: values.currentInventory,
-        type: movement.type!,
-        userId: user.id!,
-        companyId: user.company.id!,
-        destinationChamberId: values.destinationChamberId
-      }, {
-        onSuccess() {
-          if (movement?.type === MovementType.TRANSFER) {
-            toast({
-              title: 'Transfêrencia de câmara realizada com sucesso!',
-              variant: 'success'
-            })
-          } else {
-            toast({
-              title: `${movement.type === MovementType.ENTRY ? 'Entrada em' : 'Saída de'} estoque realizada com sucesso!`,
-              variant: 'success'
-            })
-          }
+      createMovement(
+        {
+          inventoryItemId: values.inventoryItem.id,
+          currentInventory: values.currentInventory,
+          type: movement.type!,
+          userId: user.id!,
+          companyId: user.company.id!,
+          destinationChamberId: values.destinationChamberId,
+          reason: values.reason,
+        },
+        {
+          onSuccess() {
+            if (movement?.type === MovementType.TRANSFER) {
+              toast({
+                title: "Transfêrencia de câmara realizada com sucesso!",
+                variant: "success",
+              });
+            } else {
+              toast({
+                title: `${
+                  movement.type === MovementType.ENTRY
+                    ? "Entrada em"
+                    : "Saída de"
+                } estoque realizada com sucesso!`,
+                variant: "success",
+              });
+            }
 
-          router.push('/admin/inventory')
+            router.push("/admin/inventory");
+          },
         }
-      })
+      );
     }
   }
 
   useEffect(() => {
     updateMovement({
       inventoryItem,
-    })
-  }, [updateMovement, inventoryItem])
+    });
+  }, [updateMovement, inventoryItem]);
 
   return (
     <>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">
-          Identificação do item
-        </CardTitle>
+        <CardTitle className="text-base">Identificação do item</CardTitle>
       </CardHeader>
 
       <Form {...form}>
@@ -150,13 +191,11 @@ export function InventoryItemStep({ user }: {
           <CardContent className="relative">
             <InventoryItemsSearch
               search={search}
-              setSearch={
-                (search) => form.setValue('search', search)
-              }
+              setSearch={(search) => form.setValue("search", search)}
               user={user}
               inventoryItemSelected={inventoryItem}
-              setInventoryItemSelected={
-                (inventoryItem) => form.setValue('inventoryItem', inventoryItem)
+              setInventoryItemSelected={(inventoryItem) =>
+                form.setValue("inventoryItem", inventoryItem)
               }
             />
 
@@ -164,29 +203,37 @@ export function InventoryItemStep({ user }: {
               <>
                 <hr className="my-3" />
 
-
-                {movement?.inventoryItem?.unitOfMeasurement === UnitOfMeasurement.UNIT ? (
+                {movement?.inventoryItem?.unitOfMeasurement ===
+                UnitOfMeasurement.UNIT ? (
                   <FormItem>
                     <FormLabel>Quantidade para movimentação</FormLabel>
                     <div className="flex gap-4 items-center justify-center mt-4">
                       <Button
-                        type='button'
-                        variant='outline'
+                        type="button"
+                        variant="outline"
                         className="rounded-full p-0 w-8 h-8"
                         disabled={currentInventory === 1}
-                        onClick={() => form.setValue('currentInventory', currentInventory - 1)}
+                        onClick={() =>
+                          form.setValue(
+                            "currentInventory",
+                            currentInventory - 1
+                          )
+                        }
                       >
                         <Minus />
                       </Button>
 
-                      <span className="font-medium">
-                        {currentInventory}
-                      </span>
+                      <span className="font-medium">{currentInventory}</span>
 
                       <Button
-                        type='button'
+                        type="button"
                         className="rounded-full p-0 w-8 h-8"
-                        onClick={() => form.setValue('currentInventory', currentInventory + 1)}
+                        onClick={() =>
+                          form.setValue(
+                            "currentInventory",
+                            currentInventory + 1
+                          )
+                        }
                       >
                         <Plus />
                       </Button>
@@ -204,12 +251,13 @@ export function InventoryItemStep({ user }: {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Quantidade para {movementType[movement?.type!].toLowerCase()}
+                          Quantidade para{" "}
+                          {movementType[movement?.type!].toLowerCase()}
                         </FormLabel>
                         <FormControl>
                           <Input
                             {...field}
-                            type='number'
+                            type="number"
                             placeholder="Quantidade a ser movimentada"
                           />
                         </FormControl>
@@ -236,16 +284,37 @@ export function InventoryItemStep({ user }: {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {chambersWithoutInventoryItemChamber.map((chamber) => (
-                              <SelectItem
-                                key={chamber.id}
-                                value={chamber.id}
-                              >
-                                {chamber.name}
-                              </SelectItem>
-                            ))}
+                            {chambersWithoutInventoryItemChamber.map(
+                              (chamber) => (
+                                <SelectItem key={chamber.id} value={chamber.id}>
+                                  {chamber.name}
+                                </SelectItem>
+                              )
+                            )}
                           </SelectContent>
                         </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {movement?.type !== MovementType.ENTRY && (
+                  <FormField
+                    control={form.control}
+                    name="reason"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Motivo da{" "}
+                          {movementType[movement?.type!].toLowerCase()}
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea
+                            {...field}
+                            placeholder="Informe o motivo desta movimentação"
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -257,18 +326,18 @@ export function InventoryItemStep({ user }: {
 
           <CardFooter className="pt-0 justify-between">
             <Button
-              size='sm'
-              variant='outline'
+              size="sm"
+              variant="outline"
               onClick={goToPreviousStep}
-              type='button'
+              type="button"
             >
               <ChevronLeft className="w-4 h-4 mr-2" />
               Voltar
             </Button>
 
             <Button
-              size='sm'
-              type='submit'
+              size="sm"
+              type="submit"
               disabled={!inventoryItem}
               isLoading={isPending}
             >
@@ -279,7 +348,7 @@ export function InventoryItemStep({ user }: {
         </form>
       </Form>
     </>
-  )
+  );
 }
 
 function InventoryItemsSearch({
@@ -287,20 +356,22 @@ function InventoryItemsSearch({
   user,
   inventoryItemSelected,
   setSearch,
-  setInventoryItemSelected
+  setInventoryItemSelected,
 }: {
-  search: string,
-  user?: User & { company: Company },
-  inventoryItemSelected: InventoryItemWithChamber | undefined,
-  setSearch: (search: string) => void,
-  setInventoryItemSelected: (inventoryItemSelected: InventoryItemWithChamber | undefined) => void
+  search: string;
+  user?: User & { company: Company };
+  inventoryItemSelected: InventoryItemWithChamber | undefined;
+  setSearch: (search: string) => void;
+  setInventoryItemSelected: (
+    inventoryItemSelected: InventoryItemWithChamber | undefined
+  ) => void;
 }) {
-  const debouncedSearch = useDebounce(search, 300)
+  const debouncedSearch = useDebounce(search, 300);
 
   const { data, isLoading, isError } = useInventoryItems({
     search: debouncedSearch,
-    companyId: user?.company.id
-  })
+    companyId: user?.company.id,
+  });
 
   return (
     <div>
@@ -318,13 +389,13 @@ function InventoryItemsSearch({
         <InventoryItemInfo inventoryItemSelected={inventoryItemSelected} />
       )}
     </div>
-  )
+  );
 }
 
 function InventoryItemInfo({
-  inventoryItemSelected
+  inventoryItemSelected,
 }: {
-  inventoryItemSelected: InventoryItemWithChamber
+  inventoryItemSelected: InventoryItemWithChamber;
 }) {
   return (
     <div className="mt-4">
@@ -332,9 +403,7 @@ function InventoryItemInfo({
         <li>
           <span className="flex gap-1">
             <Boxes className="h-4 w-4 mr-1" />
-
-            Quantidade em estoque: {' '}
-
+            Quantidade em estoque:{" "}
             <span className="text-slate-500 flex items-center gap-1">
               {formatDecimal(inventoryItemSelected.currentInventory)}
             </span>
@@ -344,10 +413,13 @@ function InventoryItemInfo({
         <li>
           <span className="flex gap-1">
             <Ruler className="h-4 w-4 mr-1" />
-            Unidade de medida: {' '}
-
+            Unidade de medida:{" "}
             <span className="text-slate-500 flex items-center gap-1">
-              {translatedUnitsOfMeasurement[inventoryItemSelected.unitOfMeasurement]}
+              {
+                translatedUnitsOfMeasurement[
+                  inventoryItemSelected.unitOfMeasurement
+                ]
+              }
             </span>
           </span>
         </li>
@@ -355,8 +427,7 @@ function InventoryItemInfo({
         <li>
           <span className="flex gap-1">
             <Package2 className="h-4 w-4 mr-1" />
-            Câmara de origem: {' '}
-
+            Câmara de origem:{" "}
             <span className="text-slate-500 flex items-center gap-1">
               {inventoryItemSelected.chamber.name}
             </span>
@@ -364,5 +435,5 @@ function InventoryItemInfo({
         </li>
       </ul>
     </div>
-  )
+  );
 }
